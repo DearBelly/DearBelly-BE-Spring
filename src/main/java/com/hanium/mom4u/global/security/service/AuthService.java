@@ -49,4 +49,12 @@ public class AuthService {
 
         return newAccessToken;
     }
+
+    @Transactional
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+
+        Long memberId = refreshTokenUtil.getMemberIdFromCookie(request);
+        refreshTokenUtil.deleteRefreshToken(memberId);
+        refreshTokenUtil.removeRefreshTokenCookie(response);
+    }
 }
