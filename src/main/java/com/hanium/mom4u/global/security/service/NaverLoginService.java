@@ -47,8 +47,8 @@ public class NaverLoginService {
                     return memberRepository.save(newMember);
                 });
 
-        String accessToken = jwtTokenProvider.createAccessToken(member.getEmail(), member.getRole());
-        String refreshToken = jwtTokenProvider.createRefreshToken(member.getEmail());
+        String accessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
+        String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
 
         refreshTokenUtil.saveRefreshToken(member.getId(), refreshToken);
         refreshTokenUtil.addRefreshTokenCookie(response, refreshToken);

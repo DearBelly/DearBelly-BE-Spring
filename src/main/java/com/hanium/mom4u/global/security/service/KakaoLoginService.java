@@ -63,8 +63,8 @@ public class KakaoLoginService {
                 });
 
         // 토큰 생성
-        String accessToken = jwtTokenProvider.createAccessToken(member.getEmail(), member.getRole());
-        String refreshToken = jwtTokenProvider.createRefreshToken(member.getEmail());
+        String accessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
+        String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
 
         // Redis에 리프레시 토큰 저장
         refreshTokenUtil.saveRefreshToken(member.getId(), refreshToken);
