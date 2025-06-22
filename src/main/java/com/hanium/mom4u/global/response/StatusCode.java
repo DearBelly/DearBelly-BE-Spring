@@ -9,6 +9,10 @@ public enum StatusCode {
 
     // token
     TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "TE4001", "토큰을 찾을 수 없습니다."),
+    EMPTY_COOKIE(HttpStatus.NOT_FOUND, "TE4002", "쿠키가 비어있습니다."),
+    INVALID_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "TE4003", "유효하지 않은 JWT 토큰입니다."),
+    REFRESH_NOT_FOUND(HttpStatus.UNAUTHORIZED, "TE4004", "쿠키에 refresh token이 존재하지 않습니다."),
+    UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "TE4005", "인증된 접근 방식이 아닙니다."),
 
     //kakao login
     KAKAO_AUTH_CODE_INVALID(HttpStatus.BAD_REQUEST, "KAKAO320", "카카오 인가 코드가 이미 사용되었거나 만료되었습니다."),
@@ -25,6 +29,9 @@ public enum StatusCode {
     NAVER_TOKEN_ERROR(HttpStatus.BAD_REQUEST, "NE4001", "네이버 서버로부터 토큰을 읽어들이는 데에 실패하였습니다."),
     NAVER_PROFILE_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "NE4002", "네이버 서버로부터 프로필 정보 요청에 실패하였습니다."),
     NAVER_PROFILE_FAILED(HttpStatus.BAD_REQUEST, "NE4003", "네이버로부터 프로필 정보를 읽어들이는 데에 실패하였습니다."),
+
+    // member
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ME4001", "회원을 조회할 수 없습니다."),
 
     // server
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER5001", "서버에서 에러가 발생했습니다."),
