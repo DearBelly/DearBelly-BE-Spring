@@ -10,7 +10,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -75,10 +78,22 @@ public class AuthController {
             }
     )
     @PostMapping("/refresh")
-    public CommonResponse<LoginResponseDto> reissue(
-            @CookieValue(value = "refreshToken", required = false) String refreshToken
+    public ResponseEntity<CommonResponse<?>> reissue(
+            HttpServletRequest request, HttpServletResponse response
     ) {
-        LoginResponseDto dto = authService.reissue(refreshToken);
-        return CommonResponse.onSuccess(dto);
+        return ResponseEntity.ok(
+                CommonResponse.onSuccess(authService.reissue(request, response))
+        );
+    }
+
+    @Operation(summary = "로그아웃 API", description = """
+            로그아웃의 API 입니다.
+            """)
+    @PostMapping("/logout")
+    public ResponseEntity<CommonResponse<Void>> logout(
+            HttpServletRequest request, HttpServletResponse response
+    ) {
+        authService.logout(request, response);
+        return ResponseEntity.ok(CommonResponse.onSuccess());
     }
 }

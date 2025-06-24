@@ -3,50 +3,58 @@ package com.hanium.mom4u.global.security.service;
 import com.hanium.mom4u.domain.member.common.Role;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
-import com.hanium.mom4u.global.exception.BusinessException;
+import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
-import com.hanium.mom4u.global.security.dto.response.LoginResponseDto;
 
 import com.hanium.mom4u.global.security.jwt.JwtTokenProvider;
 import com.hanium.mom4u.global.util.RefreshTokenUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenUtil refreshTokenUtil;
     private final MemberRepository memberRepository;
 
-    public LoginResponseDto reissue(String refreshToken) {
-        if (refreshToken == null || refreshToken.isEmpty()) {
-            throw new BusinessException(StatusCode.TOKEN_NOT_FOUND);
-        }
+    @Transactional
+    public String reissue(HttpServletRequest request, HttpServletResponse response
+    ) {
+        Long memberId = refreshTokenUtil.getMemberIdFromCookie(request);
 
-        // 1. 토큰 유효성 검증 및 이메일 추출
-        String email = jwtTokenProvider.getUserEmail(refreshToken);
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new BusinessException(StatusCode.TOKEN_INVALID);
-        }
+        // 1. Redis에 저장된 refreshToken과 일치하는지 확인
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
 
-        // 2. Redis에 저장된 refreshToken과 일치하는지 확인
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new BusinessException(StatusCode.TOKEN_INVALID));
         String savedToken = refreshTokenUtil.getRefreshToken(member.getId());
-        if (!refreshToken.equals(savedToken)) {
-            throw new BusinessException(StatusCode.TOKEN_INVALID);
+        if (!refreshTokenUtil.getRefreshTokenCookie(request).equals(savedToken)) {
+            throw GeneralException.of(StatusCode.TOKEN_INVALID);
         }
 
-        // 3. 새 accessToken 발급 (refreshToken rotation 정책이면 새로 발급)
-        String newAccessToken = jwtTokenProvider.createAccessToken(member.getEmail(), Role.ROLE_USER);
+        // 2. 새 token 발급
+        refreshTokenUtil.removeRefreshTokenCookie(response);
+        refreshTokenUtil.deleteRefreshToken(memberId);
+        String newAccessToken = jwtTokenProvider.createAccessToken(member.getId(), Role.ROLE_USER);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(member.getId());
 
-        return new LoginResponseDto(
-                newAccessToken,
-                member.getEmail(),
-                member.getName(),
-                member.getSocialType()
-        );
+        refreshTokenUtil.saveRefreshToken(memberId, newRefreshToken);
+        refreshTokenUtil.addRefreshTokenCookie(response, newRefreshToken);
+
+        return newAccessToken;
+    }
+
+    @Transactional
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+
+        Long memberId = refreshTokenUtil.getMemberIdFromCookie(request);
+        refreshTokenUtil.deleteRefreshToken(memberId);
+        refreshTokenUtil.removeRefreshTokenCookie(response);
     }
 }

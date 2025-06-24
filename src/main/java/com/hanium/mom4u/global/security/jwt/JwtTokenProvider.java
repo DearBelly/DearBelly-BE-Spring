@@ -43,8 +43,8 @@ public class JwtTokenProvider {
     }
 
     // AccessToken 생성
-    public String createAccessToken(String email, Role role) {
-        Claims claims = Jwts.claims().setSubject(email);
+    public String createAccessToken(Long memberId, Role role) {
+        Claims claims = Jwts.claims().setSubject(memberId.toString());
         claims.put("role", role);
 
         Date now = new Date();
@@ -59,12 +59,12 @@ public class JwtTokenProvider {
     }
 
     // RefreshToken 생성
-    public String createRefreshToken(String email) {
+    public String createRefreshToken(Long memberId) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + refreshTokenValidityInSeconds);
 
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(memberId.toString())
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -73,13 +73,13 @@ public class JwtTokenProvider {
 
     // 토큰에서 인증 정보 추출 (스프링 시큐리티 연동)
     public Authentication getAuthentication(String token) {
-        String email = getUserEmail(token);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+        String memberId = getMemberId(token);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(memberId);
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
-    // 토큰에서 이메일 추출
-    public String getUserEmail(String token) {
+    // 토큰에서 memberId 추출
+    public String getMemberId(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build()
                 .parseClaimsJws(token).getBody().getSubject();
     }
