@@ -18,16 +18,20 @@ spring:
 #    url: ${DEV_DB_URL}
 #    username: ${DEV_DB_USER}
 #    password: ${DEV_DB_PASSWORD}
-#  jwt:
-#    refresh:
-#      expiration: 604800 # 7일
-#    access:
-#      expiration: 86400 # 24시간
-#    secret: ${JWT_SECRET_KEY}
+  jwt:
+    refresh:
+      expiration: 86400 # 24시간
+    access:
+      expiration: 3600 # 1시간
+    secret: ${JWT_SECRET_KEY}
 #  security:
 #    kakao:
 #      client-id: ${KAKAO_REST_API_KEY}
 #      redirect-uri: ${KAKAO_CALLBACK}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
 
 server:
   port: 8080

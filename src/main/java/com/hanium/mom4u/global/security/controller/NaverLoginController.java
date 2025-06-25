@@ -33,6 +33,7 @@ public class NaverLoginController {
     }
 
     @Operation(summary = "네이버 로그인 API", description = """
+            네이버 로그인 API입니다.
             Parameter로는 code와 state 파싱한 값을 입력해주세요.
             """)
     @ApiResponses(value = {

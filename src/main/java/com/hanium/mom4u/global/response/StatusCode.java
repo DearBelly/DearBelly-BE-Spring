@@ -29,6 +29,14 @@ public enum StatusCode {
     NAVER_TOKEN_ERROR(HttpStatus.BAD_REQUEST, "NE4001", "네이버 서버로부터 토큰을 읽어들이는 데에 실패하였습니다."),
     NAVER_PROFILE_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "NE4002", "네이버 서버로부터 프로필 정보 요청에 실패하였습니다."),
     NAVER_PROFILE_FAILED(HttpStatus.BAD_REQUEST, "NE4003", "네이버로부터 프로필 정보를 읽어들이는 데에 실패하였습니다."),
+    NAVER_PARSE_ERROR(HttpStatus.BAD_REQUEST, "NE4004", "네이버로부터 얻은 정보를 파싱하는 데에 실패하였습니다."),
+
+    // Google
+    GOOGLE_TOKEN_ERROR(HttpStatus.BAD_REQUEST, "GE4001", "구글 서버로부터 토큰을 읽어들이는 데에 실패하였습니다."),
+    GOOGLE_PROFILE_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "GE4002", "구글 서버로부터 프로필 정보 요청에 실패하였습니다."),
+    GOOGLE_PROFILE_FAILED(HttpStatus.BAD_REQUEST, "GE4003", "구글 프로필 정보를 읽어들이는 데에 실패하였습니다."),
+    GOOGLE_PARSE_ERROR(HttpStatus.BAD_REQUEST, "GE4004", "구글로부터 얻은 정보를 파싱하는 데에 실패하였습니다."),
+
 
     // member
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ME4001", "회원을 조회할 수 없습니다."),
