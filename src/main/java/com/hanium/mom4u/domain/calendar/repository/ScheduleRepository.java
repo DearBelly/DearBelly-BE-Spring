@@ -12,4 +12,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     List<Schedule> findAllByMemberAndStartDate(Member member, LocalDate date);
 
+    long countByMember(Member member);
+
+
 }

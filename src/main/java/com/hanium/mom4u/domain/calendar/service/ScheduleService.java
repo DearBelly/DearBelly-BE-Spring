@@ -54,6 +54,11 @@ public class ScheduleService {
 
     public void createSchedule(ScheduleRequest request, Authentication authentication) {
         Member member = getLoginMember(authentication);
+        // 일정 개수 제한 로직 추가
+        long currentCount = scheduleRepository.countByMember(member);
+        if (currentCount >= 10) {
+            throw GeneralException.of(StatusCode.SCHEDULE_LIMIT_EXCEEDED);
+        }
         Schedule schedule = Schedule.builder()
                 .name(request.getName())
                 .startDate(request.getStartDate())
