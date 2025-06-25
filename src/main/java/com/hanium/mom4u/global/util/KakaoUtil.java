@@ -3,6 +3,7 @@ package com.hanium.mom4u.global.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanium.mom4u.global.exception.BusinessException;
+import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.dto.response.KakaoTokenDto;
 import com.hanium.mom4u.global.security.dto.response.KakaoUserInfoResponseDto;
@@ -104,25 +105,25 @@ public class KakaoUtil {
         }
     }
 
-    // KakaoUtil에 mapKakaoErrorToBusinessException 메서드 추가
-    public BusinessException mapKakaoErrorToBusinessException(String errorCode) {
+    // KakaoUtil에 mapKakaoErrorToGeneralException 메서드 추가
+    public GeneralException mapKakaoErrorToBusinessException(String errorCode) {
         switch (errorCode) {
             case "KOE320":
             case "invalid_grant":
-                return new BusinessException(StatusCode.KAKAO_AUTH_CODE_INVALID);
+                return new GeneralException(StatusCode.KAKAO_AUTH_CODE_INVALID);
             case "KOE303":
             case "invalid_request":
-                return new BusinessException(StatusCode.KAKAO_REDIRECT_URI_MISMATCH);
+                return new GeneralException(StatusCode.KAKAO_REDIRECT_URI_MISMATCH);
             case "KOE101":
             case "invalid_client":
-                return new BusinessException(StatusCode.KAKAO_CLIENT_INVALID);
+                return new GeneralException(StatusCode.KAKAO_CLIENT_INVALID);
             case "KOE102":
-                return new BusinessException(StatusCode.KAKAO_INVALID_REQUEST);
+                return new GeneralException(StatusCode.KAKAO_INVALID_REQUEST);
             case "KOE006":
-                return new BusinessException(StatusCode.KAKAO_REDIRECT_URI_INVALID);
+                return new GeneralException(StatusCode.KAKAO_REDIRECT_URI_INVALID);
             default:
                 log.error("카카오 알 수 없는 에러 코드: {}", errorCode);
-                return new BusinessException(StatusCode.KAKAO_SERVER_ERROR);
+                return new GeneralException(StatusCode.KAKAO_SERVER_ERROR);
         }
     }
 
