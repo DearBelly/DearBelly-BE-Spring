@@ -45,6 +45,8 @@ public enum StatusCode {
 
     // schedule
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SC4001", "일정을 찾을 수 없습니다."),
+    SCHEDULE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "SC4002", "일정은 최대 10개까지만 등록할 수 있습니다."),
+
 
 
     // server
