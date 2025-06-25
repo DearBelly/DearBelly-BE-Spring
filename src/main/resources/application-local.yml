@@ -25,6 +25,11 @@ spring:
       client_id: ${NAVER_API_KEY}
       redirect_uri: ${NAVER_LOCAL_CALLBACK}
       secret_key: ${NAVER_SECRET_KEY}
+    google:
+      client_id: ${GOOGLE_REST_API}
+      redirect_uri: ${GOOGLE_LOCAL_CALLBACK}
+      secret_key: ${GOOGLE_SECRET_KEY}
+
 
   data:
     redis:
