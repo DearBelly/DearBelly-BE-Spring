@@ -32,9 +32,9 @@ public class NaverUtil {
     @Value("${spring.security.naver.secret_key}")
     private String secretKey;
 
-    private final String NAVER_AUTH_URI = "https://nid.naver.com/oauth2.0/authorize";
-    private final String NAVER_TOKEN_URI = "https://nid.naver.com/oauth2.0/token";
-    private final String NAVER_PROFILE_URI = "https://openapi.naver.com/v1/nid/me";
+    private static final String NAVER_AUTH_URI = "https://nid.naver.com/oauth2.0/authorize";
+    private static final String NAVER_TOKEN_URI = "https://nid.naver.com/oauth2.0/token";
+    private static final String NAVER_PROFILE_URI = "https://openapi.naver.com/v1/nid/me";
 
     private String generateState()
     {
@@ -85,7 +85,7 @@ public class NaverUtil {
             return token;
         } catch (JsonProcessingException e) {
             log.error("Naver token parse error. Raw response: {}", response, e);
-            throw GeneralException.of(StatusCode.NAVER_TOKEN_ERROR);
+            throw GeneralException.of(StatusCode.NAVER_PARSE_ERROR);
         }
     }
 
