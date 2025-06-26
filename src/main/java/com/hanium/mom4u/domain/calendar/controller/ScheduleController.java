@@ -23,65 +23,50 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
-    @Operation(summary = "월별 일정 조회", description = "사용자의 특정 연도/월에 해당하는 모든 일정을 조회합니다.")
+    @Operation(summary = "월별 일정 조회")
     @GetMapping("/monthly")
     public ResponseEntity<?> getMonthlySchedules(
             @RequestParam int year,
-            @RequestParam int month,
-            Authentication authentication
+            @RequestParam int month
     ) {
-        List<ScheduleResponse> schedules = scheduleService.getSchedulesByMonth(authentication, year, month);
+        List<ScheduleResponse> schedules = scheduleService.getSchedulesByMonth(year, month);
         return ResponseEntity.ok(CommonResponse.onSuccess(schedules));
     }
 
-    @Operation(summary = "일별 일정 조회", description = "사용자의 특정 날짜에 해당하는 모든 일정을 조회합니다.")
+    @Operation(summary = "일별 일정 조회")
     @GetMapping("/daily")
     public ResponseEntity<?> getDailySchedules(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            Authentication authentication
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        List<ScheduleResponse> schedules = scheduleService.getSchedulesByDate(authentication, date);
+        List<ScheduleResponse> schedules = scheduleService.getSchedulesByDate(date);
         return ResponseEntity.ok(CommonResponse.onSuccess(schedules));
     }
 
-    @Operation(summary = "일정 등록", description = "사용자의 새 일정을 생성합니다.")
+    @Operation(summary = "일정 등록")
     @PostMapping
-    public ResponseEntity<?> createSchedule(
-            @RequestBody ScheduleRequest request,
-            Authentication authentication
-    ) {
-        scheduleService.createSchedule(request, authentication);
+    public ResponseEntity<?> createSchedule(@RequestBody ScheduleRequest request) {
+        scheduleService.createSchedule(request);
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
 
-    @Operation(summary = "일정 수정", description = "지정한 ID의 일정을 수정합니다.")
+    @Operation(summary = "일정 수정")
     @PatchMapping("/{scheduleId}")
-    public ResponseEntity<?> updateSchedule(
-            @PathVariable Long scheduleId,
-            @RequestBody ScheduleRequest request,
-            Authentication authentication
-    ) {
-        scheduleService.updateSchedule(scheduleId, request, authentication);
+    public ResponseEntity<?> updateSchedule(@PathVariable Long scheduleId, @RequestBody ScheduleRequest request) {
+        scheduleService.updateSchedule(scheduleId, request);
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
 
-    @Operation(summary = "일정 삭제", description = "지정한 ID의 일정을 삭제합니다.")
+    @Operation(summary = "일정 삭제")
     @DeleteMapping("/{scheduleId}")
-    public ResponseEntity<?> deleteSchedule(
-            @PathVariable Long scheduleId,
-            Authentication authentication
-    ) {
-        scheduleService.deleteSchedule(scheduleId, authentication);
+    public ResponseEntity<?> deleteSchedule(@PathVariable Long scheduleId) {
+        scheduleService.deleteSchedule(scheduleId);
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
 
-    @Operation(summary = "일정 상세 조회", description = "지정한 ID의 일정 정보를 상세 조회합니다.")
+    @Operation(summary = "일정 상세 조회")
     @GetMapping("/{scheduleId}")
-    public ResponseEntity<?> getScheduleDetail(
-            @PathVariable Long scheduleId,
-            Authentication authentication
-    ) {
-        ScheduleResponse response = scheduleService.getScheduleDetail(scheduleId, authentication);
+    public ResponseEntity<?> getScheduleDetail(@PathVariable Long scheduleId) {
+        ScheduleResponse response = scheduleService.getScheduleDetail(scheduleId);
         return ResponseEntity.ok(CommonResponse.onSuccess(response));
     }
 }

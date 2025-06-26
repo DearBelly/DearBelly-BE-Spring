@@ -68,4 +68,5 @@ public class Member extends BaseEntity {
 
     @OneToMany(mappedBy = "member")
     private List<Schedule> scheduleList;
+
 }
