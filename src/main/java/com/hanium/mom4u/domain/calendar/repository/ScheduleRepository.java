@@ -8,11 +8,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
-    List<Schedule> findAllByMemberAndStartDateBetween(Member member, LocalDate start, LocalDate end);
 
     List<Schedule> findAllByMemberAndStartDate(Member member, LocalDate date);
+    List<Schedule> findAllByMemberIdAndStartDateBetween(Long memberId, LocalDate start, LocalDate end);
 
-    long countByMember(Member member);
+    long countByMemberAndStartDate(Member member, LocalDate startDate);
 
 
 }
