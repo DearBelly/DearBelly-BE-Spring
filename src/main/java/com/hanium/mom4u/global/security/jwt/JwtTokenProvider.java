@@ -71,7 +71,12 @@ public class JwtTokenProvider {
         Long memberId = Long.valueOf(getMemberId(token));
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
-        return new UsernamePasswordAuthenticationToken(member, "", Collections.emptyList());
+        return new UsernamePasswordAuthenticationToken(
+                member.getId().toString(), //  name = memberId
+                null,
+                Collections.emptyList()
+        );
+
     }
 
     public String getMemberId(String token) {
