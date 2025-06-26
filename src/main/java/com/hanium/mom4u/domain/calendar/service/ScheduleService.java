@@ -7,6 +7,7 @@ import com.hanium.mom4u.domain.calendar.repository.ScheduleRepository;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
+import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -23,42 +24,52 @@ import java.util.stream.Collectors;
 public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
+    private final AuthenticatedProvider authenticatedProvider;
 
-    public List<ScheduleResponse> getSchedulesByMonth(Authentication authentication, int year, int month) {
-        Member member = getLoginMember(authentication);
+    public List<ScheduleResponse> getSchedulesByMonth(int year, int month) {
+        Member member = authenticatedProvider.getCurrentMember();
+        Long memberId = member.getId();
+
         LocalDate start = LocalDate.of(year, month, 1);
         LocalDate end = start.with(TemporalAdjusters.lastDayOfMonth());
 
-        return scheduleRepository.findAllByMemberAndStartDateBetween(member, start, end)
+
+        // 조건에 맞는 일정 조회
+        List<Schedule> matched = scheduleRepository.findAllByMemberIdAndStartDateBetween(memberId, start, end);
+
+
+        return scheduleRepository.findAllByMemberIdAndStartDateBetween(memberId, start, end)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
-    public List<ScheduleResponse> getSchedulesByDate(Authentication authentication, LocalDate date) {
-        Member member = getLoginMember(authentication);
+
+    public List<ScheduleResponse> getSchedulesByDate(LocalDate date) {
+        Member member = authenticatedProvider.getCurrentMember();
         return scheduleRepository.findAllByMemberAndStartDate(member, date)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
-    public ScheduleResponse getScheduleDetail(Long scheduleId, Authentication authentication) {
-        Member member = getLoginMember(authentication);
+    public ScheduleResponse getScheduleDetail(Long scheduleId) {
+        Member member = authenticatedProvider.getCurrentMember();
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.SCHEDULE_NOT_FOUND));
-
         validateOwnership(schedule, member);
         return toResponse(schedule);
     }
 
-    public void createSchedule(ScheduleRequest request, Authentication authentication) {
-        Member member = getLoginMember(authentication);
-        // 일정 개수 제한 로직 추가
-        long currentCount = scheduleRepository.countByMember(member);
-        if (currentCount >= 10) {
+    public void createSchedule(ScheduleRequest request) {
+        Member member = authenticatedProvider.getCurrentMember();
+
+        // 일별 최대 10개 제한
+        long count = scheduleRepository.countByMemberAndStartDate(member, request.getStartDate());
+        if (count >= 10) {
             throw GeneralException.of(StatusCode.SCHEDULE_LIMIT_EXCEEDED);
         }
+
         Schedule schedule = Schedule.builder()
                 .name(request.getName())
                 .startDate(request.getStartDate())
@@ -70,11 +81,10 @@ public class ScheduleService {
         scheduleRepository.save(schedule);
     }
 
-    public void updateSchedule(Long scheduleId, ScheduleRequest request, Authentication authentication) {
-        Member member = getLoginMember(authentication);
+    public void updateSchedule(Long scheduleId, ScheduleRequest request) {
+        Member member = authenticatedProvider.getCurrentMember();
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.SCHEDULE_NOT_FOUND));
-
         validateOwnership(schedule, member);
         schedule.update(
                 request.getName(),
@@ -85,11 +95,10 @@ public class ScheduleService {
         );
     }
 
-    public void deleteSchedule(Long scheduleId, Authentication authentication) {
-        Member member = getLoginMember(authentication);
+    public void deleteSchedule(Long scheduleId) {
+        Member member = authenticatedProvider.getCurrentMember();
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.SCHEDULE_NOT_FOUND));
-
         validateOwnership(schedule, member);
         scheduleRepository.delete(schedule);
     }
@@ -100,18 +109,15 @@ public class ScheduleService {
         }
     }
 
-    private Member getLoginMember(Authentication authentication) {
-        return (Member) authentication.getPrincipal();
-    }
-
     private ScheduleResponse toResponse(Schedule schedule) {
-        ScheduleResponse response = new ScheduleResponse();
-        response.setId(schedule.getId());
-        response.setName(schedule.getName());
-        response.setStartDate(schedule.getStartDate());
-        response.setEndDate(schedule.getEndDate());
-        response.setColor(schedule.getColor());
-        response.setHealthCheck(schedule.getHealthCheck());
-        return response;
+        return ScheduleResponse.builder()
+                .id(schedule.getId())
+                .name(schedule.getName())
+                .startDate(schedule.getStartDate())
+                .endDate(schedule.getEndDate())
+                .color(schedule.getColor())
+                .healthCheck(schedule.getHealthCheck())
+                .build();
     }
 }
+
