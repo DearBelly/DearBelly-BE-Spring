@@ -1,5 +1,9 @@
 package com.hanium.mom4u.global.security.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hanium.mom4u.global.exception.GeneralException;
+import com.hanium.mom4u.global.response.ErrorResponse;
+import com.hanium.mom4u.global.response.StatusCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,46 +13,60 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.http.MediaType;
 
 import java.io.IOException;
 
 @Component
-
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        System.out.println("Request path: " + path);
-
-        boolean shouldNotFilter = path.startsWith("/api/v1/auth") ||
-                path.startsWith("/swagger-ui/")||
+        return path.startsWith("/api/v1/auth") ||
+                path.startsWith("/swagger-ui/") ||
                 path.startsWith("/v3/api-docs") ||
-                path.startsWith("/swagger-resources/")||
+                path.startsWith("/swagger-resources/") ||
                 path.startsWith("/error");
-        System.out.println("Should not filter: " + shouldNotFilter);
-
-        return shouldNotFilter;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 1. JWT 토큰 추출
-        String token = jwtTokenProvider.resolveToken(request);
+        try {
+            String token = jwtTokenProvider.resolveToken(request);
 
-        // 2. 토큰 유효성 검증
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            // 3. 인증 객체 생성 및 등록
-            Authentication auth = jwtTokenProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            if (token != null && jwtTokenProvider.validateToken(token)) {
+                Authentication auth = jwtTokenProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+
+            filterChain.doFilter(request, response);
+
+        } catch (GeneralException ex) {
+            setErrorResponse(response, ex.getStatusCode());
+        } catch (Exception e) {
+            setErrorResponse(response, StatusCode.TOKEN_NOT_FOUND);
         }
 
-        // 4. 다음 필터로 요청 전달
-        filterChain.doFilter(request, response);
     }
+
+    private void setErrorResponse(HttpServletResponse response, StatusCode statusCode) throws IOException {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .httpStatus(statusCode.getHttpStatus())
+                .code(statusCode.getCode())
+                .message(statusCode.getDescription())
+                .build();
+
+        response.setStatus(statusCode.getHttpStatus().value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+    }
+
 }

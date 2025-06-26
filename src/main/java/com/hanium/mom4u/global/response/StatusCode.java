@@ -14,6 +14,8 @@ public enum StatusCode {
     REFRESH_NOT_FOUND(HttpStatus.UNAUTHORIZED, "TE4004", "쿠키에 refresh token이 존재하지 않습니다."),
     UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "TE4005", "인증된 접근 방식이 아닙니다."),
 
+
+
     //kakao login
     KAKAO_AUTH_CODE_INVALID(HttpStatus.BAD_REQUEST, "KAKAO320", "카카오 인가 코드가 이미 사용되었거나 만료되었습니다."),
     KAKAO_REDIRECT_URI_MISMATCH(HttpStatus.BAD_REQUEST, "KAKAO303", "카카오 redirect_uri가 일치하지 않습니다."),
@@ -40,6 +42,12 @@ public enum StatusCode {
 
     // member
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ME4001", "회원을 조회할 수 없습니다."),
+
+    // schedule
+    SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SC4001", "일정을 찾을 수 없습니다."),
+    SCHEDULE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "SC4002", "일정은 최대 10개까지만 등록할 수 있습니다."),
+
+
 
     // server
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER5001", "서버에서 에러가 발생했습니다."),

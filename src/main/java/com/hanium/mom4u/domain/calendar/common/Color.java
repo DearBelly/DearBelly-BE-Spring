@@ -1,5 +1,10 @@
 package com.hanium.mom4u.domain.calendar.common;
 
 public enum Color {
-    RED, BLUE, GREEN, YELLOW, PURPLE
+    SKY_BLUE,
+    AQUA_BLUE,
+    FOREST,
+    LIGHT_GREEN,
+    APRICOT,
+    CYAN
 }
