@@ -3,11 +3,17 @@ package com.hanium.mom4u.domain.family.entity;
 import com.hanium.mom4u.domain.common.BaseEntity;
 import com.hanium.mom4u.domain.member.entity.Member;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Entity
 @Table(name = "family")
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Family extends BaseEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
