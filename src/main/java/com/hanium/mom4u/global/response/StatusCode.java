@@ -14,6 +14,8 @@ public enum StatusCode {
     REFRESH_NOT_FOUND(HttpStatus.UNAUTHORIZED, "TE4004", "쿠키에 refresh token이 존재하지 않습니다."),
     UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "TE4005", "인증된 접근 방식이 아닙니다."),
 
+
+
     //kakao login
     KAKAO_AUTH_CODE_INVALID(HttpStatus.BAD_REQUEST, "KAKAO320", "카카오 인가 코드가 이미 사용되었거나 만료되었습니다."),
     KAKAO_REDIRECT_URI_MISMATCH(HttpStatus.BAD_REQUEST, "KAKAO303", "카카오 redirect_uri가 일치하지 않습니다."),
@@ -37,15 +39,15 @@ public enum StatusCode {
     GOOGLE_PROFILE_FAILED(HttpStatus.BAD_REQUEST, "GE4003", "구글 프로필 정보를 읽어들이는 데에 실패하였습니다."),
     GOOGLE_PARSE_ERROR(HttpStatus.BAD_REQUEST, "GE4004", "구글로부터 얻은 정보를 파싱하는 데에 실패하였습니다."),
 
-    // baby
-    ONLY_PREGNANT(HttpStatus.BAD_REQUEST, "BE4001", "임산부가 아니라면 태아 정보를 등록할 수 없습니다."),
-    BABY_NOT_FOUND(HttpStatus.NOT_FOUND, "BE4002", "해당 태아의 정보를 찾을 수 없습니다."),
 
     // member
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ME4001", "회원을 조회할 수 없습니다."),
 
-    // family
-    UNREGISTERED_FAMILY(HttpStatus.NOT_FOUND, "FE4001", "가족 등록 내역이 없습니다."),
+    // schedule
+    SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SC4001", "일정을 찾을 수 없습니다."),
+    SCHEDULE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "SC4002", "일정은 최대 10개까지만 등록할 수 있습니다."),
+
+
 
     // server
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER5001", "서버에서 에러가 발생했습니다."),

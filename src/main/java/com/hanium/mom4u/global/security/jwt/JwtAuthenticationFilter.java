@@ -28,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/swagger-ui/")||
                 path.startsWith("/v3/api-docs") ||
                 path.startsWith("/swagger-resources/")||
-                path.startsWith("/test");
+                path.startsWith("/error");
         System.out.println("Should not filter: " + shouldNotFilter);
 
         return shouldNotFilter;
@@ -38,17 +38,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 1. JWT 토큰 추출
-        String token = jwtTokenProvider.resolveToken(request);
+        try {
+            String token = jwtTokenProvider.resolveToken(request);
 
-        // 2. 토큰 유효성 검증
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            // 3. 인증 객체 생성 및 등록
-            Authentication auth = jwtTokenProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            if (token != null && jwtTokenProvider.validateToken(token)) {
+                Authentication auth = jwtTokenProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+
+            filterChain.doFilter(request, response);
+
+        } catch (GeneralException ex) {
+            setErrorResponse(response, ex.getStatusCode());
+        } catch (Exception e) {
+            setErrorResponse(response, StatusCode.TOKEN_NOT_FOUND);
         }
 
-        // 4. 다음 필터로 요청 전달
-        filterChain.doFilter(request, response);
     }
+
+    private void setErrorResponse(HttpServletResponse response, StatusCode statusCode) throws IOException {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .httpStatus(statusCode.getHttpStatus())
+                .code(statusCode.getCode())
+                .message(statusCode.getDescription())
+                .build();
+
+        response.setStatus(statusCode.getHttpStatus().value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+    }
+
 }

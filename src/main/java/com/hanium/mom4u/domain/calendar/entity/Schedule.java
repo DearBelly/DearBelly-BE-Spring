@@ -4,9 +4,13 @@ import com.hanium.mom4u.domain.calendar.common.Color;
 import com.hanium.mom4u.domain.common.BaseEntity;
 import com.hanium.mom4u.domain.member.entity.Member;
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
-
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "calendar")
 public class Schedule extends BaseEntity {
@@ -34,4 +38,15 @@ public class Schedule extends BaseEntity {
 
     @Column(name = "health_check")
     private String healthCheck;
+
+
+    // Schedule.java (entity)
+    public void update(String name, LocalDate startDate, LocalDate endDate, Color color, String healthCheck) {
+        this.name = name;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.color = color;
+        this.healthCheck = healthCheck;
+    }
+
 }
