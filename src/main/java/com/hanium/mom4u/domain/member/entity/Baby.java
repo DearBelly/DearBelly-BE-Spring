@@ -49,4 +49,22 @@ public class Baby extends BaseEntity {
     @Setter
     @JoinColumn(name = "member_id")
     private Member member;
+
+    public Baby updateInfo(BabyInfoRequestDto requestDto) {
+        if (requestDto.getName() != null && !requestDto.getName().isEmpty()) {
+            this.name = requestDto.getName();
+        }
+        if (requestDto.getPregnantDate() != null) {
+            this.pregnantDate = requestDto.getPregnantDate();
+        }
+        if (requestDto.getBabyGender() != null) {
+            this.gender = requestDto.getBabyGender();
+        }
+
+        if (requestDto.getWeekLevel() > 0) {
+            this.weekLevel = requestDto.getWeekLevel();
+        }
+
+        return this;
+    }
 }
