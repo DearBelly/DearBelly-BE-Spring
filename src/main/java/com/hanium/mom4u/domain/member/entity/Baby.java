@@ -1,14 +1,19 @@
 package com.hanium.mom4u.domain.member.entity;
 
 import com.hanium.mom4u.domain.common.BaseEntity;
+import com.hanium.mom4u.domain.member.common.BabyGender;
+import com.hanium.mom4u.domain.member.dto.request.BabyInfoRequestDto;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "baby")
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Baby extends BaseEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,8 +26,8 @@ public class Baby extends BaseEntity {
     @Column(name = "pregnant_date")
     private LocalDate pregnantDate;
 
-    @Column(name = "month_level")
-    private int monthLevel;
+    @Column(name = "week_level")
+    private int weekLevel;
 
     @Column(name = "due_date")
     private LocalDate dueDate;
@@ -30,8 +35,9 @@ public class Baby extends BaseEntity {
     @Column(name = "is_ended")
     private boolean isEnded;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender")
-    private String gender;
+    private BabyGender gender;
 
     @Column(name = "name")
     private String name;
@@ -40,6 +46,7 @@ public class Baby extends BaseEntity {
     private int birthYear;
 
     @ManyToOne
+    @Setter
     @JoinColumn(name = "member_id")
     private Member member;
 }
