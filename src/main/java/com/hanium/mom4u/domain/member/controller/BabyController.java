@@ -4,6 +4,7 @@ import com.hanium.mom4u.domain.member.dto.request.BabyInfoRequestDto;
 import com.hanium.mom4u.domain.member.service.BabyService;
 import com.hanium.mom4u.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/baby")
 @RequiredArgsConstructor
+@Tag(name = "태아 정보 API Controller", description = "태아 정보 관련 API Controller입니다.")
 public class BabyController {
 
     private final BabyService babyService;
@@ -45,6 +47,7 @@ public class BabyController {
     @Operation(summary = "등록된 태아 정보 전체 조회 API", description = """
             가족 구성원 간에 등록된 태아 전체를 조회합니다.<br>
             """)
+    @GetMapping("")
     public ResponseEntity<CommonResponse<?>> getBabyAll() {
         return ResponseEntity.ok(
                 CommonResponse.onSuccess(babyService.readAllBabyInfo())
