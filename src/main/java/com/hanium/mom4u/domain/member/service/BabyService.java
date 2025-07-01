@@ -46,8 +46,10 @@ public class BabyService {
                     .build();
             baby.setMember(member);
             babyRepository.save(baby);
+            log.info("Baby ID {} 저장 성공...", baby.getId());
 
             return BabyInfoResponseDto.builder()
+                    .babyId(baby.getId())
                     .name(baby.getName())
                     .pregnantDate(baby.getPregnantDate())
                     .babyGender(baby.getGender())
@@ -69,6 +71,7 @@ public class BabyService {
                 .orElseThrow(() -> GeneralException.of(StatusCode.BABY_NOT_FOUND));
 
         return BabyInfoResponseDto.builder()
+                .babyId(baby.getId())
                 .name(baby.getName())
                 .pregnantDate(baby.getPregnantDate())
                 .babyGender(baby.getGender())
@@ -87,6 +90,7 @@ public class BabyService {
                     .stream()
                     .map(baby ->
                         BabyInfoResponseDto.builder()
+                                .babyId(baby.getId())
                                 .name(baby.getName())
                                 .pregnantDate(baby.getPregnantDate())
                                 .babyGender(baby.getGender())
@@ -96,16 +100,18 @@ public class BabyService {
         } else {
 
             // 가족 구성원 등록 우선 필요
-            if (member.getFamily() != null) {
+            if (member.getFamily().getId() == null) {
                 throw BusinessException.of(StatusCode.UNREGISTERED_FAMILY);
             }
 
             // 임산부가 아닐 때의 태아 조회
             List<Member> familyMembers = memberRepository.findByFamily(member.getFamily());
+            log.info("{} family ID에 등록된 태아 조회...", member.getFamily().getId());
             return familyMembers.stream()
                     .filter(Member::isPregnant)
                     .flatMap(pregnantMember -> pregnantMember.getBabyList().stream())
                     .map(baby -> BabyInfoResponseDto.builder()
+                            .babyId(baby.getId())
                             .name(baby.getName())
                             .pregnantDate(baby.getPregnantDate())
                             .babyGender(baby.getGender())
@@ -129,6 +135,7 @@ public class BabyService {
                     .orElseThrow(() -> GeneralException.of(StatusCode.BABY_NOT_FOUND));
 
             return BabyInfoResponseDto.builder()
+                    .babyId(baby.getId())
                     .name(baby.getName())
                     .pregnantDate(baby.getPregnantDate())
                     .babyGender(baby.getGender())
