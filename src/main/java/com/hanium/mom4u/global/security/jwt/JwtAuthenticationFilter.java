@@ -1,10 +1,15 @@
 package com.hanium.mom4u.global.security.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hanium.mom4u.global.exception.GeneralException;
+import com.hanium.mom4u.global.response.ErrorResponse;
+import com.hanium.mom4u.global.response.StatusCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -28,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/swagger-ui/")||
                 path.startsWith("/v3/api-docs") ||
                 path.startsWith("/swagger-resources/")||
-                path.startsWith("/error");
+                path.startsWith("/test");
         System.out.println("Should not filter: " + shouldNotFilter);
 
         return shouldNotFilter;
