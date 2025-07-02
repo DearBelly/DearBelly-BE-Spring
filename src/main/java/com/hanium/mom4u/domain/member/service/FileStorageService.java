@@ -19,7 +19,7 @@ public class FileStorageService {
 
     public String save(MultipartFile file){;
         if(file==null || file.isEmpty()){
-            throw new IllegalArgumentException("파일이 비어있습니다.");
+            throw GeneralException.of(StatusCode.FILE_EMPTY);
         }try {
             // 업로드 폴더가 없으면 생성
             File dir = new File(UPLOAD_DIR);
