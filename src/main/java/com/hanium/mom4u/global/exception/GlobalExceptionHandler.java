@@ -5,10 +5,13 @@ import com.hanium.mom4u.global.response.ErrorResponse;
 import com.hanium.mom4u.global.response.StatusCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.nio.file.AccessDeniedException;
 
 @Slf4j
 @RestControllerAdvice
@@ -23,7 +26,7 @@ public class GlobalExceptionHandler {
 
     // BussinessException(성공 응답(200)이되, 에러 메세지를 담아서 반환)
     @ExceptionHandler(BusinessException.class)
-    protected ResponseEntity<CommonResponse> customException(BusinessException e, HttpServletRequest request) {
+    protected ResponseEntity<CommonResponse> businessException(BusinessException e, HttpServletRequest request) {
         logError(e, request);
         return ResponseEntity.ok(CommonResponse.withMessage(e.getStatusCode()));
     }

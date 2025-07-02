@@ -1,8 +1,12 @@
 package com.hanium.mom4u.global.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hanium.mom4u.global.response.ErrorResponse;
+import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.JwtAuthenticationFilter;
 import com.hanium.mom4u.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -19,6 +23,7 @@ import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider; // JwtTokenProvider 주입
@@ -36,13 +41,28 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/error","/v3/api-docs/**", "/swagger-ui/**",
-                                "/swagger-ui.html", "/swagger-resources/**", "/api-docs/**",
+                        .requestMatchers("/test/**","/v3/api-docs/**", "/swagger-ui/**",
+                                "/swagger-resources/**", "/api-docs/**",
                                 "/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/schedules/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            log.error("Access denied : {}", accessDeniedException);
+
+                            ErrorResponse errorResponse = ErrorResponse.builder()
+                                    .httpStatus(StatusCode.UNAUTHORIZED_ACCESS.getHttpStatus())
+                                    .code(StatusCode.UNAUTHORIZED_ACCESS.getCode())
+                                    .message(StatusCode.UNAUTHORIZED_ACCESS.getDescription())
+                                    .build();
+
+                            response.setStatus(StatusCode.UNAUTHORIZED_ACCESS.getHttpStatus().value());
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(new ObjectMapper().writeValueAsString(errorResponse));
+                        })
+                )
                 .build();
     }
 

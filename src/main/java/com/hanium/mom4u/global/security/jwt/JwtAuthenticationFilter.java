@@ -9,28 +9,34 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.http.MediaType;
 
 import java.io.IOException;
 
 @Component
+
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        return path.startsWith("/api/v1/auth") ||
-                path.startsWith("/swagger-ui/") ||
+        System.out.println("Request path: " + path);
+
+        boolean shouldNotFilter = path.startsWith("/api/v1/auth") ||
+                path.startsWith("/swagger-ui/")||
                 path.startsWith("/v3/api-docs") ||
-                path.startsWith("/swagger-resources/") ||
-                path.startsWith("/error");
+                path.startsWith("/swagger-resources/")||
+                path.startsWith("/test");
+        System.out.println("Should not filter: " + shouldNotFilter);
+
+        return shouldNotFilter;
     }
 
     @Override
