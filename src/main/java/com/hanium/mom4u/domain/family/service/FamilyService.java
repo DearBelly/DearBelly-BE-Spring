@@ -60,19 +60,23 @@ public class FamilyService {
     public void joinFamily(String inputCode) {
         Member member = authenticatedProvider.getCurrentMember();
 
-
-        if (member.getFamily() != null) {
-            throw BusinessException.of(StatusCode.ALREADY_HAS_FAMILY);
-        }
-
-
-        Family family = familyRepository.findByCode(inputCode)
+        // 입력된 코드에 해당하는 가족이 있는지 조회
+        Family familyByInputCode = familyRepository.findByCode(inputCode)
                 .orElseThrow(() -> GeneralException.of(StatusCode.UNREGISTERED_FAMILY));
 
+        // 현재 사용자의 가족이 있는 경우
+        Family currentFamily = member.getFamily();
 
-        member.setFamily(family);
+        // 사용자의 현재 가족이 입력된 코드와 일치하지 않으면 → 유효하지 않은 코드
+        if (currentFamily != null && !currentFamily.getCode().equals(inputCode)) {
+            throw GeneralException.of(StatusCode.UNREGISTERED_FAMILY);  // or 새로운 StatusCode.INVALID_FAMILY_CODE
+        }
+
+        // 정상적인 경우 → 가족 연결
+        member.setFamily(familyByInputCode);
         memberRepository.save(member);
     }
+
 
     @Transactional
     public String createNewFamilyCode() {
