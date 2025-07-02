@@ -55,7 +55,7 @@ public enum StatusCode {
     BABY_NOT_FOUND(HttpStatus.BAD_REQUEST, "BE4002", "해당 태아를 조회할 수 없습니다."),
 
     // family
-    UNREGISTERED_FAMILY(HttpStatus.NOT_FOUND, "FE4001", "가족 정보가 등록되지 않았습니다."),
+    UNREGISTERED_FAMILY(HttpStatus.NOT_FOUND, "FE4001", "잘못된 인증 코드입니다."),
     ALREADY_HAS_FAMILY(HttpStatus.BAD_REQUEST, "FE4002", "이미 가족에 등록된 사용자입니다."),
 
 
