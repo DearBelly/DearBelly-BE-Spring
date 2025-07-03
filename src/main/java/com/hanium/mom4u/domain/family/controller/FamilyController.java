@@ -1,6 +1,7 @@
 package com.hanium.mom4u.domain.family.controller;
 
 import com.hanium.mom4u.domain.family.dto.request.FamilyCodeRequest;
+import com.hanium.mom4u.domain.family.dto.response.FamilyMemberResponse;
 import com.hanium.mom4u.domain.family.service.FamilyService;
 import com.hanium.mom4u.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,11 +35,12 @@ public class FamilyController {
 
 
     @Operation(summary = "가족 코드 유효성 확인 + 사용자 목록 조회", description = "가족 코드가 유효한 경우 사용자 목록 반환. 유효하지 않으면 예외 발생")
-    @GetMapping("/api/v1/family-code")
-    public ResponseEntity<CommonResponse> getFamilyCodeInfo(@RequestParam String code) {
-        List<String> members = familyService.getMemberIdsInCodeSafely(code); // 유효성 체크 포함
+    @GetMapping("/api/v1/family-code/members")
+    public ResponseEntity<CommonResponse> getFamilyMembers(@RequestParam String code) {
+        List<FamilyMemberResponse> members = familyService.getFamilyMembersByCode(code);
         return ResponseEntity.ok(CommonResponse.onSuccess(members));
     }
+
 
 
 
