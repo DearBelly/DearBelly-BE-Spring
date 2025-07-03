@@ -1,5 +1,6 @@
 package com.hanium.mom4u.domain.family.service;
 
+import com.hanium.mom4u.domain.family.dto.response.FamilyMemberResponse;
 import com.hanium.mom4u.domain.family.entity.Family;
 import com.hanium.mom4u.domain.family.repository.FamilyRepository;
 import com.hanium.mom4u.domain.member.entity.Member;
@@ -18,12 +19,16 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
+import java.util.Optional;
+
+
 @Service
 @RequiredArgsConstructor
 public class FamilyService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final AuthenticatedProvider authenticatedProvider;
+    private final MemberRepository memberRepository;
 
     private static final Duration CODE_EXPIRATION = Duration.ofMinutes(3);
 
@@ -90,15 +95,27 @@ public class FamilyService {
     }
 
     //코드 유효성
-    public List<String> getMemberIdsInCodeSafely(String code) {
+    public List<FamilyMemberResponse> getFamilyMembersByCode(String code) {
         String key = "FAMILY_CODE:" + code;
 
         if (!Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
             throw new BusinessException(StatusCode.INVALID_FAMILY_CODE);
         }
 
-        return redisTemplate.opsForList().range(key, 0, -1);
+        List<String> userIdList = redisTemplate.opsForList().range(key, 0, -1);
+
+        return userIdList.stream()
+                .map(Long::parseLong)
+                .map(memberRepository::findById)
+                .flatMap(Optional::stream)
+                .map(member -> FamilyMemberResponse.builder()
+                        .nickname(member.getNickname())
+                        .imgUrl(member.getImgUrl())
+                        .isPregnant(member.isPregnant())
+                        .build())
+                .toList();
     }
+
 
 
 
