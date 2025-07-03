@@ -45,7 +45,11 @@ public enum StatusCode {
     FILE_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE5001", "파일 저장에 실패했습니다."),
     FILE_EMPTY(HttpStatus.BAD_REQUEST, "FILE4002", "파일이 비어있습니다."),
 
+
+    //code
     DUPLICATE_FAMILY_CODE(HttpStatus.CONFLICT, "FE4002", "이미 사용 중인 가족 코드입니다."),
+    INVALID_FAMILY_CODE(HttpStatus.BAD_REQUEST, "FAM4001", "유효하지 않거나 만료된 가족 코드입니다."),
+
 
 
     // schedule
@@ -58,7 +62,7 @@ public enum StatusCode {
 
     // family
     UNREGISTERED_FAMILY(HttpStatus.NOT_FOUND, "FE4001", "잘못된 인증 코드입니다."),
-    ALREADY_HAS_FAMILY(HttpStatus.BAD_REQUEST, "FE4002", "이미 가족에 등록된 사용자입니다."),
+
 
 
     // server
