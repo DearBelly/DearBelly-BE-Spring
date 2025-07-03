@@ -9,102 +9,97 @@ import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class FamilyService {
 
+    private final RedisTemplate<String, String> redisTemplate;
     private final AuthenticatedProvider authenticatedProvider;
-    private final FamilyRepository familyRepository;
-    private final MemberRepository memberRepository;
 
-    @Transactional
+    private static final Duration CODE_EXPIRATION = Duration.ofMinutes(3);
+
+
+    private static final String CODE_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int CODE_LENGTH = 10;
+
+    private String generateRandomCode() {
+        StringBuilder code = new StringBuilder();
+        SecureRandom random = new SecureRandom();
+
+        for (int i = 0; i < CODE_LENGTH; i++) {
+            int index = random.nextInt(CODE_CHARACTERS.length());
+            code.append(CODE_CHARACTERS.charAt(index));
+        }
+
+        return code.toString();
+    }
+
+    // 코드 생성
     public String createFamilyCode() {
         Member member = authenticatedProvider.getCurrentMember();
 
-        if (!member.isPregnant()) {
-            throw BusinessException.of(StatusCode.ONLY_PREGNANT);
-        }
-
-        // 랜덤 코드 생성 및 중복 방지
         String code;
         do {
-            code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        } while (familyRepository.existsByCode(code));
+            code = generateRandomCode();  // ← UUID 대신
+        } while (Boolean.TRUE.equals(redisTemplate.hasKey("FAMILY_CODE:" + code)));
 
-        // 기존 가족이 없으면 새로 생성
-        if (member.getFamily() == null) {
-            Family family = new Family();
-            family.setCode(code);
-            familyRepository.save(family);
-
-            member.setFamily(family);
-            memberRepository.save(member);
-            return code;
-        }
-
-        // 기존 가족이 있으면 코드만 갱신
-        Family family = member.getFamily();
-        family.setCode(code);
-        familyRepository.save(family);
+        redisTemplate.opsForList().rightPush("FAMILY_CODE:" + code, member.getId().toString());
+        redisTemplate.expire("FAMILY_CODE:" + code, CODE_EXPIRATION);
 
         return code;
     }
 
 
-    @Transactional
-    public void joinFamily(String inputCode) {
+    // 코드로 참여
+    public void joinFamily(String code) {
         Member member = authenticatedProvider.getCurrentMember();
 
-        // 입력된 코드에 해당하는 가족이 있는지 조회
-        Family familyByInputCode = familyRepository.findByCode(inputCode)
-                .orElseThrow(() -> GeneralException.of(StatusCode.UNREGISTERED_FAMILY));
+        String key = "FAMILY_CODE:" + code;
 
-        // 현재 사용자의 가족이 있는 경우
-        Family currentFamily = member.getFamily();
-
-        // 사용자의 현재 가족이 입력된 코드와 일치하지 않으면 → 유효하지 않은 코드
-        if (currentFamily != null && !currentFamily.getCode().equals(inputCode)) {
-            throw GeneralException.of(StatusCode.UNREGISTERED_FAMILY);  // or 새로운 StatusCode.INVALID_FAMILY_CODE
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            throw new BusinessException(StatusCode.INVALID_FAMILY_CODE); // 커스텀 예외
         }
 
-        // 정상적인 경우 → 가족 연결
-        member.setFamily(familyByInputCode);
-        memberRepository.save(member);
-    }
-
-
-    @Transactional
-    public String createNewFamilyCode() {
-        Member currentUser = authenticatedProvider.getCurrentMember(); // 현재 로그인 사용자
-
-        if (!currentUser.isPregnant()) {
-            throw new BusinessException(StatusCode.ONLY_PREGNANT);
+        List<String> userList = redisTemplate.opsForList().range(key, 0, -1);
+        if (userList.contains(member.getId().toString())) {
+            // 이미 등록된 사용자
+            return;
         }
 
-        Family family = currentUser.getFamily();
-        String newCode = UUID.randomUUID().toString().substring(0, 8); // 8자리만 추출
-
-        family.setCode(newCode);
-        familyRepository.save(family);
-
-        return newCode;
+        redisTemplate.opsForList().rightPush(key, member.getId().toString());
     }
 
-
-    @Transactional(readOnly = true)
-    public String getFamilyCode() {
+    // 사용자가 해당 코드 그룹에 속해 있는지 검증
+    public boolean hasAccessToCode(String code) {
         Member member = authenticatedProvider.getCurrentMember();
+        String key = "FAMILY_CODE:" + code;
 
-        if (member.getFamily() == null) {
-            throw BusinessException.of(StatusCode.UNREGISTERED_FAMILY);
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(key))) return false;
+
+        List<String> userList = redisTemplate.opsForList().range(key, 0, -1);
+        return userList.contains(member.getId().toString());
+    }
+
+    //코드 유효성
+    public List<String> getMemberIdsInCodeSafely(String code) {
+        String key = "FAMILY_CODE:" + code;
+
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            throw new BusinessException(StatusCode.INVALID_FAMILY_CODE);
         }
 
-        return member.getFamily().getCode();
+        return redisTemplate.opsForList().range(key, 0, -1);
     }
+
+
 
 }
