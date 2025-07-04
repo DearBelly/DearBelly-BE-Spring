@@ -19,7 +19,7 @@ import java.util.List;
 public class FamilyController {
     private final FamilyService familyService;
 
-    @Operation(summary = "가족 코드 생성 API", description = "누구나 호출할 수 있으며, 10분 유효한 공유 코드를 생성합니다.")
+    @Operation(summary = "가족 코드 생성 API", description = "누구나 호출할 수 있으며, 3분 유효한 공유 코드를 생성합니다.")
     @PostMapping("/api/v1/family-code")
     public ResponseEntity<CommonResponse> generateFamilyCode() {
         String code = familyService.createFamilyCode();
