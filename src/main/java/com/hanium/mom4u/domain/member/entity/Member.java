@@ -44,8 +44,23 @@ public class Member extends BaseEntity {
     @Column(name = "gender")
     private String gender;
 
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
     @Column(name = "is_pregnant")
     private boolean isPregnant;
+
+    @Column(name = "pregnant_week")
+    private int pregnantWeek;
+
+    @Column(name = "due_date")
+    private LocalDate dueDate;
+
+    @Column(name = "pre_pregnant")
+    private Boolean prePregnant;
+
+    @Column(name = "img_url")
+    private String imgUrl;
 
     @Column(name = "is_inactive")
     private boolean isInactive;
@@ -53,11 +68,6 @@ public class Member extends BaseEntity {
     @Column(name = "inactive_date")
     private LocalDate inactiveDate;
 
-    @Column(name = "pregnant_week")
-    private int pregnantWeek;
-
-    @Column(name = "img_url")
-    private String imgUrl;
 
     @ManyToOne
     @JoinColumn(name = "family_id")

@@ -42,6 +42,15 @@ public enum StatusCode {
 
     // member
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ME4001", "회원을 조회할 수 없습니다."),
+    FILE_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE5001", "파일 저장에 실패했습니다."),
+    FILE_EMPTY(HttpStatus.BAD_REQUEST, "FILE4002", "파일이 비어있습니다."),
+
+
+    //code
+    DUPLICATE_FAMILY_CODE(HttpStatus.CONFLICT, "FE4002", "이미 사용 중인 가족 코드입니다."),
+    INVALID_FAMILY_CODE(HttpStatus.BAD_REQUEST, "FAM4001", "유효하지 않거나 만료된 가족 코드입니다."),
+
+
 
     // schedule
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SC4001", "일정을 찾을 수 없습니다."),
@@ -52,7 +61,9 @@ public enum StatusCode {
     BABY_NOT_FOUND(HttpStatus.BAD_REQUEST, "BE4002", "해당 태아를 조회할 수 없습니다."),
 
     // family
-    UNREGISTERED_FAMILY(HttpStatus.NOT_FOUND, "FE4001", "가족 정보가 등록되지 않았습니다."),
+    UNREGISTERED_FAMILY(HttpStatus.NOT_FOUND, "FE4001", "잘못된 인증 코드입니다."),
+
+
 
     // server
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER5001", "서버에서 에러가 발생했습니다."),
