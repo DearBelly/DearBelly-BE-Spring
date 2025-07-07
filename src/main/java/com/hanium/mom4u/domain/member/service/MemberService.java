@@ -1,6 +1,7 @@
 package com.hanium.mom4u.domain.member.service;
 
 import com.hanium.mom4u.domain.member.dto.response.MemberInfoResponse;
+import com.hanium.mom4u.domain.member.dto.response.ThemeResponse;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
 import com.hanium.mom4u.global.exception.GeneralException;
@@ -55,14 +56,18 @@ public class MemberService {
 
         return new MemberInfoResponse(
                 member.getNickname(),
+                member.getEmail(),
                 member.getImgUrl(),
                 member.isPregnant(),
                 member.getDueDate(),
                 member.getPrePregnant(),
                 member.getGender(),
-                member.getBirthDate()
+                member.getBirthDate(),
+                member.getSocialType().name()
         );
     }
+
+
 
 }
 
