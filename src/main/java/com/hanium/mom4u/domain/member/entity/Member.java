@@ -68,6 +68,8 @@ public class Member extends BaseEntity {
     @Column(name = "inactive_date")
     private LocalDate inactiveDate;
 
+    @Column(name = "is_light_mode")
+    private Boolean isLightMode;
 
     @ManyToOne
     @JoinColumn(name = "family_id")
