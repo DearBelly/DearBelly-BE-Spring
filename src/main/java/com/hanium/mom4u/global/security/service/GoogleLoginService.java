@@ -34,8 +34,8 @@ public class GoogleLoginService {
         GoogleProfileResponseDto profile = googleUtil.findProfile(
                 googleUtil.getToken(code).getAccessToken())
                 ;
-        Member member = memberRepository.findByEmailAndSocialType(
-                profile.getEmail(), SocialType.GOOGLE)
+        Member member = memberRepository.findByEmailAndSocialTypeAndIsInactiveFalse(
+                        profile.getEmail(), SocialType.GOOGLE)
                 .orElseGet(() -> {
                     Member newMember = Member.builder()
                             .name(profile.getName())
@@ -46,6 +46,7 @@ public class GoogleLoginService {
                             .build();
                     return memberRepository.save(newMember);
                 });
+
 
         String accessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
