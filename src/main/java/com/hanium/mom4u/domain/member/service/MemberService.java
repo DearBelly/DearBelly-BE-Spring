@@ -45,7 +45,15 @@ public class MemberService {
         member.setPrePregnant(prePregnant); // Member 엔티티에 prePregnant 필드 추가 필요
         member.setGender(gender);
         member.setBirthDate(birth); // Member 엔티티에 birth 필드 추가 필요
+
+        if (member.getIsLightMode() == null) {
+            member.setIsLightMode(true);
+        }
+
         memberRepository.save(member);
+
+
+
     }
 
     @Transactional(readOnly = true)
@@ -66,8 +74,5 @@ public class MemberService {
                 member.getSocialType().name()
         );
     }
-
-
-
 }
 
