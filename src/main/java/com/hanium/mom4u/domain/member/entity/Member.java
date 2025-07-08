@@ -75,10 +75,10 @@ public class Member extends BaseEntity {
     @JoinColumn(name = "family_id")
     private Family family;
 
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Baby> babyList;
 
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Schedule> scheduleList;
 
 }
