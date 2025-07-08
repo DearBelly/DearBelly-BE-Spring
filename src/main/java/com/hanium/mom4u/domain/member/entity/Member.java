@@ -75,10 +75,17 @@ public class Member extends BaseEntity {
     @JoinColumn(name = "family_id")
     private Family family;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "member")
     private List<Baby> babyList;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "member")
     private List<Schedule> scheduleList;
 
+    public void inactive() {
+        this.isInactive = true;
+        this.inactiveDate = LocalDate.now();
+    }
+
 }
+
+
