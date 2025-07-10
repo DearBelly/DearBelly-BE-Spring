@@ -14,5 +14,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     long countByMemberAndStartDate(Member member, LocalDate startDate);
 
+    void deleteByMember(Member member);
 
 }

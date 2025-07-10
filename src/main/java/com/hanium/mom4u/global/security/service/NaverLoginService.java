@@ -30,7 +30,8 @@ public class NaverLoginService {
     @Transactional
     public LoginResponseDto loginWithNaver(HttpServletResponse response, String code, String state) {
         NaverProfileResponseDto profile = naverUtil.findProfile(naverUtil.getToken(code, state).getAccessToken());
-        Member member = memberRepository.findByEmailAndSocialType(profile.getResponse().email, SocialType.NAVER)
+        Member member = memberRepository.findByEmailAndSocialTypeAndIsInactiveFalse(
+                        profile.getResponse().getEmail(), SocialType.NAVER)
                 .orElseGet(() -> {
                     Member newMember = Member.builder()
                             .name(profile.getResponse().getName())
@@ -46,6 +47,7 @@ public class NaverLoginService {
                             .build();
                     return memberRepository.save(newMember);
                 });
+
 
         String accessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());

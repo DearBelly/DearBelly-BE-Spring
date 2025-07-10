@@ -1,6 +1,7 @@
 package com.hanium.mom4u.domain.member.service;
 
 import com.hanium.mom4u.domain.member.dto.response.MemberInfoResponse;
+import com.hanium.mom4u.domain.member.dto.response.ThemeResponse;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
 import com.hanium.mom4u.global.exception.GeneralException;
@@ -44,7 +45,15 @@ public class MemberService {
         member.setPrePregnant(prePregnant); // Member 엔티티에 prePregnant 필드 추가 필요
         member.setGender(gender);
         member.setBirthDate(birth); // Member 엔티티에 birth 필드 추가 필요
+
+        if (member.getIsLightMode() == null) {
+            member.setIsLightMode(true);
+        }
+
         memberRepository.save(member);
+
+
+
     }
 
     @Transactional(readOnly = true)
@@ -55,14 +64,15 @@ public class MemberService {
 
         return new MemberInfoResponse(
                 member.getNickname(),
+                member.getEmail(),
                 member.getImgUrl(),
                 member.isPregnant(),
                 member.getDueDate(),
                 member.getPrePregnant(),
                 member.getGender(),
-                member.getBirthDate()
+                member.getBirthDate(),
+                member.getSocialType().name()
         );
     }
-
 }
 

@@ -1,5 +1,6 @@
 package com.hanium.mom4u.domain.member.controller;
 
+import com.hanium.mom4u.domain.member.dto.response.ThemeResponse;
 import com.hanium.mom4u.domain.member.service.MemberService;
 import com.hanium.mom4u.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,7 +21,7 @@ public class MemberController {
 
     private final MemberService memberService;
 
-    @Operation(summary = "회원가입: 개인정보 입력", description = "회원정보를 입력합니다.")
+    @Operation(summary = "회원가입: 개인정보 입력/수정", description = "회원정보를 입력합니다.")
     @PatchMapping("/profile")
     public ResponseEntity<CommonResponse<Void>> updateProfile(
             @RequestParam("nickname") String nickname,
@@ -44,7 +45,6 @@ public class MemberController {
     public ResponseEntity<CommonResponse> getMyProfile() {
         return ResponseEntity.ok(CommonResponse.onSuccess(memberService.getMyProfile()));
     }
-
 
 }
 

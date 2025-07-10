@@ -68,6 +68,8 @@ public class Member extends BaseEntity {
     @Column(name = "inactive_date")
     private LocalDate inactiveDate;
 
+    @Column(name = "is_light_mode")
+    private Boolean isLightMode;
 
     @ManyToOne
     @JoinColumn(name = "family_id")
@@ -79,4 +81,11 @@ public class Member extends BaseEntity {
     @OneToMany(mappedBy = "member")
     private List<Schedule> scheduleList;
 
+    public void inactive() {
+        this.isInactive = true;
+        this.inactiveDate = LocalDate.now();
+    }
+
 }
+
+

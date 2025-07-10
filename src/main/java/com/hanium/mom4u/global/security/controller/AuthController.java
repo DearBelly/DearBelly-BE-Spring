@@ -96,4 +96,15 @@ public class AuthController {
         authService.logout(request, response);
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
+
+    @Operation(summary = "계정탈퇴 API", description = """
+            계정탈퇴 API 입니다.
+            """)
+    @DeleteMapping("/withdraw")
+    public ResponseEntity<CommonResponse<Void>> withdraw(
+            HttpServletRequest request, HttpServletResponse response
+    ) {
+        authService.withdraw(request, response);
+        return ResponseEntity.ok(CommonResponse.onSuccess());
+    }
 }

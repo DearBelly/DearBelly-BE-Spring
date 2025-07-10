@@ -12,8 +12,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -57,4 +61,18 @@ public class AuthService {
         refreshTokenUtil.deleteRefreshToken(memberId);
         refreshTokenUtil.removeRefreshTokenCookie(response);
     }
+
+
+    @Transactional
+    public void withdraw(HttpServletRequest request, HttpServletResponse response) {
+        Long memberId = refreshTokenUtil.getMemberIdFromCookie(request);
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(StatusCode.MEMBER_NOT_FOUND));
+
+        member.inactive();  // Soft delete 처리
+
+        refreshTokenUtil.deleteRefreshToken(memberId);
+        refreshTokenUtil.removeRefreshTokenCookie(response);
+    }
+
 }

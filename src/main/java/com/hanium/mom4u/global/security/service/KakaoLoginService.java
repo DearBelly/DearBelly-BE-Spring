@@ -52,7 +52,7 @@ public class KakaoLoginService {
         String email = userInfo.getKakaoAccount().getEmail();
         String nickname = userInfo.getKakaoAccount().getProfile().getNickname();
 
-        Member member = memberRepository.findByEmailAndSocialType(email, SocialType.KAKAO)
+        Member member = memberRepository.findByEmailAndSocialTypeAndIsInactiveFalse(email, SocialType.KAKAO)
                 .orElseGet(() -> {
                     Member newMember = new Member();
                     newMember.setEmail(email);
@@ -61,6 +61,7 @@ public class KakaoLoginService {
                     newMember.setSocialType(SocialType.KAKAO);
                     return memberRepository.save(newMember);
                 });
+
 
         // 토큰 생성
         String accessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
