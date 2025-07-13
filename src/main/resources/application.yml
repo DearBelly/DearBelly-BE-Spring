@@ -5,3 +5,12 @@ spring:
     group:
       local: "local"
       dev: "dev"
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true

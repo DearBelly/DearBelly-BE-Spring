@@ -3,20 +3,42 @@ spring:
     activate:
       on-profile: "local"
 
-  jpa:
-    hibernate:
-      ddl-auto: create
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        use_sql_comments: true
-
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${LOCAL_DB_URL}
     username: ${LOCAL_DB_USER}
     password: ${LOCAL_DB_PASSWORD}
+
+  jwt:
+    refresh:
+      expiration: 604800 # 7일
+    access:
+      expiration: 86400 # 24시간
+    secret: ${JWT_SECRET_KEY}
+
+
+  security:
+    kakao:
+      client_id: ${KAKAO_REST_API_KEY}
+      redirect_uri: ${KAKAO_LOCAL_CALLBACK}
+    naver:
+      client_id: ${NAVER_API_KEY}
+      redirect_uri: ${NAVER_LOCAL_CALLBACK}
+      secret_key: ${NAVER_SECRET_KEY}
+    google:
+      client_id: ${GOOGLE_REST_API}
+      redirect_uri: ${GOOGLE_LOCAL_CALLBACK}
+      secret_key: ${GOOGLE_SECRET_KEY}
+
+
+  data:
+    redis:
+      host: ${LOCAL_REDIS_HOST}
+      port: 6379
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
 
 server:
   port: 8080

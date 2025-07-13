@@ -1,10 +1,6 @@
 package com.hanium.mom4u.domain.news.common;
 
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
-@AllArgsConstructor
 public enum Category {
     HEALTH("건강"),
     FINANCIAL("지원금"),
@@ -13,5 +9,16 @@ public enum Category {
     EDUCATION("교육프로그램"),
     EMOTIONAL("정서");
 
-    private String displayName;
+    private final String displayName;
+
+
+    private Category(String displayName) {
+
+        this.displayName = displayName; }
+   
+
+    public String getDisplayName() {
+        return displayName;
+    }
 }
+
