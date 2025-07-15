@@ -110,7 +110,6 @@ jobs:
 
             export ECR_URI=${{ secrets.ECR_URI }}
             export NEXT_COLOR=${{ env.NEXT_COLOR }}
-            
             docker pull ${{ secrets.ECR_URI }}/dearbelly-api:$NEXT_COLOR
             
             # proxy_pass 라인만 찾아서 변경
@@ -118,6 +117,7 @@ jobs:
       
             # nginx 설정 다시 로드
             docker exec nginx nginx -s reload
+            export ECR_URI=${{ secrets.ECR_URI }}
             docker compose up -d --no-deps --force-recreate
             
             docker image prune -a -f
