@@ -34,7 +34,7 @@ jobs:
       - name: Set active color (green or blue)
         id: color
         run: |
-          ACTIVE_COLOR=$(ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.REMOTE_HOST }} \
+          ACTIVE_COLOR=$(ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} \
             'docker ps --format "{{.Names}}" | grep app_green && echo green || echo blue')
           echo "ACTIVE_COLOR=$ACTIVE_COLOR" >> $GITHUB_ENV
           if [ "$ACTIVE_COLOR" == "green" ]; then
