@@ -1,25 +1,31 @@
 version: '3.8'
 services:
   blue:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: ${ECR_URI}/dearbelly-api:blue
     ports:
       - "8081:8080"
     env_file:
-      - .env
+      - /home/ubuntu/dearbelly-api/.env
+    volumes:
+      - /home/ubuntu/dearbelly-api:/home/dearbelly
+    networks:
+      - mynetwork
+    depends_on:
+      - redis
     container_name: app_blue
 
   green:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: ${ECR_URI}/dearbelly-api:green
     ports:
       - "8082:8080"
     env_file:
-      - .env
+      - /home/ubuntu/dearbelly-api/.env
+    volumes:
+      - /home/ubuntu/dearbelly-api:/home/dearbelly
+    networks:
+      - mynetwork
+    depends_on:
+      - redis
     container_name: app_green
 
   nginx:
@@ -32,3 +38,24 @@ services:
       - blue
       - green
     container_name: nginx
+    networks:
+      - mynetwork
+    restart: always
+
+  redis:
+    image: redis:7.4.1
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mynetwork
+    restart: always
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  redis_data:
