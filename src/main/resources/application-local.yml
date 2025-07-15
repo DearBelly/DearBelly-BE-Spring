@@ -16,7 +16,6 @@ spring:
       expiration: 86400 # 24시간
     secret: ${JWT_SECRET_KEY}
 
-
   security:
     kakao:
       client_id: ${KAKAO_REST_API_KEY}
@@ -30,15 +29,10 @@ spring:
       redirect_uri: ${GOOGLE_LOCAL_CALLBACK}
       secret_key: ${GOOGLE_SECRET_KEY}
 
-
   data:
     redis:
       host: ${LOCAL_REDIS_HOST}
       port: 6379
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
 
 server:
   port: 8080
