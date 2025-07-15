@@ -3,35 +3,31 @@ spring:
     activate:
       on-profile: "dev"
 
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DEV_DB_URL}
+    username: ${DEV_DB_USER}
+    password: ${DEV_DB_PASSWORD}
 
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        use_sql_comments: true
-
-#  datasource:
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: ${DEV_DB_URL}
-#    username: ${DEV_DB_USER}
-#    password: ${DEV_DB_PASSWORD}
   jwt:
     refresh:
       expiration: 86400 # 24시간
     access:
       expiration: 3600 # 1시간
     secret: ${JWT_SECRET_KEY}
-#  security:
-#    kakao:
-#      client-id: ${KAKAO_REST_API_KEY}
-#      redirect-uri: ${KAKAO_CALLBACK}
 
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
+  security:
+    kakao:
+      client_id: ${KAKAO_REST_API_KEY}
+      redirect_uri: ${KAKAO_LOCAL_CALLBACK}
+    naver:
+      client_id: ${NAVER_API_KEY}
+      redirect_uri: ${NAVER_LOCAL_CALLBACK}
+      secret_key: ${NAVER_SECRET_KEY}
+    google:
+      client_id: ${GOOGLE_REST_API}
+      redirect_uri: ${GOOGLE_LOCAL_CALLBACK}
+      secret_key: ${GOOGLE_SECRET_KEY}
 
 server:
   port: 8080
