@@ -29,6 +29,11 @@ spring:
       redirect_uri: ${GOOGLE_LOCAL_CALLBACK}
       secret_key: ${GOOGLE_SECRET_KEY}
 
+  data:
+    redis:
+      host: ${DEV_REDIS_HOST}
+      port: 6379
+
 server:
   port: 8080
 
