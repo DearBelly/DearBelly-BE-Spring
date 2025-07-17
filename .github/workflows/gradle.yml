@@ -51,7 +51,7 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/
+          source: ./deploy/**
           target: /home/ubuntu/dearbelly-api/
 
       - name: Transfer nginx directory file to ec2
