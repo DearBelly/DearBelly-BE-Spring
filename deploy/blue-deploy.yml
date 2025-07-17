@@ -1,0 +1,46 @@
+services:
+  blue:
+    image: ${ECR_URI}/dearbelly-api:latest
+    ports:
+      - "8081:8080"
+    env_file:
+      - /home/ubuntu/dearbelly-api/.env
+    volumes:
+      - /home/ubuntu/dearbelly-api:/home/dearbelly
+    networks:
+      - mynetwork
+    depends_on:
+      - redis
+    container_name: app_blue
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - /home/ubuntu/dearbelly-api/nginx/:/etc/nginx/
+    ports:
+      - "80:80"
+    depends_on:
+      - blue
+      - green
+    container_name: nginx
+    networks:
+      - mynetwork
+    restart: always
+
+  redis:
+    image: redis:7.4.1
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mynetwork
+    restart: always
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  redis_data:
