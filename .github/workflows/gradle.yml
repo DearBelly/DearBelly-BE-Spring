@@ -25,28 +25,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: ap-northeast-2
 
-      - name: Create SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-      - name: Set active color (green or blue)
-        id: color
-        run: |
-          ACTIVE_COLOR=$(ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} \
-            'docker ps --format "{{.Names}}" | grep app_green && echo green || echo blue')
-          echo "ACTIVE_COLOR=$ACTIVE_COLOR" >> $GITHUB_ENV
-          if [ "$ACTIVE_COLOR" == "green" ]; then
-            echo "NEXT_COLOR=blue" >> $GITHUB_ENV
-          else
-            echo "NEXT_COLOR=green" >> $GITHUB_ENV
-          fi
-
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
 
       - name: Build With Gradle
         run: |
@@ -56,27 +37,21 @@ jobs:
 
       - name: Build, tag, and push image to Amazon ECR
         run: |
-          docker build -t dearbelly-api:${{ env.NEXT_COLOR }} .
-          docker tag dearbelly-api:${{ env.NEXT_COLOR }} ${{ secrets.ECR_URI }}/dearbelly-api:${{ env.NEXT_COLOR }}
-          docker push ${{ secrets.ECR_URI }}/dearbelly-api:${{ env.NEXT_COLOR }}
-
-      - name: activate .env
-        run: echo "${{ secrets.ENV }}" > .env
+          docker build -t ${{ secrets.ECR_URI }}/dearbelly-api .
+          docker tag ${{ secrets.ECR_URI }}/dearbelly-api ${{ secrets.ECR_URI }}/dearbelly-api:latest
+          docker push ${{ secrets.ECR_URI }}/dearbelly-api:latest
 
   transfer:
     runs-on: ubuntu-22.04
     needs: build
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
       - name: Transfer docker-compose.yml file to ec2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./docker-compose.yml
+          source: ./deploy/*.yml
           target: /home/ubuntu/dearbelly-api/
 
       - name: Transfer nginx directory file to ec2
@@ -85,9 +60,17 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./nginx/
-          target: /home/ubuntu/
+          source: ./nginx/nginx.conf
+          target: /home/ubuntu/nginx
 
+      - name: Transfer deploy.sh
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: ./deploy/deploy.sh
+          target: /home/ubuntu/dearbelly-api/
 
   deploy:
     runs-on: ubuntu-22.04
@@ -109,15 +92,7 @@ jobs:
             aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
             export ECR_URI=${{ secrets.ECR_URI }}
-            export NEXT_COLOR=${{ env.NEXT_COLOR }}
-            docker pull ${{ secrets.ECR_URI }}/dearbelly-api:$NEXT_COLOR
+            docker pull ${{ secrets.ECR_URI }}/dearbelly-api:latest
             
-            # proxy_pass 라인만 찾아서 변경
-            sed -i "s/proxy_pass http:\/\/.*;/proxy_pass http:\/\/${NEXT_COLOR}_backend;/" /home/ubuntu/nginx/nginx.conf
-      
-            # nginx 설정 다시 로드
-            docker exec nginx nginx -s reload
-            export ECR_URI=${{ secrets.ECR_URI }}
-            docker compose up -d --no-deps --force-recreate
-            
-            docker image prune -a -f
+            chmod +x deploy.sh
+            source deploy.sh
