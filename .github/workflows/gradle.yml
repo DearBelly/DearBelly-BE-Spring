@@ -45,6 +45,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
       - name: Transfer deploy directory file to ec2
         uses: appleboy/scp-action@master
         with:
