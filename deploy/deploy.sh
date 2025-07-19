@@ -23,7 +23,7 @@ sleep 10
 echo "The $STOP_TARGET version is currently running on the server. Starting the $RUN_TARGET version."
 
 # 새로운 컨테이너가 제대로 떴는지 확인
-EXIST_AFTER=$(docker-compose -p dearbelly-api-${AFTER_COMPOSE_COLOR} -f docker-compose.${AFTER_COMPOSE_COLOR}.yml ps | grep Up)
+EXIST_AFTER=$(docker compose -p dearbelly-api-${AFTER_COMPOSE_COLOR} -f docker-compose.${AFTER_COMPOSE_COLOR}.yml ps | grep Up)
 if [ -n "$EXIST_AFTER" ]; then
   # reload nginx
   cp /home/ubuntu/nginx/nginx.${AFTER_COMPOSE_COLOR}.conf /etc/nginx/conf.d/default.conf
