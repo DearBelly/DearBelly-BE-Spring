@@ -5,9 +5,11 @@ on:
     branches:
       - main
 
+
 jobs:
   build:
     runs-on: ubuntu-22.04
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -18,15 +20,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Detect running container and set IMAGE_TAG
+        id: detect
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > id_rsa
+          chmod 600 id_rsa
+
+          IMAGE_TAG=$(ssh -o StrictHostKeyChecking=no -i id_rsa ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} \
+            'if docker ps --filter "name=dearbelly-api-blue" --format "{{.Names}}" | grep -q dearbelly-api-blue; then echo green; else echo blue; fi')
+
+          echo "IMAGE_TAG=$IMAGE_TAG"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          aws-region: ap-northeast-2
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build With Gradle
@@ -37,21 +50,23 @@ jobs:
 
       - name: Build, tag, and push image to Amazon ECR
         run: |
-          docker build -t ${{ secrets.ECR_URI }}/dearbelly-api .
-          docker tag ${{ secrets.ECR_URI }}/dearbelly-api ${{ secrets.ECR_URI }}/dearbelly-api:latest
-          docker push ${{ secrets.ECR_URI }}/dearbelly-api:latest
+          docker build -t ${{ secrets.ECR_URI }}/dearbelly-api:${{ env.IMAGE_TAG }} .
+          docker push ${{ secrets.ECR_URI }}/dearbelly-api:${{ env.IMAGE_TAG }}
 
   transfer:
     runs-on: ubuntu-22.04
     needs: build
     steps:
-      - name: Transfer docker-compose.yml file to ec2
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Transfer g file to ec2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/*.yml
+          source: ./deploy/
           target: /home/ubuntu/dearbelly-api/
 
       - name: Transfer nginx directory file to ec2
@@ -60,17 +75,8 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./nginx/nginx.conf
-          target: /home/ubuntu/nginx
-
-      - name: Transfer deploy.sh
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/deploy.sh
-          target: /home/ubuntu/dearbelly-api/
+          source: ./nginx/
+          target: /home/ubuntu/
 
   deploy:
     runs-on: ubuntu-22.04
@@ -84,15 +90,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            mkdir -p ~/dearbelly-api
-            cd ~/dearbelly-api
+            cd ~/dearbelly-api/deploy
             
             echo "${{ secrets.ENV }}" > .env
             
             aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
             export ECR_URI=${{ secrets.ECR_URI }}
-            docker pull ${{ secrets.ECR_URI }}/dearbelly-api:latest
+            docker pull ${{ secrets.ECR_URI }}/dearbelly-api:${{ env.IMAGE_TAG }}
             
             chmod +x deploy.sh
             source deploy.sh
