@@ -26,8 +26,8 @@ echo "The $STOP_TARGET version is currently running on the server. Starting the 
 EXIST_AFTER=$(docker compose -p dearbelly-api-${AFTER_COMPOSE_COLOR} -f docker-compose.${AFTER_COMPOSE_COLOR}.yml ps | grep Up)
 if [ -n "$EXIST_AFTER" ]; then
   # reload nginx
-  cp /home/ubuntu/nginx/nginx.${AFTER_COMPOSE_COLOR}.conf /etc/nginx/conf.d/default.conf
-  nginx -s reload
+  sudo cp /home/ubuntu/nginx/nginx.${AFTER_COMPOSE_COLOR}.conf /etc/nginx/conf.d/default.conf
+  sudo nginx -s reload
 
   # 이전 컨테이너 종료
   docker stop dearbelly-api-${BEFORE_COMPOSE_COLOR}
