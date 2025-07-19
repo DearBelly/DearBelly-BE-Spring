@@ -7,15 +7,15 @@ ERR_MSG=''
 trap 'echo "Error occured: $ERR_MSG. Exiting deploy script."; exit 1' ERR
 
 if sudo docker ps --filter "name=dearbelly-api-blue" --quiet | grep -E .; then
-  echo "blue up"
-  docker compose -p dearbelly-api-blue -f docker-compose.blue.yml up -d
-  BEFORE_COMPOSE_COLOR="green"
-  AFTER_COMPOSE_COLOR="blue"
-else
-  echo "green up"
+  echo "Blue down, Green Up "
   docker compose -p dearbelly-api-green -f docker-compose.green.yml up -d
   BEFORE_COMPOSE_COLOR="blue"
   AFTER_COMPOSE_COLOR="green"
+else
+  echo "Green down, Blue up"
+  docker compose -p dearbelly-api-blue -f docker-compose.blue.yml up -d
+  BEFORE_COMPOSE_COLOR="green"
+  AFTER_COMPOSE_COLOR="blue"
 fi
 
 sleep 10

@@ -94,7 +94,7 @@ jobs:
             
             echo "${{ secrets.ENV }}" > .env
             
-            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
             export ECR_URI=${{ secrets.ECR_URI }}
             docker pull ${{ secrets.ECR_URI }}/dearbelly-api:${{ env.IMAGE_TAG }}
