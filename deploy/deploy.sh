@@ -6,41 +6,34 @@ ERR_MSG=''
 
 trap 'echo "Error occured: $ERR_MSG. Exiting deploy script."; exit 1' ERR
 
-if sudo docker ps --filter "name=app_blue" --quiet | grep -E .; then
-  RUN_TARGET="app_green"
-  STOP_TARGET="app_blue"
-  WAS_RUN_PORT=8082
-  WAS_STOP_PORT=8081
+if sudo docker ps --filter "name=dearbelly-api-blue" --quiet | grep -E .; then
+  echo "blue up"
+  docker compose -p dearbelly-api-blue -f docker-compose.blue.yml up -d
+  BEFORE_COMPOSE_COLOR="green"
+  AFTER_COMPOSE_COLOR="blue"
 else
-  RUN_TARGET="app_blue"
-  STOP_TARGET="app_green"
-  WAS_RUN_PORT=8081
-  WAS_STOP_PORT=8082
+  echo "green up"
+  docker compose -p dearbelly-api-green -f docker-compose.green.yml up -d
+  BEFORE_COMPOSE_COLOR="blue"
+  AFTER_COMPOSE_COLOR="green"
 fi
+
+sleep 10
 
 echo "The $STOP_TARGET version is currently running on the server. Starting the $RUN_TARGET version."
 
-DOCKER_COMPOSE_FILE="$RUN_TARGET-deploy.yml"
-sudo docker compose -f "$DOCKER_COMPOSE_FILE" pull || { ERR_MSG='Failed to pull docker image'; exit 1; }
-sudo docker compose -f "$DOCKER_COMPOSE_FILE" up -d || { ERR_MSG='Failed to start docker image'; exit 1; }
-sleep 50
+# 새로운 컨테이너가 제대로 떴는지 확인
+EXIST_AFTER=$(docker-compose -p dearbelly-api-${AFTER_COMPOSE_COLOR} -f docker-compose.${AFTER_COMPOSE_COLOR}.yml ps | grep Up)
+if [ -n "$EXIST_AFTER" ]; then
+  # reload nginx
+  cp /home/ubuntu/nginx/nginx.${AFTER_COMPOSE_COLOR}.conf /etc/nginx/conf.d/default.conf
+  nginx -s reload
 
-NGINX_ID=$(sudo docker ps --filter "name=nginx" --quiet)
-NGINX_CONFIG="/etc/nginx/conf.d/default.conf"
-
-sudo docker exec $NGINX_ID /bin/bash -c "sed -i 's/$STOP_TARGET:8080/$RUN_TARGET:8080/' $NGINX_CONFIG"
-sudo docker exec $NGINX_ID /bin/bash -c "nginx -s reload" || { ERR_MSG='Failed to reload nginx'; exit 1; }
-
-echo "Terminating the $STOP_TARGET applications."
-
-STOP_CONTAINER_ID=$(sudo docker ps --filter "name=$STOP_TARGET" --quiet)
-if [ -n "$STOP_CONTAINER_ID" ]; then
-  sudo docker stop $STOP_CONTAINER_ID
-  sudo docker rm $STOP_CONTAINER_ID
-  sudo docker image prune -af
+  # 이전 컨테이너 종료
+  docker stop dearbelly-api-${BEFORE_COMPOSE_COLOR}
+  docker rm dearbelly-api-${BEFORE_COMPOSE_COLOR}
+  docker image prune -af
 fi
-
-rm .env
 
 echo "Deployment success."
 exit 0
