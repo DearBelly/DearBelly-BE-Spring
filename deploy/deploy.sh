@@ -31,9 +31,11 @@ if [ -n "$EXIST_AFTER" ]; then
 
   # 이전 컨테이너 종료
   docker stop dearbelly-api-${BEFORE_COMPOSE_COLOR}
+  docker stop redis-${BEFORE_COMPOSE_COLOR}
   docker rm dearbelly-api-${BEFORE_COMPOSE_COLOR}
   docker image prune -af
 fi
 
 echo "Deployment success."
-exit 0
+
+read -p "Press any key to exit"
