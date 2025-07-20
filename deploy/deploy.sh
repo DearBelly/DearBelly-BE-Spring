@@ -36,5 +36,4 @@ if [ -n "$EXIST_AFTER" ]; then
 fi
 
 echo "Deployment success."
-
-read -p "Press any key to exit"
+exit 0
