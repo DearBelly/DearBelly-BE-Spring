@@ -29,6 +29,7 @@ public class FamilyService {
     private final RedisTemplate<String, String> redisTemplate;
     private final AuthenticatedProvider authenticatedProvider;
     private final MemberRepository memberRepository;
+    private final FamilyRepository familyRepository;
 
     private static final Duration CODE_EXPIRATION = Duration.ofMinutes(3);
 
@@ -52,9 +53,25 @@ public class FamilyService {
     public String createFamilyCode() {
         Member member = authenticatedProvider.getCurrentMember();
 
+        if (!member.isPregnant()) {
+            throw new BusinessException(StatusCode.FORBIDDEN_FAMILY_CODE_CREATION);
+        }
+
+        Family family;
+        // 이미 가족이 있는 경우 그 가족 재사용
+        if (member.getFamily() != null) {
+            family = member.getFamily();
+        } else {
+            family = new Family();
+            familyRepository.save(family);
+            member.setFamily(family);
+            memberRepository.save(member);
+        }
+
+        // 코드 생성
         String code;
         do {
-            code = generateRandomCode();  // ← UUID 대신
+            code = generateRandomCode();
         } while (Boolean.TRUE.equals(redisTemplate.hasKey("FAMILY_CODE:" + code)));
 
         redisTemplate.opsForList().rightPush("FAMILY_CODE:" + code, member.getId().toString());
@@ -65,56 +82,58 @@ public class FamilyService {
 
 
     // 코드로 참여
+    @Transactional
     public void joinFamily(String code) {
         Member member = authenticatedProvider.getCurrentMember();
 
-        String key = "FAMILY_CODE:" + code;
-
-        if (!Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
-            throw new BusinessException(StatusCode.INVALID_FAMILY_CODE); // 커스텀 예외
+        // 이미 가족이 있는 경우 참여 불가
+        if (member.getFamily() != null) {
+            throw new BusinessException(StatusCode.ALREADY_IN_FAMILY);
         }
 
-        List<String> userList = redisTemplate.opsForList().range(key, 0, -1);
-        if (userList.contains(member.getId().toString())) {
-            // 이미 등록된 사용자
-            return;
-        }
-
-        redisTemplate.opsForList().rightPush(key, member.getId().toString());
-    }
-
-    // 사용자가 해당 코드 그룹에 속해 있는지 검증
-    public boolean hasAccessToCode(String code) {
-        Member member = authenticatedProvider.getCurrentMember();
         String key = "FAMILY_CODE:" + code;
-
-        if (!Boolean.TRUE.equals(redisTemplate.hasKey(key))) return false;
-
-        List<String> userList = redisTemplate.opsForList().range(key, 0, -1);
-        return userList.contains(member.getId().toString());
-    }
-
-    //코드 유효성
-    public List<FamilyMemberResponse> getFamilyMembersByCode(String code) {
-        String key = "FAMILY_CODE:" + code;
-
         if (!Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
             throw new BusinessException(StatusCode.INVALID_FAMILY_CODE);
         }
 
-        List<String> userIdList = redisTemplate.opsForList().range(key, 0, -1);
+        List<String> userList = redisTemplate.opsForList().range(key, 0, -1);
+        if (userList == null || userList.isEmpty()) {
+            throw new BusinessException(StatusCode.INVALID_FAMILY_CODE);
+        }
 
-        return userIdList.stream()
-                .map(Long::parseLong)
-                .map(memberRepository::findById)
-                .flatMap(Optional::stream)
-                .map(member -> FamilyMemberResponse.builder()
-                        .nickname(member.getNickname())
-                        .imgUrl(member.getImgUrl())
-                        .isPregnant(member.isPregnant())
+        if (!userList.contains(member.getId().toString())) {
+            redisTemplate.opsForList().rightPush(key, member.getId().toString());
+        }
+
+        // 임산부 ID로부터 가족 조회
+        Long pregnantMemberId = Long.parseLong(userList.get(0));
+        Family family = memberRepository.findById(pregnantMemberId)
+                .flatMap(m -> Optional.ofNullable(m.getFamily()))
+                .orElseThrow(() -> new BusinessException(StatusCode.UNREGISTERED_FAMILY));
+
+        member.setFamily(family);
+        memberRepository.save(member);
+    }
+
+
+    //코드 유효성
+    public List<FamilyMemberResponse> getFamilyMembersByFamily() {
+        Member member = authenticatedProvider.getCurrentMember();
+        Family family = member.getFamily();
+
+        if (family == null) {
+            throw new BusinessException(StatusCode.NOT_IN_FAMILY); // 가족에 속해있지 않은 경우
+        }
+
+        return family.getMemberList().stream()
+                .map(m -> FamilyMemberResponse.builder()
+                        .nickname(m.getNickname())
+                        .imgUrl(m.getImgUrl())
+                        .isPregnant(m.isPregnant())
                         .build())
                 .toList();
     }
+
 
 
 

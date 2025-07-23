@@ -19,6 +19,8 @@ public class NaverProfileResponseDto {
         public String id;
         @JsonProperty("nickname")
         public String nickname;
+        @JsonProperty("profile_image")
+        private String profileImage;
         @JsonProperty("age")
         public String age;
         @JsonProperty("gender")
