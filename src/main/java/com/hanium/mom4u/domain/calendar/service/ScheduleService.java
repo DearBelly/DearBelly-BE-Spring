@@ -28,30 +28,42 @@ public class ScheduleService {
 
     public List<ScheduleResponse> getSchedulesByMonth(int year, int month) {
         Member member = authenticatedProvider.getCurrentMember();
-        Long memberId = member.getId();
-
         LocalDate start = LocalDate.of(year, month, 1);
         LocalDate end = start.with(TemporalAdjusters.lastDayOfMonth());
 
-
-        // 조건에 맞는 일정 조회
-        List<Schedule> matched = scheduleRepository.findAllByMemberIdAndStartDateBetween(memberId, start, end);
-
-
-        return scheduleRepository.findAllByMemberIdAndStartDateBetween(memberId, start, end)
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        if (member.getFamily() != null) {
+            // 가족 전체 일정 반환
+            return scheduleRepository.findAllByMemberFamilyIdAndStartDateBetween(member.getFamily().getId(), start, end)
+                    .stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        } else {
+            // 개인 일정만
+            return scheduleRepository.findAllByMemberIdAndStartDateBetween(member.getId(), start, end)
+                    .stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        }
     }
+
 
 
     public List<ScheduleResponse> getSchedulesByDate(LocalDate date) {
         Member member = authenticatedProvider.getCurrentMember();
-        return scheduleRepository.findAllByMemberAndStartDate(member, date)
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+
+        if (member.getFamily() != null) {
+            return scheduleRepository.findAllByMemberFamilyIdAndStartDate(member.getFamily().getId(), date)
+                    .stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        } else {
+            return scheduleRepository.findAllByMemberAndStartDate(member, date)
+                    .stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        }
     }
+
 
     public ScheduleResponse getScheduleDetail(Long scheduleId) {
         Member member = authenticatedProvider.getCurrentMember();
@@ -103,11 +115,21 @@ public class ScheduleService {
         scheduleRepository.delete(schedule);
     }
 
-    private void validateOwnership(Schedule schedule, Member member) {
-        if (!schedule.getMember().getId().equals(member.getId())) {
-            throw GeneralException.of(StatusCode.UNAUTHORIZED_ACCESS);
+    private void validateOwnership(Schedule schedule, Member currentMember) {
+        // 본인 일정이면 OK
+        if (schedule.getMember().getId().equals(currentMember.getId())) return;
+
+        // 가족이 존재하고, 일정 소유자도 같은 가족이면 OK
+        if (currentMember.getFamily() != null &&
+                schedule.getMember().getFamily() != null &&
+                currentMember.getFamily().getId().equals(schedule.getMember().getFamily().getId())) {
+            return;
         }
+
+        // 둘 다 아니면 예외
+        throw GeneralException.of(StatusCode.UNAUTHORIZED_ACCESS);
     }
+
 
     private ScheduleResponse toResponse(Schedule schedule) {
         return ScheduleResponse.builder()
