@@ -1,19 +1,18 @@
 package com.hanium.mom4u.domain.member.service;
 
+import com.hanium.mom4u.domain.member.dto.request.ProfileEditRequest;
 import com.hanium.mom4u.domain.member.dto.response.MemberInfoResponse;
-import com.hanium.mom4u.domain.member.dto.response.ThemeResponse;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
-
 
 @Service
 @Transactional
@@ -22,38 +21,64 @@ public class MemberService {
     private final AuthenticatedProvider authenticatedProvider;
     private final FileStorageService fileStorageService;
     private final MemberRepository memberRepository;
-    private static final String DEFAULT_PROFILE_IMG_URL = "/images/default-profile.png";
 
-    public void updateProfile(String nickname, MultipartFile imgFile,Boolean isPregnant,
-                              LocalDate dueDate, Boolean prePregnant, String gender, LocalDate birth){
+    @Value("${spring.cloud.aws.s3.default-image}")
+    private String DEFAULT_PROFILE_IMG_URL;
+
+    public void updateProfile(String nickname, Boolean isPregnant,
+                              LocalDate dueDate, Boolean prePregnant, String gender, LocalDate birth) {
         Member member = authenticatedProvider.getCurrentMember();
         member = memberRepository.findById(member.getId())
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
 
         member.setNickname(nickname);
-
-
-        if(imgFile != null && !imgFile.isEmpty()){
-            String imgUrl = fileStorageService.save(imgFile);
-            member.setImgUrl(imgUrl);
-        } else {
-            member.setImgUrl(DEFAULT_PROFILE_IMG_URL);
-        }
-
         member.setPregnant(isPregnant);
-        member.setDueDate(dueDate); // Member 엔티티에 dueDate 필드 추가 필요
-        member.setPrePregnant(prePregnant); // Member 엔티티에 prePregnant 필드 추가 필요
+        member.setDueDate(dueDate);
+        member.setPrePregnant(prePregnant);
         member.setGender(gender);
-        member.setBirthDate(birth); // Member 엔티티에 birth 필드 추가 필요
+        member.setBirthDate(birth);
 
         if (member.getIsLightMode() == null) {
             member.setIsLightMode(true);
         }
 
         memberRepository.save(member);
+    }
 
+    public String getPresignedUploadUrl(String filename) {
+        return fileStorageService.generatePresignedPutUrl("images/" + filename);
+    }
 
+    public void updateProfileImage(String imgUrl) {
+        Member member = authenticatedProvider.getCurrentMember();
+        member.setImgUrl(imgUrl);
+        memberRepository.save(member);
+    }
 
+    public void editProfile(ProfileEditRequest request) {
+        Member member = authenticatedProvider.getCurrentMember();
+        member = memberRepository.findById(member.getId())
+                .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
+
+        if (request.getNickname() != null) {
+            member.setNickname(request.getNickname());
+        }
+
+        if (request.getDueDate() != null) {
+            member.setDueDate(request.getDueDate());
+        }
+
+        if (request.getImgUrl() != null) {
+            if (request.getImgUrl().isBlank()) {
+                // 빈 문자열이면 기본 이미지로 설정
+                member.setImgUrl(DEFAULT_PROFILE_IMG_URL);
+            } else {
+                // 새 이미지로 설정
+                member.setImgUrl(request.getImgUrl());
+            }
+        }
+
+        memberRepository.save(member);
     }
 
     @Transactional(readOnly = true)
@@ -62,10 +87,15 @@ public class MemberService {
         member = memberRepository.findById(member.getId())
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
 
+        String imageUrl = member.getImgUrl();
+        if (imageUrl == null || imageUrl.isBlank()) {
+            imageUrl = DEFAULT_PROFILE_IMG_URL;
+        }
+
         return new MemberInfoResponse(
                 member.getNickname(),
                 member.getEmail(),
-                member.getImgUrl(),
+                imageUrl, // 수정된 이미지 URL 사용
                 member.isPregnant(),
                 member.getDueDate(),
                 member.getPrePregnant(),
@@ -75,4 +105,3 @@ public class MemberService {
         );
     }
 }
-
