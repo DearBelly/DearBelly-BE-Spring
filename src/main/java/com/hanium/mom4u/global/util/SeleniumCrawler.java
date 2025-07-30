@@ -8,6 +8,7 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -22,7 +23,8 @@ public class SeleniumCrawler {
     private static final String MAIN_URL = "https://health.seoulmc.or.kr/healthCareInfo/pregnancyInfo.do";
     private static final String POST_URL = "https://health.seoulmc.or.kr/healthCareInfo/pregnancyView.do?boardPid=";
 
-    private static final String FILE_PATH = "E:/CrawlingData/";
+    @Value("${external.filepath}")
+    private static String FILE_PATH;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
