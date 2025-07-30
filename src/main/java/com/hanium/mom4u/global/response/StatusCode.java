@@ -49,6 +49,10 @@ public enum StatusCode {
     //code
     DUPLICATE_FAMILY_CODE(HttpStatus.CONFLICT, "FE4002", "이미 사용 중인 가족 코드입니다."),
     INVALID_FAMILY_CODE(HttpStatus.BAD_REQUEST, "FAM4001", "유효하지 않거나 만료된 가족 코드입니다."),
+    FORBIDDEN_FAMILY_CODE_CREATION(HttpStatus.FORBIDDEN, "FAM4002", "임산부만 가족 코드를 생성할 수 있습니다."),
+    ALREADY_IN_FAMILY(HttpStatus.BAD_REQUEST, "FAM4004", "이미 가족에 속해 있어 가족 코드를 생성할 수 없습니다."),
+    NOT_IN_FAMILY(HttpStatus.FORBIDDEN, "FAM4005", "가족에 속해 있지 않습니다."),
+
 
 
 

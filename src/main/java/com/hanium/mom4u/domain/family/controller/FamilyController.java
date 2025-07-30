@@ -19,7 +19,7 @@ import java.util.List;
 public class FamilyController {
     private final FamilyService familyService;
 
-    @Operation(summary = "가족 코드 생성 API", description = "누구나 호출할 수 있으며, 3분 유효한 공유 코드를 생성합니다.")
+    @Operation(summary = "가족 코드 생성 API", description = "임산부만 호출할 수 있으며, 3분 유효한 공유 코드를 생성합니다.")
     @PostMapping("/api/v1/family-code")
     public ResponseEntity<CommonResponse> generateFamilyCode() {
         String code = familyService.createFamilyCode();
@@ -36,13 +36,10 @@ public class FamilyController {
 
     @Operation(summary = "가족 코드 유효성 확인 + 사용자 목록 조회", description = "가족 코드가 유효한 경우 사용자 목록 반환. 유효하지 않으면 예외 발생")
     @GetMapping("/api/v1/family-code/members")
-    public ResponseEntity<CommonResponse> getFamilyMembers(@RequestParam String code) {
-        List<FamilyMemberResponse> members = familyService.getFamilyMembersByCode(code);
+    public ResponseEntity<CommonResponse> getFamilyMembers() {
+        List<FamilyMemberResponse> members = familyService.getFamilyMembersByFamily();
         return ResponseEntity.ok(CommonResponse.onSuccess(members));
     }
-
-
-
 
 
 
