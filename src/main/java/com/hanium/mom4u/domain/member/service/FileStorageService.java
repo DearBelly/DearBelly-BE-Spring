@@ -1,65 +1,45 @@
 package com.hanium.mom4u.domain.member.service;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import com.hanium.mom4u.global.exception.GeneralException;
+import com.hanium.mom4u.global.response.StatusCode;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.auth.credentials.*;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import org.springframework.web.multipart.MultipartFile;
 
-
-import java.net.URL;
-import java.time.Duration;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
-@RequiredArgsConstructor
+@Transactional
 public class FileStorageService {
+    private static final String UPLOAD_DIR="uploads";
 
-    @Value("${spring.cloud.aws.s3.bucket}")
-    private String bucketName;
+    public String save(MultipartFile file){;
+        if(file==null || file.isEmpty()){
+            throw GeneralException.of(StatusCode.FILE_EMPTY);
+        }try {
+            // 업로드 폴더가 없으면 생성
+            File dir = new File(UPLOAD_DIR);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            // 파일명 중복 방지 (타임스탬프 등)
+            String originalFilename = file.getOriginalFilename();
+            String filename = System.currentTimeMillis() + "_" + originalFilename;
+            Path filePath = Paths.get(UPLOAD_DIR, filename);
 
-    @Value("${spring.cloud.aws.region.static}")
-    private String region;
+            // 파일 저장
+            Files.copy(file.getInputStream(), filePath);
 
-    @Value("${spring.cloud.aws.s3.access-key}") // optional - 로컬에서만 필요
-    private String accessKey;
-
-    @Value("${spring.cloud.aws.s3.secret-key}") // optional - 로컬에서만 필요
-    private String secretKey;
-
-
-    public String generatePresignedPutUrl(String objectKey) {
-        S3Presigner presigner;
-
-        if (accessKey != null && !accessKey.isBlank() && secretKey != null && !secretKey.isBlank()) {
-            AwsCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
-            presigner = S3Presigner.builder()
-                    .credentialsProvider(StaticCredentialsProvider.create(credentials))
-                    .region(Region.of(region))
-                    .build();
-        } else {
-            presigner = S3Presigner.builder()
-                    .region(Region.of(region))
-                    .build();
+            // 반환: 웹에서 접근 가능한 경로
+            return "/uploads/" + filename;
+        } catch (IOException e) {
+            throw GeneralException.of(StatusCode.FILE_SAVE_FAILED);
         }
 
-        PutObjectRequest objectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(objectKey)
-                .build();
-
-        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .putObjectRequest(objectRequest)
-                .signatureDuration(Duration.ofMinutes(5))
-                .build();
-
-        URL presignedPutUrl = presigner.presignPutObject(presignRequest).url();
-        presigner.close();
-
-        return presignedPutUrl.toString();
+    }
     }
 
-
-}
