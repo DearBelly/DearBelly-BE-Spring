@@ -31,7 +31,6 @@ public class FileStorageService {
     @Value("${spring.cloud.aws.s3.secret-key}") // optional - 로컬에서만 필요
     private String secretKey;
 
-
     public String generatePresignedPutUrl(String objectKey) {
         S3Presigner presigner;
 
