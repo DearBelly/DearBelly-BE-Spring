@@ -25,6 +25,7 @@ public class MemberService {
     @Value("${spring.cloud.aws.s3.default-image}")
     private String DEFAULT_PROFILE_IMG_URL;
 
+
     public void updateProfile(String nickname, Boolean isPregnant,
                               LocalDate dueDate, Boolean prePregnant, String gender, LocalDate birth) {
         Member member = authenticatedProvider.getCurrentMember();
