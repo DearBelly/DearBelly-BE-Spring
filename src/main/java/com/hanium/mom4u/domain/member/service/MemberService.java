@@ -46,13 +46,30 @@ public class MemberService {
     }
 
     public String getPresignedUploadUrl(String filename) {
-        return fileStorageService.generatePresignedPutUrl("images/" + filename);
+        Member member = authenticatedProvider.getCurrentMember();
+        String objectKey = "images/" + member.getId() + "/" + filename;
+        return fileStorageService.generatePresignedPutUrl(objectKey);
     }
 
-    public void updateProfileImage(String imgUrl) {
+    public void updateProfileImage(String newImgUrl) {
         Member member = authenticatedProvider.getCurrentMember();
-        member.setImgUrl(imgUrl);
+        String oldImgUrl = member.getImgUrl();
+
+
+        if (oldImgUrl != null && !oldImgUrl.isBlank()
+                && !oldImgUrl.equals(DEFAULT_PROFILE_IMG_URL)) {
+            String objectKey = extractKeyFromUrl(oldImgUrl);
+            fileStorageService.deleteFile(objectKey);
+        }
+
+        member.setImgUrl(newImgUrl);
         memberRepository.save(member);
+    }
+
+    private String extractKeyFromUrl(String fullUrl) {
+        int index = fullUrl.indexOf(".amazonaws.com/");
+        if (index == -1) return ""; // 예외 처리
+        return fullUrl.substring(index + ".amazonaws.com/".length());
     }
 
     public void editProfile(ProfileEditRequest request) {
