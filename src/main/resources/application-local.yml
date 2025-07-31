@@ -54,3 +54,6 @@ logging:
   level:
     root: INFO
     org.hibernate.SQL: DEBUG
+
+external:
+  filepath: ${LOCAL_FILE_PATH}
