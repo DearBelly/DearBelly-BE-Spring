@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.*;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -59,6 +61,26 @@ public class FileStorageService {
         presigner.close();
 
         return presignedPutUrl.toString();
+    }
+
+
+    public void deleteFile(String objectKey) {
+        S3Client s3Client = S3Client.builder()
+                .region(Region.of(region))
+                .credentialsProvider(
+                        (accessKey != null && secretKey != null) ?
+                                StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)) :
+                                DefaultCredentialsProvider.create()
+                )
+                .build();
+
+        DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(objectKey)
+                .build();
+
+        s3Client.deleteObject(deleteRequest);
+        s3Client.close();
     }
 
 
