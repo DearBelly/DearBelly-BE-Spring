@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -87,18 +86,26 @@ public class MemberService {
         }
 
         if (request.getImgUrl() != null) {
+            String oldImgUrl = member.getImgUrl();
+
+            // 삭제 로직 추가
+            if (oldImgUrl != null && !oldImgUrl.isBlank()
+                    && !oldImgUrl.equals(DEFAULT_PROFILE_IMG_URL)) {
+                String objectKey = extractKeyFromUrl(oldImgUrl);
+                fileStorageService.deleteFile(objectKey);
+            }
+
+            // 새로운 값 적용
             if (request.getImgUrl().isBlank()) {
-                // 빈 문자열이면 기본 이미지로 설정
                 member.setImgUrl(DEFAULT_PROFILE_IMG_URL);
             } else {
-                // 새 이미지로 설정
                 member.setImgUrl(request.getImgUrl());
             }
         }
 
+
         memberRepository.save(member);
     }
-
     @Transactional(readOnly = true)
     public MemberInfoResponse getMyProfile() {
         Member member = authenticatedProvider.getCurrentMember();
@@ -110,10 +117,11 @@ public class MemberService {
             imageUrl = DEFAULT_PROFILE_IMG_URL;
         }
 
+
         return new MemberInfoResponse(
                 member.getNickname(),
                 member.getEmail(),
-                imageUrl, // 수정된 이미지 URL 사용
+                imageUrl,
                 member.isPregnant(),
                 member.getDueDate(),
                 member.getPrePregnant(),
