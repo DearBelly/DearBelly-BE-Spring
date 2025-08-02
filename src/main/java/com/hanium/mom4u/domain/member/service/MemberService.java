@@ -51,16 +51,23 @@ public class MemberService {
         return fileStorageService.generatePresignedPutUrl(objectKey);
     }
 
+    //기본 이미지가 아닌 경우 S3에서 삭제
+    private void deleteIfCustomImage(String imageUrl) {
+        if (imageUrl != null && !imageUrl.isBlank()
+                && !imageUrl.equals(DEFAULT_PROFILE_IMG_URL)) {
+            String objectKey = extractKeyFromUrl(imageUrl);
+            fileStorageService.deleteFile(objectKey);
+        }
+    }
+
+
     public void updateProfileImage(String newImgUrl) {
         Member member = authenticatedProvider.getCurrentMember();
         String oldImgUrl = member.getImgUrl();
 
 
-        if (oldImgUrl != null && !oldImgUrl.isBlank()
-                && !oldImgUrl.equals(DEFAULT_PROFILE_IMG_URL)) {
-            String objectKey = extractKeyFromUrl(oldImgUrl);
-            fileStorageService.deleteFile(objectKey);
-        }
+        deleteIfCustomImage(oldImgUrl);
+
 
         member.setImgUrl(newImgUrl);
         memberRepository.save(member);
@@ -86,14 +93,7 @@ public class MemberService {
         }
 
         if (request.getImgUrl() != null) {
-            String oldImgUrl = member.getImgUrl();
-
-            // 삭제 로직 추가
-            if (oldImgUrl != null && !oldImgUrl.isBlank()
-                    && !oldImgUrl.equals(DEFAULT_PROFILE_IMG_URL)) {
-                String objectKey = extractKeyFromUrl(oldImgUrl);
-                fileStorageService.deleteFile(objectKey);
-            }
+            deleteIfCustomImage(member.getImgUrl());
 
             // 새로운 값 적용
             if (request.getImgUrl().isBlank()) {
