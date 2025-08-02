@@ -1,7 +1,6 @@
 package com.hanium.mom4u.domain.member.controller;
 
 import com.hanium.mom4u.domain.member.dto.request.ProfileEditRequest;
-import com.hanium.mom4u.domain.member.dto.response.ThemeResponse;
 import com.hanium.mom4u.domain.member.service.MemberService;
 import com.hanium.mom4u.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,7 +44,7 @@ public class MemberController {
         return ResponseEntity.ok(CommonResponse.onSuccess(presignedUrl));
     }
 
-    @Operation(summary = "프로필 이미지 저장", description = "이미지 업로드 후 URL을 사용자 정보에 반영합니다.")
+    @Operation(summary = "프로필 이미지 저장", description = "이미지 업로드 후(프론트에서 put해야함) URL을 사용자 정보에 반영합니다.")
     @PatchMapping("/profile/image")
     public ResponseEntity<CommonResponse<Void>> updateProfileImage(@RequestParam("imgUrl") String imgUrl) {
         memberService.updateProfileImage(imgUrl);
