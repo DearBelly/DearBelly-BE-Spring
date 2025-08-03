@@ -2,6 +2,7 @@ package com.hanium.mom4u.domain.member.controller;
 
 import com.hanium.mom4u.domain.member.dto.request.ProfileEditRequest;
 import com.hanium.mom4u.domain.member.service.MemberService;
+import com.hanium.mom4u.domain.news.common.Category;
 import com.hanium.mom4u.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,9 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/member")
@@ -31,9 +32,10 @@ public class MemberController {
             @RequestParam(value = "pre_pregnant", required = false) Boolean prePregnant,
             @RequestParam("gender") String gender,
             @RequestParam("birth")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birth
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birth,
+            @RequestParam(value = "categories", required = false) Set<Category> categories
     ) {
-        memberService.updateProfile(nickname, isPregnant, dueDate, prePregnant, gender, birth);
+        memberService.updateProfile(nickname, isPregnant, dueDate, prePregnant, gender, birth, categories);
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
 
@@ -51,7 +53,7 @@ public class MemberController {
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
 
-    @Operation(summary = "회원 닉네임, 출산예정일, 이미지 수정", description = "닉네임, 출산 예정일, 프로필 이미지를 수정합니다.")
+    @Operation(summary = "회원 닉네임, 출산예정일, 이미지 수정", description = "마이페이지에서 닉네임, 출산 예정일, 프로필 이미지를 수정합니다.")
     @PatchMapping("/profile/edit")
     public ResponseEntity<CommonResponse<Void>> editProfile(@RequestBody ProfileEditRequest request) {
         memberService.editProfile(request);
