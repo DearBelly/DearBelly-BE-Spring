@@ -40,10 +40,8 @@ public class MemberService {
         member.setPrePregnant(prePregnant);
         member.setGender(gender);
         member.setBirthDate(birth);
-        if (categories != null) {
-            member.getInterests().clear(); // 값이 없어도 안전함
-            member.getInterests().addAll(categories);
-        }
+        member.getInterests().addAll(categories);
+
 
 
         memberRepository.save(member);
