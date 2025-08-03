@@ -23,8 +23,17 @@ public class CrawlingResultDto {
     private String postedAt;
 
     public static News toEntity(CrawlingResultDto dto) {
+        Category category = null;
+        if (category != null) {
+            try {
+                category = Category.valueOf(dto.getContentType().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.printf("{} 카테고리 잘못됨\n", dto.getPostId());
+            }
+        }
+
         return News.builder()
-                .category(Category.valueOf(dto.getContentType()))
+                .category(category)
                 .title(dto.getTitle())
                 .subTitle(dto.getSubTitle())
                 .content(dto.getContent())

@@ -3,6 +3,7 @@ package com.hanium.mom4u.external.s3;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanium.mom4u.domain.news.entity.News;
 import com.hanium.mom4u.domain.news.repository.NewsRepository;
+import com.hanium.mom4u.domain.news.service.S3JsonImportEvent;
 import com.hanium.mom4u.global.crawling.dto.CrawlingResultDto;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
@@ -98,10 +99,10 @@ public class FileStorageService {
     }
 
     @EventListener
-    public void importJsonFromS3(String bucketName) {
+    public void importJsonFromS3(S3JsonImportEvent event) {
 
         ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
-                .bucket(bucketName)
+                .bucket(event.getBucketName())
                 .prefix(NEWS_KEY)
                 .build();
 
@@ -109,13 +110,13 @@ public class FileStorageService {
 
         List<S3Object> objectList = listResponse.contents();
 
-        for (S3Object s3Object: objectList) {
+        for (S3Object s3Object : objectList) {
             String key = s3Object.key();
 
             if (!key.endsWith(".json")) {
                 continue; // skip
             }
-            ResponseInputStream<GetObjectResponse> s3InputStream =  s3Client.getObject(GetObjectRequest.builder()
+            ResponseInputStream<GetObjectResponse> s3InputStream = s3Client.getObject(GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(key)
                     .build());
