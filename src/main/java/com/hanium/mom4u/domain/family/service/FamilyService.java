@@ -64,7 +64,7 @@ public class FamilyService {
         } else {
             family = new Family();
             familyRepository.save(family);
-            member.setFamily(family);
+            member.assignFamily(family);
             memberRepository.save(member);
         }
 
@@ -111,7 +111,7 @@ public class FamilyService {
                 .flatMap(m -> Optional.ofNullable(m.getFamily()))
                 .orElseThrow(() -> new BusinessException(StatusCode.UNREGISTERED_FAMILY));
 
-        member.setFamily(family);
+        member.assignFamily(family);
         memberRepository.save(member);
     }
 

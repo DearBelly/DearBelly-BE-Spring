@@ -32,7 +32,7 @@ public class FamilyResetScheduler {
 
         for (Family family : oldFamilies) {
             for (Member member : family.getMemberList()) {
-                member.setFamily(null);
+                member.assignFamily(family);
                 memberRepository.save(member);
             }
             log.info("[운영] 3개월 경과로 초기화된 가족 ID: {}", family.getId());
