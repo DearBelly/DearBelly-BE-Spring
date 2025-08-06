@@ -1,8 +1,7 @@
 package com.hanium.mom4u.external.s3;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hanium.mom4u.domain.news.entity.News;
-import com.hanium.mom4u.domain.news.repository.NewsRepository;
+import com.hanium.mom4u.domain.news.repository.NewsJdbcRepository;
 import com.hanium.mom4u.domain.news.service.S3JsonImportEvent;
 import com.hanium.mom4u.global.crawling.dto.CrawlingResultDto;
 import com.hanium.mom4u.global.exception.GeneralException;
@@ -44,7 +43,7 @@ public class FileStorageService {
 
     private final S3Client s3Client;
     private final ObjectMapper objectMapper;
-    private final NewsRepository newsRepository;
+    private final NewsJdbcRepository newsJdbcRepository;
     private static final String NEWS_KEY = "data/preprocessed/";
 
     public String generatePresignedPutUrl(String objectKey) {
@@ -124,9 +123,8 @@ public class FileStorageService {
             try {
                 CrawlingResultDto dto = objectMapper.readValue(s3InputStream, CrawlingResultDto.class);
 
-                News news = CrawlingResultDto.toEntity(dto);
-                newsRepository.save(news);
-                System.out.printf("{} 저장 성공", news.getId());
+                newsJdbcRepository.save(dto);
+                System.out.printf("{} 저장 성공", dto.getPostId());
             } catch (IOException e) {
                 throw new GeneralException(StatusCode.JSON_PARSING_ERROR);
             }
