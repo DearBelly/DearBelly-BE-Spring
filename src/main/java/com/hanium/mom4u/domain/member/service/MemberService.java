@@ -5,6 +5,7 @@ import com.hanium.mom4u.domain.member.dto.response.MemberInfoResponse;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
 import com.hanium.mom4u.external.s3.FileStorageService;
+import com.hanium.mom4u.domain.news.common.Category;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Set;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -27,7 +30,7 @@ public class MemberService {
 
 
     public void updateProfile(String nickname, Boolean isPregnant,
-                              LocalDate dueDate, Boolean prePregnant, String gender, LocalDate birth) {
+                              LocalDate dueDate, Boolean prePregnant, String gender, LocalDate birth, Set<Category> categories) {
         Member member = authenticatedProvider.getCurrentMember();
         member = memberRepository.findById(member.getId())
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
@@ -38,10 +41,9 @@ public class MemberService {
         member.setPrePregnant(prePregnant);
         member.setGender(gender);
         member.setBirthDate(birth);
+        member.getInterests().addAll(categories);
 
-        if (member.getIsLightMode() == null) {
-            member.setIsLightMode(true);
-        }
+
 
         memberRepository.save(member);
     }
@@ -128,6 +130,7 @@ public class MemberService {
                 member.getPrePregnant(),
                 member.getGender(),
                 member.getBirthDate(),
+                member.getInterests(),
                 member.getSocialType().name()
         );
     }

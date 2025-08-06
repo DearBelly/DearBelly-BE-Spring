@@ -6,13 +6,10 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.util.List;
 
 @Entity
 @Table(name = "family")
-@Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -30,4 +27,7 @@ public class Family extends BaseEntity {
 
     @OneToMany(mappedBy = "family")
     private List<DailyQuestion> dailyQuestionList;
+
+
+
 }
