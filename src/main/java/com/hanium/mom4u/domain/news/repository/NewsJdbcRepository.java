@@ -14,7 +14,7 @@ public class NewsJdbcRepository {
     public void save(CrawlingResultDto dto) {
 
         // 중복 체크
-        String findQuery = "SELECT COUNT(post_id) FROM news WHERE post_id = ?";
+        String findQuery = "SELECT EXISTS (SELECT 1 FROM news WHERE post_id = ?)";
         Integer count = jdbcTemplate.queryForObject(findQuery, Integer.class, dto.getPostId());
 
         if (count != null && count > 0) {
