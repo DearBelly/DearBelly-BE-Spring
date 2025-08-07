@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.news.service;
+package com.hanium.mom4u.domain.news.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

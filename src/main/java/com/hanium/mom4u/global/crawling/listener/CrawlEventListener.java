@@ -1,4 +1,4 @@
-package com.hanium.mom4u.global.crawling.event;
+package com.hanium.mom4u.global.crawling.listener;
 
 import com.hanium.mom4u.global.util.SeleniumCrawler;
 import lombok.RequiredArgsConstructor;

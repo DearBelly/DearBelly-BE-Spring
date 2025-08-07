@@ -1,4 +1,4 @@
-package com.hanium.mom4u.global.crawling.event;
+package com.hanium.mom4u.global.crawling.listener;
 
 import org.springframework.context.ApplicationEvent;
 
