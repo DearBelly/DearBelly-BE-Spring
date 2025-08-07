@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.member.service;
+package com.hanium.mom4u.external.s3;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -6,8 +6,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.*;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
@@ -30,6 +29,7 @@ public class FileStorageService {
 
     @Value("${spring.cloud.aws.s3.secret-key}") // optional - 로컬에서만 필요
     private String secretKey;
+
 
     public String generatePresignedPutUrl(String objectKey) {
         S3Presigner presigner;
@@ -81,6 +81,4 @@ public class FileStorageService {
         s3Client.deleteObject(deleteRequest);
         s3Client.close();
     }
-
-
 }
