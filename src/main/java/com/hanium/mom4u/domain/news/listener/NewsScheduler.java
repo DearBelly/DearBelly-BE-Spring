@@ -1,5 +1,6 @@
 package com.hanium.mom4u.domain.news.listener;
 
+import com.hanium.mom4u.domain.news.listener.S3JsonImportEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
