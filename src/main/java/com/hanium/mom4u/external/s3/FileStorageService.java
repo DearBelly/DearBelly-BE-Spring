@@ -2,7 +2,7 @@ package com.hanium.mom4u.external.s3;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanium.mom4u.domain.news.repository.NewsJdbcRepository;
-import com.hanium.mom4u.domain.news.service.S3JsonImportEvent;
+import com.hanium.mom4u.domain.news.listener.S3JsonImportEvent;
 import com.hanium.mom4u.global.crawling.dto.CrawlingResultDto;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
