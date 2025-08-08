@@ -1,6 +1,6 @@
 package com.hanium.mom4u.global.crawling.service;
 
-import com.hanium.mom4u.global.crawling.event.CrawlEvent;
+import com.hanium.mom4u.global.crawling.listener.CrawlEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
