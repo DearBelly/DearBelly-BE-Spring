@@ -34,11 +34,6 @@ spring:
       host: ${DEV_REDIS_HOST}
       port: 6379
 
-logging:
-  level:
-    root: INFO
-    org.hibernate.SQL: DEBUG
-
   cloud:
     aws:
       s3:
@@ -51,3 +46,8 @@ logging:
         static: ${AWS_REGION}
       stack:
         auto: false
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: DEBUG
