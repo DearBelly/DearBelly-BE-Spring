@@ -1,5 +1,6 @@
 package com.hanium.mom4u.domain.member.controller;
 
+import com.hanium.mom4u.domain.member.dto.request.CategoryUpdateRequest;
 import com.hanium.mom4u.domain.member.dto.request.ProfileEditRequest;
 import com.hanium.mom4u.domain.member.service.MemberService;
 import com.hanium.mom4u.domain.news.common.Category;
@@ -68,5 +69,12 @@ public class MemberController {
         return ResponseEntity.ok(CommonResponse.onSuccess(memberService.getMyProfile()));
     }
 
+
+    @Operation(summary = "관심 카테고리 변경(단독)", description = "다른 필드 건드리지 않고 관심 카테고리만 교체합니다.")
+    @PatchMapping("/profile/categories")
+    public ResponseEntity<CommonResponse<Void>> updateCategories(@RequestBody CategoryUpdateRequest req) {
+        memberService.updateCategories(req.getCategories());
+        return ResponseEntity.ok(CommonResponse.onSuccess());
+    }
 }
 
