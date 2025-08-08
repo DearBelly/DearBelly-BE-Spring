@@ -134,4 +134,17 @@ public class MemberService {
                 member.getSocialType().name()
         );
     }
+
+    public void updateCategories(Set<Category> categories) {
+        Member member = authenticatedProvider.getCurrentMember();
+        member = memberRepository.findById(member.getId())
+                .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
+
+        member.getInterests().clear();
+        if (categories != null && !categories.isEmpty()) {
+            member.getInterests().addAll(categories);
+        }
+        memberRepository.save(member);
+    }
+
 }
