@@ -50,13 +50,16 @@ public class NewsService {
                 map.put(category, 1);
             }
         }
+        else if (interests.size() == 1) { // 관심 카테고리가 1개
+            Category category = interests.get(0);
+            map.put(category, 3);
+        }
         else if (interests.size() == 2) {
             Collections.shuffle(interests); // 2개 중 1개만 랜덤
             Category first = interests.get(0);
             Category second = interests.get(1);
             map.put(first, 2); // 2개 반환
-            map.put(second, 2);
-
+            map.put(second, 1);
         }
         else {  // 관심 카테고리가 3개 이상인 경우
                 Collections.shuffle(interests);
