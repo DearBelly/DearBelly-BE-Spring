@@ -20,18 +20,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Detect running container and set IMAGE_TAG
-        id: detect
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > id_rsa
-          chmod 600 id_rsa
-
-          IMAGE_TAG=$(ssh -o StrictHostKeyChecking=no -i id_rsa ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} \
-            'if docker ps --filter "name=dearbelly-api-blue" --format "{{.Names}}" | grep -q dearbelly-api-blue; then echo green; else echo blue; fi')
-
-          echo "IMAGE_TAG=$IMAGE_TAG"
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -50,8 +38,8 @@ jobs:
 
       - name: Build, tag, and push image to Amazon ECR
         run: |
-          docker build -t ${{ secrets.ECR_URI }}/dearbelly-api:${{ env.IMAGE_TAG }} .
-          docker push ${{ secrets.ECR_URI }}/dearbelly-api:${{ env.IMAGE_TAG }}
+          docker build -t ${{ secrets.ECR_URI }}/dearbelly-api:latest .
+          docker push ${{ secrets.ECR_URI }}/dearbelly-api:latest
 
   transfer:
     runs-on: ubuntu-22.04
@@ -97,7 +85,7 @@ jobs:
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
             export ECR_URI=${{ secrets.ECR_URI }}
-            docker pull ${{ secrets.ECR_URI }}/dearbelly-api:${{ env.IMAGE_TAG }}
+            docker pull ${{ secrets.ECR_URI }}/dearbelly-api:latest
             
             chmod +x deploy.sh
             source deploy.sh
