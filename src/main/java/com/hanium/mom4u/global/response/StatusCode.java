@@ -51,6 +51,9 @@ public enum StatusCode {
     ALREADY_IN_FAMILY(HttpStatus.BAD_REQUEST, "FAM4004", "이미 가족에 속해 있어 가족 코드를 생성할 수 없습니다."),
     NOT_IN_FAMILY(HttpStatus.FORBIDDEN, "FAM4005", "가족에 속해 있지 않습니다."),
 
+    // News
+    NEWS_NOT_FOUND(HttpStatus.NOT_FOUND, "NE4001", "해당 데이터를 찾을 수 없습니다."),
+    NEWS_OUT_OF_INDEX(HttpStatus.BAD_REQUEST, "NE4002", "인덱스를 잘못 입력하였습니다."),
 
     // schedule
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SC4001", "일정을 찾을 수 없습니다."),

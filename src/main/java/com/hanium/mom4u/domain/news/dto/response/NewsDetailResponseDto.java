@@ -2,6 +2,7 @@ package com.hanium.mom4u.domain.news.dto.response;
 
 
 import com.hanium.mom4u.domain.news.common.Category;
+import com.hanium.mom4u.domain.news.entity.News;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,17 @@ public class NewsDetailResponseDto {
     private String title;
     private String subTitle;
     private String content;
-    private Category contentType;
+    private Category category;
     private String imageUrl;
+
+    public static NewsDetailResponseDto toDetailDto(News news) {
+        return NewsDetailResponseDto.builder()
+                .newsId(news.getId())
+                .title(news.getTitle())
+                .subTitle(news.getSubTitle())
+                .category(news.getCategory())
+                .imageUrl(news.getImgUrl())
+                .content(news.getContent())
+                .build();
+    }
 }
