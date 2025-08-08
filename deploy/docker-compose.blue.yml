@@ -1,6 +1,6 @@
 services:
   dearbelly-api:
-    image: ${ECR_URI}/dearbelly-api:blue
+    image: ${ECR_URI}/dearbelly-api:latest
     ports:
       - "8080:8080"
     env_file:
