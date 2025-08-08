@@ -73,7 +73,7 @@ public class MemberController {
     @Operation(summary = "관심 카테고리 변경(단독)", description = "다른 필드 건드리지 않고 관심 카테고리만 교체합니다.")
     @PatchMapping("/profile/categories")
     public ResponseEntity<CommonResponse<Void>> updateCategories(@RequestBody CategoryUpdateRequest req) {
-        memberService.updateCategories(req.getCategories());
+        memberService.updateCategories(req.getInterests());
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
 }
