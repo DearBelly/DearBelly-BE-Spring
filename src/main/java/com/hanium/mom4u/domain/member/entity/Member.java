@@ -9,14 +9,16 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
-
+import com.hanium.mom4u.domain.news.common.Category;
+import java.util.Set;
 @Setter
 @Getter
 @Entity
 @Builder
-@RequiredArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "member")
 public class Member extends BaseEntity {
 
@@ -80,6 +82,21 @@ public class Member extends BaseEntity {
 
     @OneToMany(mappedBy = "member")
     private List<Schedule> scheduleList;
+
+    @ElementCollection(targetClass = Category.class)
+    @CollectionTable(name = "member_interests", joinColumns = @JoinColumn(name = "member_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category")
+    @Builder.Default
+    private Set<Category> interests = new HashSet<>();
+
+
+
+    public void assignFamily(Family family) {
+        this.family = family;
+    }
+
+
 
     public void inactive() {
         this.isInactive = true;

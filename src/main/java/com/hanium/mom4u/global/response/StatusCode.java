@@ -14,8 +14,6 @@ public enum StatusCode {
     REFRESH_NOT_FOUND(HttpStatus.UNAUTHORIZED, "TE4004", "쿠키에 refresh token이 존재하지 않습니다."),
     UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "TE4005", "인증된 접근 방식이 아닙니다."),
 
-
-
     //kakao login
     KAKAO_AUTH_CODE_INVALID(HttpStatus.BAD_REQUEST, "KAKAO320", "카카오 인가 코드가 이미 사용되었거나 만료되었습니다."),
     KAKAO_REDIRECT_URI_MISMATCH(HttpStatus.BAD_REQUEST, "KAKAO303", "카카오 redirect_uri가 일치하지 않습니다."),
@@ -49,8 +47,13 @@ public enum StatusCode {
     //code
     DUPLICATE_FAMILY_CODE(HttpStatus.CONFLICT, "FE4002", "이미 사용 중인 가족 코드입니다."),
     INVALID_FAMILY_CODE(HttpStatus.BAD_REQUEST, "FAM4001", "유효하지 않거나 만료된 가족 코드입니다."),
+    FORBIDDEN_FAMILY_CODE_CREATION(HttpStatus.FORBIDDEN, "FAM4002", "임산부만 가족 코드를 생성할 수 있습니다."),
+    ALREADY_IN_FAMILY(HttpStatus.BAD_REQUEST, "FAM4004", "이미 가족에 속해 있어 가족 코드를 생성할 수 없습니다."),
+    NOT_IN_FAMILY(HttpStatus.FORBIDDEN, "FAM4005", "가족에 속해 있지 않습니다."),
 
-
+    // News
+    NEWS_NOT_FOUND(HttpStatus.NOT_FOUND, "NE4001", "해당 데이터를 찾을 수 없습니다."),
+    NEWS_OUT_OF_INDEX(HttpStatus.BAD_REQUEST, "NE4002", "인덱스를 잘못 입력하였습니다."),
 
     // schedule
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SC4001", "일정을 찾을 수 없습니다."),
@@ -63,12 +66,11 @@ public enum StatusCode {
     // family
     UNREGISTERED_FAMILY(HttpStatus.NOT_FOUND, "FE4001", "잘못된 인증 코드입니다."),
 
-
-
     // server
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER5001", "서버에서 에러가 발생했습니다."),
     INVALID_JSON_FORMAT(HttpStatus.BAD_REQUEST, "JSON400", "JSON 형식 오류"),
     NETWORK_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "NET500", "네트워크 오류 발생"),
+    JSON_PARSING_ERROR(HttpStatus.BAD_REQUEST, "JSON401", "Json 파싱 실패"),
 
     ;
 
