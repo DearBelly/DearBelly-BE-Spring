@@ -47,9 +47,6 @@ spring:
       stack:
         auto: false
 
-server:
-  port: 8080
-
 logging:
   level:
     root: INFO
