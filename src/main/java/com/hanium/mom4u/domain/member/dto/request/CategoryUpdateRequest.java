@@ -7,5 +7,5 @@ import java.util.Set;
 @Getter
 public class CategoryUpdateRequest {
 
-    private Set<Category> categories;
+    private Set<Category> interests;
 }
