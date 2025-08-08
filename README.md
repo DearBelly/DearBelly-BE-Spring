@@ -54,11 +54,11 @@ src/
 ```
 
 ---
-# 📝 Git Commit Convention
+# 📝 Git Commit Convention 📝
 
-Spring Boot 기반 백엔드 프로젝트를 위한 Git 커밋 메시지 작성 규칙입니다.
+DearBelly Spring Server Git 커밋 메시지 작성 규칙
 
-## ✅ 커밋 메시지 형식
+## ✅ 커밋 메시지 형식 ✅
 
 ```angular2html
 <type>(<scope>): <subject>
@@ -68,7 +68,7 @@ Spring Boot 기반 백엔드 프로젝트를 위한 Git 커밋 메시지 작성 
 
 ---
 
-## 🧩 Type 목록
+## 🧩 Type 목록 🧩
 
 | Type       | 설명 |
 |------------|------|
@@ -82,9 +82,9 @@ Spring Boot 기반 백엔드 프로젝트를 위한 Git 커밋 메시지 작성 
 
 ---
 
-# 🌿 Branch Naming Convention
+# 🌿 Branch Naming Convention 🌿
 
-## 📌 브랜치 네이밍 컨벤션
+## 📌 브랜치 네이밍 컨벤션 📌
 
 ```angular2html
 <type>/<작업-설명>-<이슈번호>
