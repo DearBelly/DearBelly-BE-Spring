@@ -13,7 +13,7 @@ spring:
     refresh:
       expiration: 604800 # 7일
     access:
-      expiration: 86400 # 24시간
+      expiration: 2592000 # 30일
     secret: ${JWT_SECRET_KEY}
 
   security:
@@ -46,9 +46,6 @@ spring:
         static: ${AWS_REGION}
       stack:
         auto: false
-
-server:
-  port: 8080
 
 logging:
   level:
