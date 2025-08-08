@@ -4,6 +4,14 @@ set -e
 
 ERR_MSG=''
 
+# 로그 출력
+log() {
+  local MSG="[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+  echo "$MSG"
+}
+
+log "===== Deployment script started ====="
+
 trap 'echo "Error occured: $ERR_MSG. Exiting deploy script."; exit 1' ERR
 
 if sudo docker ps --filter "name=dearbelly-api-blue" --quiet | grep -E .; then
@@ -19,21 +27,27 @@ else
 fi
 
 sleep 10
-
-echo "The $STOP_TARGET version is currently running on the server. Starting the $RUN_TARGET version."
+log "Switched from $BEFORE_COMPOSE_COLOR to $AFTER_COMPOSE_COLOR."
 
 # 새로운 컨테이너가 제대로 떴는지 확인
 EXIST_AFTER=$(docker compose -p dearbelly-api-${AFTER_COMPOSE_COLOR} -f docker-compose.${AFTER_COMPOSE_COLOR}.yml ps | grep Up)
 if [ -n "$EXIST_AFTER" ]; then
   # reload nginx
+  log "New container ($AFTER_COMPOSE_COLOR) is running. Reloading nginx..."
   sudo cp /home/ubuntu/nginx/nginx.${AFTER_COMPOSE_COLOR}.conf /etc/nginx/conf.d/default.conf
   sudo nginx -s reload
 
   # 이전 컨테이너 종료
+  log "Stopping old container ($BEFORE_COMPOSE_COLOR)..."
   docker stop dearbelly-api-${BEFORE_COMPOSE_COLOR}
   docker rm dearbelly-api-${BEFORE_COMPOSE_COLOR}
   docker image prune -af
+else
+  log "ERROR: New container ($AFTER_COMPOSE_COLOR) failed to start."
+  exit 1
 fi
 
-echo "Deployment success."
+log "Deployment completed successfully."
+log "===== Deployment script ended ====="
+
 exit 0
