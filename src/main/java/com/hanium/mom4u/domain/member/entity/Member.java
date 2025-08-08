@@ -17,8 +17,8 @@ import java.util.Set;
 @Getter
 @Entity
 @Builder
-@RequiredArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "member")
 public class Member extends BaseEntity {
 
@@ -84,13 +84,11 @@ public class Member extends BaseEntity {
     private List<Schedule> scheduleList;
 
     @ElementCollection(targetClass = Category.class)
-    @CollectionTable(
-            name = "member_interests",
-            joinColumns = @JoinColumn(name = "member_id")
-    )
-    @Column(name = "category")
+    @CollectionTable(name = "member_interests", joinColumns = @JoinColumn(name = "member_id"))
     @Enumerated(EnumType.STRING)
-    private final Set<Category> interests = new HashSet<>();
+    @Column(name = "category")
+    @Builder.Default
+    private Set<Category> interests = new HashSet<>();
 
 
 

@@ -52,15 +52,19 @@ public class KakaoLoginService {
         String email = userInfo.getKakaoAccount().getEmail();
         String nickname = userInfo.getKakaoAccount().getProfile().getNickname();
 
-        Member member = memberRepository.findByEmailAndSocialTypeAndIsInactiveFalse(email, SocialType.KAKAO)
+        Member member = memberRepository
+                .findByEmailAndSocialTypeAndIsInactiveFalse(email, SocialType.KAKAO)
                 .orElseGet(() -> {
-                    Member newMember = new Member();
-                    newMember.setEmail(email);
-                    newMember.setName(nickname);
-                    newMember.setRole(Role.ROLE_USER);
-                    newMember.setSocialType(SocialType.KAKAO);
+                    Member newMember = Member.builder()
+                            .email(email)
+                            .name(nickname)
+                            .nickname(nickname)
+                            .role(Role.ROLE_USER)
+                            .socialType(SocialType.KAKAO)
+                            .build();
                     return memberRepository.save(newMember);
                 });
+
 
 
         // 토큰 생성
