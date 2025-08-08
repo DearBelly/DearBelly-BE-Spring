@@ -116,9 +116,7 @@ public class NewsService {
             }
             // 카테고리 별로 조회하기
             else {
-                Category[] categories = Category.values();
-
-                Slice<News> newsList = newsRepository.findByCategory(categories[index -1], pageable);
+                Slice<News> newsList = newsRepository.findByCategory(Category.getCategory(index), pageable);
                 return newsList
                         .map(NewsPreviewResponseDto::toPreviewDto);
             }
