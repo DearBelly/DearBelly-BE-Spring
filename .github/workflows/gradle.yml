@@ -54,6 +54,15 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: ./monitoring/
+          target: /home/ubuntu/
+
+      - name: Transfer prometheus setting file to ec2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: ./deploy/
           target: /home/ubuntu/dearbelly-api/
 
@@ -71,6 +80,11 @@ jobs:
     needs: transfer
     steps:
       - name: SSH into EC2 server and Deploy
+        env:
+          ECR_URI: ${{ secrets.ECR_URI }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          PROMETHEUS_USER: ${{ secrets.PROMETHEUS_USER }}
+          GRAFANA_USER: ${{ secrets.GRAFANA_USER }}
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.REMOTE_HOST }}
@@ -84,7 +98,6 @@ jobs:
             
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
-            export ECR_URI=${{ secrets.ECR_URI }}
             docker pull ${{ secrets.ECR_URI }}/dearbelly-api:latest
             
             chmod +x deploy.sh

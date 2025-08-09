@@ -1,6 +1,6 @@
 ---
-name: Backend Chore
-about: "🛠 백엔드 비기능성 작업 기록용 템플릿"
+name: Chore
+about: "🛠 비기능성 작업 기록용 템플릿"
 title: "[CHORE] 작업 제목 (예: [CHORE] Swagger Docs 설정)"
 labels: ''
 assignees: ''
