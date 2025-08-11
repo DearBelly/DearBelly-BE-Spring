@@ -54,3 +54,12 @@ logging:
 
 external:
   filepath: ${LOCAL_FILE_PATH}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: *
+  endpoint:
+    health:
+      show-components: always
