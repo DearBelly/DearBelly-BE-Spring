@@ -1,5 +1,5 @@
 ---
-name: Backend Bug
+name: Bug
 about: "🐛 버그 발생/해결 템플릿"
 title: "[BUG] 작업 제목 (예: [BUG] 로그인 API에서 잘못된 비밀번호 처리 오류)"
 labels: ''

@@ -4,7 +4,7 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - /home/ubuntu/dearbelly-api/.env
+      - /home/ubuntu/dearbelly-api/deploy/.env
     volumes:
       - /home/ubuntu/dearbelly-api:/home/dearbelly
     networks:
@@ -23,6 +23,35 @@ services:
     networks:
       - mynetwork
     restart: always
+
+  prometheus:
+    user: ${PROMETHEUS_USER}
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - /home/ubuntu/monitoring/config:/etc/prometheus
+      - /home/ubuntu/monitoring/volume:/prometheus/data
+    ports:
+      - 9090:9090
+    command:
+      - '--web.enable-lifecycle'
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+    restart: always
+    networks:
+      - mynetwork
+
+  grafana:
+    user: ${GRAFANA_USER}
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - /home/ubuntu/grafana/volume:/var/lib/grafana
+    restart: always
+    networks:
+      - mynetwork
 
 networks:
   mynetwork:

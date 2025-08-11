@@ -51,3 +51,12 @@ logging:
   level:
     root: INFO
     org.hibernate.SQL: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health", "info"
+  endpoint:
+    health:
+      show-components: always
