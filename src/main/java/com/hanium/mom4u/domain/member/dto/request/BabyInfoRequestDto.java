@@ -13,10 +13,9 @@ public class BabyInfoRequestDto {
     private long babyId;
     @Schema(description = "태아 이름")
     private String name;
-    @Schema(description = "출산 예정일")
-    private LocalDate pregnantDate;
+    @Schema(description = "마지막 생리 시작일(LMP)")
+    private LocalDate lmpDate;
     @Schema(description = "태아 성별")
     private BabyGender babyGender;
-    @Schema(description = "주차 수")
-    private int weekLevel;
+
 }

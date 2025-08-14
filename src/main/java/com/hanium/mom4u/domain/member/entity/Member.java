@@ -52,11 +52,8 @@ public class Member extends BaseEntity {
     @Column(name = "is_pregnant")
     private boolean isPregnant;
 
-    @Column(name = "pregnant_week")
-    private int pregnantWeek;
-
-    @Column(name = "due_date")
-    private LocalDate dueDate;
+    @Column(name = "lmp_date")
+    private LocalDate lmpDate;
 
     @Column(name = "pre_pregnant")
     private Boolean prePregnant;
