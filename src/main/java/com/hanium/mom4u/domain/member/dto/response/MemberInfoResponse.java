@@ -14,7 +14,7 @@ public class MemberInfoResponse {
     private String email;
     private String imgUrl;
     private Boolean isPregnant;
-    private LocalDate LmpDate;
+    private LocalDate lmpDate;
     private Boolean prePregnant;
     private String gender;
     private LocalDate birthDate;
