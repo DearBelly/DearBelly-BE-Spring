@@ -41,8 +41,8 @@ public class BabyService {
             Baby baby = Baby.builder()
                     .name(requestDto.getName())
                     .gender(requestDto.getBabyGender())
-                    .pregnantDate(requestDto.getPregnantDate())
-                    .weekLevel(requestDto.getWeekLevel())
+                    .lmpDate(requestDto.getLmpDate())
+                    .isEnded(false)
                     .build();
             baby.setMember(member);
             babyRepository.save(baby);
@@ -51,9 +51,10 @@ public class BabyService {
             return BabyInfoResponseDto.builder()
                     .babyId(baby.getId())
                     .name(baby.getName())
-                    .pregnantDate(baby.getPregnantDate())
+                    .lmpDate(requestDto.getLmpDate())
                     .babyGender(baby.getGender())
-                    .weekLevel(baby.getWeekLevel())
+                    .currentWeek(baby.getCurrentWeek())
+                    .dueDateCalculated(baby.getDueDateCalculated())
                     .build();
         } else {
             log.warn("임산부가 아닙니다.");
@@ -64,18 +65,28 @@ public class BabyService {
     // 특정 태아 정보 조회하기
     @Transactional(readOnly = true)
     public BabyInfoResponseDto readBabyInfo(Long babyId) {
-        Member member = authenticatedProvider.getCurrentMember();
-        log.info("member 조회 완료: {}", member.getId());
+        Member me = authenticatedProvider.getCurrentMember();
+        log.info("member 조회 완료: {}", me.getId());
 
         Baby baby = babyRepository.findById(babyId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.BABY_NOT_FOUND));
 
+        // 권한: 본인 or 같은 가족이면 허용
+        boolean sameOwner = baby.getMember().getId().equals(me.getId());
+        boolean sameFamily = (baby.getMember().getFamily() != null && me.getFamily() != null &&
+                baby.getMember().getFamily().getId().equals(me.getFamily().getId()));
+
+        if (!(sameOwner || sameFamily)) {
+            throw GeneralException.of(StatusCode.NOT_IN_FAMILY);
+        }
+
         return BabyInfoResponseDto.builder()
                 .babyId(baby.getId())
                 .name(baby.getName())
-                .pregnantDate(baby.getPregnantDate())
                 .babyGender(baby.getGender())
-                .weekLevel(baby.getWeekLevel())
+                .lmpDate(baby.getLmpDate())
+                .currentWeek(baby.getCurrentWeek())
+                .dueDateCalculated(baby.getDueDateCalculated())
                 .build();
     }
 
@@ -92,16 +103,17 @@ public class BabyService {
                         BabyInfoResponseDto.builder()
                                 .babyId(baby.getId())
                                 .name(baby.getName())
-                                .pregnantDate(baby.getPregnantDate())
                                 .babyGender(baby.getGender())
-                                .weekLevel(baby.getWeekLevel())
+                                .lmpDate(baby.getLmpDate())
+                                .currentWeek(baby.getCurrentWeek())
+                                .dueDateCalculated(baby.getDueDateCalculated())
                                 .build())
                     .toList();
-        } else {
-
-            // 가족 구성원 등록 우선 필요
-            if (member.getFamily().getId() == null) {
-                throw BusinessException.of(StatusCode.UNREGISTERED_FAMILY);
+        } else{
+            // 가족이 없으면 빈 배열 반환
+            if (member.getFamily() == null) {
+                log.info("가족 없음 → 빈 배열 반환");
+                return List.of();
             }
 
             // 임산부가 아닐 때의 태아 조회
@@ -113,9 +125,10 @@ public class BabyService {
                     .map(baby -> BabyInfoResponseDto.builder()
                             .babyId(baby.getId())
                             .name(baby.getName())
-                            .pregnantDate(baby.getPregnantDate())
                             .babyGender(baby.getGender())
-                            .weekLevel(baby.getWeekLevel())
+                            .lmpDate(baby.getLmpDate())
+                            .currentWeek(baby.getCurrentWeek())
+                            .dueDateCalculated(baby.getDueDateCalculated())
                             .build())
                     .toList();
         }
@@ -137,9 +150,10 @@ public class BabyService {
             return BabyInfoResponseDto.builder()
                     .babyId(baby.getId())
                     .name(baby.getName())
-                    .pregnantDate(baby.getPregnantDate())
                     .babyGender(baby.getGender())
-                    .weekLevel(baby.getWeekLevel())
+                    .lmpDate(baby.getLmpDate())
+                    .currentWeek(baby.getCurrentWeek())
+                    .dueDateCalculated(baby.getDueDateCalculated())
                     .build();
         } else {
             throw BusinessException.of(StatusCode.ONLY_PREGNANT);
