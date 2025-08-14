@@ -13,7 +13,7 @@ public class ProfileEditRequest {
 
     @Schema(description = "마지막 생리 시작일")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate LmpDate;
+    private LocalDate lmpDate;
 
     @Schema(description = "프로필 이미지 URL")
     private String imgUrl;
