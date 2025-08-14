@@ -28,15 +28,15 @@ public class MemberController {
     public ResponseEntity<CommonResponse<Void>> updateProfile(
             @RequestParam("nickname") String nickname,
             @RequestParam("isPregnant") Boolean isPregnant,
-            @RequestParam(value = "dueDate", required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDate,
+            @RequestParam(value = "lmpDate", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate lmpDate,
             @RequestParam(value = "pre_pregnant", required = false) Boolean prePregnant,
             @RequestParam("gender") String gender,
             @RequestParam("birth")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birth,
             @RequestParam(value = "categories", required = false) Set<Category> categories
     ) {
-        memberService.updateProfile(nickname, isPregnant, dueDate, prePregnant, gender, birth, categories);
+        memberService.updateProfile(nickname, isPregnant, lmpDate, prePregnant, gender, birth, categories);
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
 
