@@ -30,14 +30,14 @@ public class MemberService {
 
 
     public void updateProfile(String nickname, Boolean isPregnant,
-                              LocalDate dueDate, Boolean prePregnant, String gender, LocalDate birth, Set<Category> categories) {
+                              LocalDate LmpDate, Boolean prePregnant, String gender, LocalDate birth, Set<Category> categories) {
         Member member = authenticatedProvider.getCurrentMember();
         member = memberRepository.findById(member.getId())
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
 
         member.setNickname(nickname);
         member.setPregnant(isPregnant);
-        member.setDueDate(dueDate);
+        member.setLmpDate(LmpDate);
         member.setPrePregnant(prePregnant);
         member.setGender(gender);
         member.setBirthDate(birth);
@@ -91,8 +91,8 @@ public class MemberService {
             member.setNickname(request.getNickname());
         }
 
-        if (request.getDueDate() != null) {
-            member.setDueDate(request.getDueDate());
+        if (request.getLmpDate() != null) {
+            member.setLmpDate(request.getLmpDate());
         }
 
         if (request.getImgUrl() != null) {
@@ -126,7 +126,7 @@ public class MemberService {
                 member.getEmail(),
                 imageUrl,
                 member.isPregnant(),
-                member.getDueDate(),
+                member.getLmpDate(),
                 member.getPrePregnant(),
                 member.getGender(),
                 member.getBirthDate(),
