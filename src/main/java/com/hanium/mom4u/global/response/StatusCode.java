@@ -66,6 +66,13 @@ public enum StatusCode {
     // family
     UNREGISTERED_FAMILY(HttpStatus.NOT_FOUND, "FE4001", "잘못된 인증 코드입니다."),
 
+    //letter
+    LETTER_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, "LE4001", "편지 내용은 필수입니다."),
+    LETTER_FORBIDDEN(HttpStatus.FORBIDDEN,    "LE4031", "편지에 접근 권한이 없습니다."),
+    LETTER_NOT_FOUND(HttpStatus.NOT_FOUND,    "LE4041", "편지를 찾을 수 없습니다."),
+    LETTER_CONTENT_TOO_LONG (HttpStatus.BAD_REQUEST, "LE4002", "편지 내용은 300자 이하여야 합니다."),
+
+
     // server
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER5001", "서버에서 에러가 발생했습니다."),
     INVALID_JSON_FORMAT(HttpStatus.BAD_REQUEST, "JSON400", "JSON 형식 오류"),
