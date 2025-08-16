@@ -5,6 +5,7 @@ import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.question.entity.Letter;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,4 +31,15 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
     """)
     List<Letter> findByWriterAndCreatedAtBetween(
             Member writer, LocalDateTime start, LocalDateTime end);
+
+    @Query("""
+      select count(l)
+      from Letter l
+      where l.family.id = :familyId
+        and l.writer.id <> :meId
+        and (:lastSeen is null or l.updatedAt > :lastSeen)
+    """)
+    long countUnreadFamilyLetters(@Param("familyId") Long familyId,
+                                  @Param("meId") Long meId,
+                                  @Param("lastSeen") LocalDateTime lastSeen);
 }
