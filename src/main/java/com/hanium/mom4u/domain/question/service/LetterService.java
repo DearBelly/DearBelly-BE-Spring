@@ -23,7 +23,6 @@ public class LetterService {
 
     private final LetterRepository letterRepository;
     private final AuthenticatedProvider authenticatedProvider;
-    private final LetterReadService letterreadService;
 
     public Long create(LetterRequest req) {
         Member me = authenticatedProvider.getCurrentMember(); // 가족 정보 확인용
@@ -108,10 +107,6 @@ public class LetterService {
             throw GeneralException.of(StatusCode.LETTER_FORBIDDEN);
         }
 
-        //  읽음 처리는 별도 트랜잭션으로
-        if (letter.getFamily() != null && !letter.getWriter().getId().equals(me.getId())) {
-            letterreadService.markAsRead(letter, me);
-        }
 
         return LetterResponse.builder()
                 .id(letter.getId())
