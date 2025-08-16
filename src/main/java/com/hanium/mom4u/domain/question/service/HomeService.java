@@ -5,7 +5,7 @@ import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.BabyRepository;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
 import com.hanium.mom4u.domain.question.dto.response.HomeResponse;
-import com.hanium.mom4u.domain.question.repository.LetterReadRepository;
+import com.hanium.mom4u.domain.question.repository.LetterRepository;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ public class HomeService {
 
     private final BabyRepository babyRepository;
     private final MemberRepository memberRepository;
-    private final LetterReadRepository letterReadRepository;
+    private final LetterRepository letterRepository;
     private final AuthenticatedProvider authenticatedProvider;
 
     /** 아기 이름, 주차(0부터), 편지 읽음 여부 */
@@ -62,6 +62,10 @@ public class HomeService {
         if (me.getFamily() == null) return false;
         Long familyId = me.getFamily().getId();
         if (memberRepository.countByFamilyId(familyId) <= 1) return false;
-        return letterReadRepository.countUnreadForMember(familyId, me.getId()) > 0;
+
+        long unread= letterRepository.countUnreadFamilyLetters(
+                familyId,me.getId(), me.getLastFamilyLetterSeenAt()
+        );
+        return unread > 0;
     }
 }
