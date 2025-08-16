@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import com.hanium.mom4u.domain.news.common.Category;
@@ -79,6 +80,13 @@ public class Member extends BaseEntity {
 
     @OneToMany(mappedBy = "member")
     private List<Schedule> scheduleList;
+
+    @Column(name = "last_personal_letter_seen_at")
+    private LocalDateTime lastPersonalLetterSeenAt;
+
+    @Column(name = "last_family_letter_seen_at")
+    private LocalDateTime lastFamilyLetterSeenAt;
+
 
     @ElementCollection(targetClass = Category.class)
     @CollectionTable(name = "member_interests", joinColumns = @JoinColumn(name = "member_id"))
