@@ -1,6 +1,7 @@
 package com.hanium.mom4u.domain.question.controller;
 
 import com.hanium.mom4u.domain.question.dto.request.LetterRequest;
+import com.hanium.mom4u.domain.question.dto.response.HomeResponse;
 import com.hanium.mom4u.domain.question.dto.response.LetterResponse;
 import com.hanium.mom4u.domain.question.service.LetterService;
 import com.hanium.mom4u.global.response.CommonResponse;
@@ -16,10 +17,19 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/letters")
 @RequiredArgsConstructor
-@Tag(name = "편지함")
+@Tag(name = "홈 페이지")
 public class LetterController {
 
     private final LetterService letterService;
+
+    @Operation(
+            summary = "홈 상단 배너 조회",
+            description = "아기 이름, 오늘 기준 0주차부터 계산된 주차, 그리고 '남이 쓴 미열람 편지' 여부를 반환합니다."
+    )
+    @GetMapping("/top")
+    public ResponseEntity<CommonResponse<HomeResponse>> top() {
+        return ResponseEntity.ok(CommonResponse.onSuccess(letterService.getTopBanner()));
+    }
 
     @Operation(summary = "편지 쓰기 API", description = "편지 작성 API입니다.")
     @PostMapping
