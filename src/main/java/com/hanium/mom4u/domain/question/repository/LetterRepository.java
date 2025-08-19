@@ -4,6 +4,7 @@ import com.hanium.mom4u.domain.family.entity.Family;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.question.entity.Letter;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -32,14 +33,16 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
     List<Letter> findByWriterAndCreatedAtBetween(
             Member writer, LocalDateTime start, LocalDateTime end);
 
+    @Modifying
+    @Query("update Member m set m.hasSeenFamilyLetters = true where m.id = :memberId")
+    void markSeenForMember(@Param("memberId") Long memberId);
+
+    @Modifying
     @Query("""
-      select count(l)
-      from Letter l
-      where l.family.id = :familyId
-        and l.writer.id <> :meId
-        and (:lastSeen is null or l.updatedAt > :lastSeen)
-    """)
-    long countUnreadFamilyLetters(@Param("familyId") Long familyId,
-                                  @Param("meId") Long meId,
-                                  @Param("lastSeen") LocalDateTime lastSeen);
+  update Member m
+     set m.hasSeenFamilyLetters = false
+   where m.family.id = :familyId
+     and m.id <> :writerId
+""")
+    void resetSeenFlagForFamilyExceptWriter(Long familyId, Long writerId);
 }
