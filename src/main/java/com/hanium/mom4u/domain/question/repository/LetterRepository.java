@@ -33,16 +33,18 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
     List<Letter> findByWriterAndCreatedAtBetween(
             Member writer, LocalDateTime start, LocalDateTime end);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update Member m set m.hasSeenFamilyLetters = true where m.id = :memberId")
     void markSeenForMember(@Param("memberId") Long memberId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-  update Member m
-     set m.hasSeenFamilyLetters = false
-   where m.family.id = :familyId
-     and m.id <> :writerId
+update Member m
+   set m.hasSeenFamilyLetters = false
+ where m.family.id = :familyId
+   and m.id <> :writerId
 """)
-    void resetSeenFlagForFamilyExceptWriter(Long familyId, Long writerId);
+    void resetSeenFlagForFamilyExceptWriter(@Param("familyId") Long familyId,
+                                            @Param("writerId") Long writerId);
+
 }
