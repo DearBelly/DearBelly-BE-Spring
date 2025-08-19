@@ -30,21 +30,28 @@ public class LetterService {
     private final BabyRepository babyRepository;
     private final MemberRepository memberRepository;
 
+    @Transactional
     public Long create(LetterRequest req) {
-        Member me = authenticatedProvider.getCurrentMember(); // 가족 정보 확인용
+        Member me = authenticatedProvider.getCurrentMember();
         String content = req.getContent().trim();
         if (content.isEmpty()) throw GeneralException.of(StatusCode.LETTER_CONTENT_REQUIRED);
         if (content.length() > 300) throw GeneralException.of(StatusCode.LETTER_CONTENT_TOO_LONG);
 
-        // 가족이 없어도 저장 가능 (family=null)
         Letter letter = Letter.builder()
                 .content(content)
                 .writer(me)
                 .family(me.getFamily()) // null 가능
                 .build();
 
-        return letterRepository.save(letter).getId();
+        Long id = letterRepository.save(letter).getId();
+
+        if (me.getFamily() != null) {
+            letterRepository.resetSeenFlagForFamilyExceptWriter(me.getFamily().getId(), me.getId());
+            letterRepository.markSeenForMember(me.getId());
+        }
+        return id;
     }
+
 
     @Transactional(readOnly = true)
     public List<LetterResponse> getByMonth(Integer year, Integer month) {
@@ -74,6 +81,7 @@ public class LetterService {
                 .toList();
     }
 
+    @Transactional
     public void update(Long letterId, LetterRequest req) {
         Long myId = authenticatedProvider.getCurrentMemberId();
         String content = req.getContent().trim();
@@ -86,8 +94,12 @@ public class LetterService {
             throw GeneralException.of(StatusCode.LETTER_FORBIDDEN);
 
         letter.updateContent(content);
-    }
 
+        if (letter.getFamily() != null) {
+            letterRepository.resetSeenFlagForFamilyExceptWriter(letter.getFamily().getId(), myId);
+            letterRepository.markSeenForMember(myId); // 선택
+        }
+    }
     public void delete(Long letterId) {
         Long myId = authenticatedProvider.getCurrentMemberId();
         Letter letter = letterRepository.findById(letterId)
@@ -98,7 +110,7 @@ public class LetterService {
         letterRepository.delete(letter);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LetterResponse getDetail(Long letterId) {
         Member me = authenticatedProvider.getCurrentMember();
         Letter letter = letterRepository.findById(letterId)
@@ -113,6 +125,16 @@ public class LetterService {
             throw GeneralException.of(StatusCode.LETTER_FORBIDDEN);
         }
 
+        // 남이 쓴 가족 편지라면 읽음 처리
+        boolean shouldMarkSeen =
+                letter.getFamily() != null
+                        && me.getFamily() != null
+                        && letter.getFamily().getId().equals(me.getFamily().getId())
+                        && !letter.getWriter().getId().equals(me.getId());
+
+        if (shouldMarkSeen) {
+            letterRepository.markSeenForMember(me.getId());
+        }
 
         return LetterResponse.builder()
                 .id(letter.getId())
@@ -165,13 +187,9 @@ public class LetterService {
 
     private boolean hasUnreadLetterIcon(Member me) {
         if (me.getFamily() == null) return false;
-        Long familyId = me.getFamily().getId();
-        if (memberRepository.countByFamilyId(familyId) <= 1) return false;
+        if (memberRepository.countByFamilyId(me.getFamily().getId()) <= 1) return false;
 
-        long unread= letterRepository.countUnreadFamilyLetters(
-                familyId,me.getId(), me.getLastFamilyLetterSeenAt()
-        );
-        return unread > 0;
+        return !me.isHasSeenFamilyLetters();
     }
 }
 
