@@ -81,11 +81,8 @@ public class Member extends BaseEntity {
     @OneToMany(mappedBy = "member")
     private List<Schedule> scheduleList;
 
-    @Column(name = "last_personal_letter_seen_at")
-    private LocalDateTime lastPersonalLetterSeenAt;
-
-    @Column(name = "last_family_letter_seen_at")
-    private LocalDateTime lastFamilyLetterSeenAt;
+    @Column(name = "has_seen_family_letters", nullable = false)
+    private boolean hasSeenFamilyLetters = false;
 
 
     @ElementCollection(targetClass = Category.class)
