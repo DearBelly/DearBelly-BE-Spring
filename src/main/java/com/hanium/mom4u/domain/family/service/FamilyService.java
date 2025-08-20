@@ -6,7 +6,6 @@ import com.hanium.mom4u.domain.family.repository.FamilyRepository;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
 import com.hanium.mom4u.global.exception.BusinessException;
-import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.List;
-import java.util.UUID;
 
 import java.util.Optional;
 
@@ -117,6 +115,7 @@ public class FamilyService {
 
 
     //코드 유효성
+    @Transactional(readOnly = true)
     public List<FamilyMemberResponse> getFamilyMembersByFamily() {
         Member member = authenticatedProvider.getCurrentMember();
         Family family = member.getFamily();
@@ -133,9 +132,6 @@ public class FamilyService {
                         .build())
                 .toList();
     }
-
-
-
 
 
 }
