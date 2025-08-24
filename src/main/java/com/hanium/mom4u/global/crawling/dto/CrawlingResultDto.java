@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CrawlingResultDto {
 
-    private Long postId;
-    private String contentType;
+    private String postId;
+    private String category;
     private String title;
     private String subTitle;
     private String link;
@@ -26,7 +26,7 @@ public class CrawlingResultDto {
         Category category = null;
         if (category != null) {
             try {
-                category = Category.valueOf(dto.getContentType().toUpperCase());
+                category = Category.valueOf(dto.getCategory().toUpperCase());
             } catch (IllegalArgumentException e) {
                 System.out.printf("{} 카테고리 잘못됨\n", dto.getPostId());
             }
