@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-
 @Repository
 @RequiredArgsConstructor
 public class NewsJdbcRepository {
@@ -13,9 +12,12 @@ public class NewsJdbcRepository {
     private final JdbcTemplate jdbcTemplate;
     public void save(CrawlingResultDto dto) {
 
+        // Post ID 생성
+        String postId = dto.getPostId() + "_ " + dto.getCategory();
+
         // 중복 체크
         String findQuery = "SELECT EXISTS (SELECT 1 FROM news WHERE post_id = ?)";
-        Integer count = jdbcTemplate.queryForObject(findQuery, Integer.class, dto.getPostId());
+        Integer count = jdbcTemplate.queryForObject(findQuery, Integer.class, postId);
 
         if (count != null && count > 0) {
             // 이미 존재
@@ -28,7 +30,7 @@ public class NewsJdbcRepository {
                 "VALUES (? ,?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
-                dto.getPostId(),
+                postId,
                 dto.getTitle(),
                 dto.getSubTitle(),
                 dto.getLink(),
