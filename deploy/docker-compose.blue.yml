@@ -29,7 +29,7 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     volumes:
-      - /home/ubuntu/monitoring/config:/etc/prometheus
+      - /home/ubuntu/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - /home/ubuntu/monitoring/volume:/prometheus/data
     ports:
       - 9090:9090
