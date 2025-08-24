@@ -1,12 +1,12 @@
-package com.hanium.mom4u.domain.news.listener;
+package com.hanium.mom4u.global.crawling.listener;
 
 import org.springframework.context.ApplicationEvent;
 
-public class S3JsonImportEvent extends ApplicationEvent {
+public class FinancialCrawlEvent extends ApplicationEvent {
 
     private String bucketName;
 
-    public S3JsonImportEvent(Object source, String bucketName) {
+    public FinancialCrawlEvent(Object source, String bucketName) {
         super(source);
         this.bucketName = bucketName;
     }

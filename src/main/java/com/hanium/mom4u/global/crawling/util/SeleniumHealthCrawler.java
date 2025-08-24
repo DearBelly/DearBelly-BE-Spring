@@ -1,4 +1,4 @@
-package com.hanium.mom4u.global.util;
+package com.hanium.mom4u.global.crawling.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanium.mom4u.global.crawling.dto.CrawlingResultDto;
@@ -18,7 +18,7 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class SeleniumCrawler {
+public class SeleniumHealthCrawler {
 
     private static final String MAIN_URL = "https://health.seoulmc.or.kr/healthCareInfo/pregnancyInfo.do";
     private static final String POST_URL = "https://health.seoulmc.or.kr/healthCareInfo/pregnancyView.do?boardPid=";
@@ -60,7 +60,7 @@ public class SeleniumCrawler {
 
 
                         CrawlingResultDto resultDto = CrawlingResultDto.builder()
-                                .postId(Long.parseLong(postId))
+                                .postId(postId)
                                 .title(title)
                                 .subTitle(subTitle)
                                 .link(link)
