@@ -4,7 +4,7 @@ import com.hanium.mom4u.domain.member.dto.request.ProfileEditRequest;
 import com.hanium.mom4u.domain.member.dto.response.MemberInfoResponse;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
-import com.hanium.mom4u.external.s3.FileStorageService;
+import com.hanium.mom4u.external.s3.service.FileStorageService;
 import com.hanium.mom4u.domain.news.common.Category;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
