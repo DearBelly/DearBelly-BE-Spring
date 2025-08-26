@@ -72,6 +72,8 @@ public enum StatusCode {
     LETTER_NOT_FOUND(HttpStatus.NOT_FOUND,    "LE4041", "편지를 찾을 수 없습니다."),
     LETTER_CONTENT_TOO_LONG (HttpStatus.BAD_REQUEST, "LE4002", "편지 내용은 300자 이하여야 합니다."),
 
+    // scan
+    NOT_ENOUGH_FORMAT(HttpStatus.BAD_REQUEST, "SCAN4001", "유효한 사진 파일 양식이 아닙니다."),
 
     // server
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER5001", "서버에서 에러가 발생했습니다."),
