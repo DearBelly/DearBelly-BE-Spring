@@ -20,21 +20,20 @@ import java.time.LocalDate;
 import java.util.*;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 @Transactional
+@ExtendWith(MockitoExtension.class)
 class NewsServiceTest {
 
     @Mock
     private NewsRepository newsRepository;
-
     @Mock
     private MemberRepository memberRepository;
-
     @Mock
     private AuthenticatedProvider authenticatedProvider;
-
     @InjectMocks
     private NewsService newsService;
 
@@ -64,15 +63,15 @@ class NewsServiceTest {
                 .role(Role.ROLE_USER)
                 .build();
         m.setInterests(interests);
-        return memberRepository.save(m);
+        return m;
     }
 
-    private News saveNews(Category category, String title, LocalDate postedAt) {
+    private News createNews(Category category, String title, LocalDate postedAt) {
         News news = new News();
         news.setCategory(category);
         news.setTitle(title);
         news.setPostedAt(postedAt);
-        return newsRepository.save(news);
+        return news;
     }
 
     @Nested
@@ -81,13 +80,26 @@ class NewsServiceTest {
         @Test
         @DisplayName("관심사가 비어있을 때의 테스트")
         void 관심사가_비어있을_때의_테스트() {
-            // given
+            // given (Mock이니까 저장 안되므로 메모리 객체 필요)
+            List<News> allNews = new ArrayList<>();
             for (Category c : Category.values()) {
-                saveNews(c, c.name()+"-1", LocalDate.now().minusDays(2));
-                saveNews(c, c.name()+"-2", LocalDate.now().minusDays(1));
+                allNews.add(createNews(c, c.name() + "-1", LocalDate.now().minusDays(2)));
+                allNews.add(createNews(c, c.name() + "-2", LocalDate.now().minusDays(1)));
             }
             Member member = memberWithNone();
             when(authenticatedProvider.getCurrentMember()).thenReturn(member);
+
+            // when
+            when(newsRepository.findByCategoryOrderByPostedAt(any(Category.class), anyInt()))
+                    .thenAnswer(inv -> {
+                        Category category = inv.getArgument(0);
+                        int count = inv.getArgument(1);
+                        return allNews.stream()
+                                .filter(n -> n.getCategory() == category)
+                                .sorted(Comparator.comparing(News::getPostedAt).reversed())
+                                .limit(count)
+                                .toList();
+                    });
 
             // when
             List<NewsPreviewResponseDto> result = newsService.getRecommend();
@@ -100,13 +112,28 @@ class NewsServiceTest {
         @Test
         @DisplayName("관심사가 하나일 때의 테스트")
         void 관심사가_하나일_때의_테스트() {
-            saveNews(Category.EMOTIONAL, "E-1", LocalDate.now().minusDays(3));
-            saveNews(Category.EMOTIONAL, "E-2", LocalDate.now().minusDays(2));
-            saveNews(Category.EMOTIONAL, "E-3", LocalDate.now().minusDays(1));
+            // given
+            News n1 = createNews(Category.EMOTIONAL, "E-1", LocalDate.now().minusDays(3));
+            News n2 = createNews(Category.EMOTIONAL, "E-2", LocalDate.now().minusDays(2));
+            News n3 = createNews(Category.EMOTIONAL, "E-3", LocalDate.now().minusDays(1));
+            List<News> allNews = List.of(n1, n2, n3);
 
             Member member = saveMemberWithInterests(Category.EMOTIONAL);
             when(authenticatedProvider.getCurrentMember()).thenReturn(member);
 
+
+            when(newsRepository.findByCategoryOrderByPostedAt(any(Category.class), anyInt()))
+                    .thenAnswer(inv -> {
+                        Category category = inv.getArgument(0);
+                        int count = inv.getArgument(1);
+                        return allNews.stream()
+                                .filter(n -> n.getCategory() == category)
+                                .sorted(Comparator.comparing(News::getPostedAt).reversed())
+                                .limit(count)
+                                .toList();
+                    });
+
+            // when
             var result = newsService.getRecommend();
 
             assertThat(result).hasSize(3);
@@ -118,13 +145,27 @@ class NewsServiceTest {
         @DisplayName("관심사가 2개일 때의 테스트")
         void 관심사가_2개일_때의_테스트() {
             // 어떤 카테고리에 2개/1개가 갈지는 shuffle에 의존하므로 개수만 검증
-            saveNews(Category.CHILD, "C-1", LocalDate.now().minusDays(2));
-            saveNews(Category.CHILD, "C-2", LocalDate.now().minusDays(1));
-            saveNews(Category.HEALTH, "H-1", LocalDate.now().minusDays(1));
+            // given
+            News news1 = createNews(Category.CHILD, "C-1", LocalDate.now().minusDays(2));
+            News news2 = createNews(Category.CHILD, "C-2", LocalDate.now().minusDays(1));
+            News news3 = createNews(Category.HEALTH, "H-1", LocalDate.now().minusDays(1));
+            List<News> allNews = List.of(news1, news2, news3);
 
             Member member = saveMemberWithInterests(Category.HEALTH, Category.CHILD);
             when(authenticatedProvider.getCurrentMember()).thenReturn(member);
 
+            when(newsRepository.findByCategoryOrderByPostedAt(any(Category.class), anyInt()))
+                    .thenAnswer(inv -> {
+                        Category category = inv.getArgument(0);
+                        int count = inv.getArgument(1);
+                        return allNews.stream()
+                                .filter(n -> n.getCategory() == category)
+                                .sorted(Comparator.comparing(News::getPostedAt).reversed())
+                                .limit(count)
+                                .toList();
+                    });
+
+            // when
             var result = newsService.getRecommend();
 
             assertThat(result).hasSize(3);
@@ -134,15 +175,29 @@ class NewsServiceTest {
 
         @Test
         void 관심사가_3개_이상일_때의_테스트() {
-            saveNews(Category.HEALTH, "H-1", LocalDate.now());
-            saveNews(Category.CHILD, "C-1", LocalDate.now());
-            saveNews(Category.FINANCIAL, "F-1", LocalDate.now());
-            saveNews(Category.PREGNANCY_PLANNING, "PP-1", LocalDate.now());
+            News n1 = createNews(Category.HEALTH, "H-1", LocalDate.now());
+            News n2 = createNews(Category.CHILD, "C-1", LocalDate.now());
+            News n3 = createNews(Category.FINANCIAL, "F-1", LocalDate.now());
+            News n4 = createNews(Category.PREGNANCY_PLANNING, "PP-1", LocalDate.now());
+            List<News> allNews = List.of(n1, n2, n3, n4);
 
             Member member = saveMemberWithInterests(Category.HEALTH, Category.CHILD, Category.FINANCIAL, Category.PREGNANCY_PLANNING);
             when(authenticatedProvider.getCurrentMember()).thenReturn(member);
+
+            when(newsRepository.findByCategoryOrderByPostedAt(any(Category.class), anyInt()))
+                    .thenAnswer(inv -> {
+                        Category category = inv.getArgument(0);
+                        int count = inv.getArgument(1);
+                        return allNews.stream()
+                                .filter(n -> n.getCategory() == category)
+                                .sorted(Comparator.comparing(News::getPostedAt).reversed())
+                                .limit(count)
+                                .toList();
+                    });
+            // when
             var result = newsService.getRecommend();
 
+            // then
             assertThat(result).hasSize(3);
         }
     }
