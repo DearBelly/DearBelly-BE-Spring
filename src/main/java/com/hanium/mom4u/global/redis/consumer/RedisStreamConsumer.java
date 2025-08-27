@@ -6,14 +6,11 @@ import com.hanium.mom4u.domain.scan.service.ScanService;
 import com.hanium.mom4u.global.redis.common.RedisStreamNames;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.data.redis.connection.Subscription;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.stream.StreamListener;
-import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -29,8 +26,6 @@ public class RedisStreamConsumer implements StreamListener<String, MapRecord<Str
     private final ObjectMapper objectMapper;
 
     private final ScanService scanService;
-
-    // TODO: DisposableBean 으로 예외처리 추가
 
     /**
      * Redis Stream 메세지를 처리하는 메소드
@@ -53,7 +48,7 @@ public class RedisStreamConsumer implements StreamListener<String, MapRecord<Str
             }
 
             String body = new String(payload.getBytes(), StandardCharsets.UTF_8);
-            log.info("📥 분석 결과 수신: {}", body);
+            log.info("분석 결과 수신: {}", body);
 
             // JSON → DTO 변환
             ModelResponseDto result = objectMapper.readValue(body, ModelResponseDto.class);
@@ -94,4 +89,5 @@ public class RedisStreamConsumer implements StreamListener<String, MapRecord<Str
         Boolean set = redisStringTemplate.opsForValue().setIfAbsent(key, "1", Duration.ofHours(6));
         return Boolean.TRUE.equals(set);
     }
+
 }
