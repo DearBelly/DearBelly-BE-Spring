@@ -20,6 +20,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+      - /path/to/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - mynetwork
     restart: always
@@ -29,7 +30,7 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     volumes:
-      - /home/ubuntu/monitoring/config:/etc/prometheus
+      - /home/ubuntu/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - /home/ubuntu/monitoring/volume:/prometheus/data
     ports:
       - 9090:9090

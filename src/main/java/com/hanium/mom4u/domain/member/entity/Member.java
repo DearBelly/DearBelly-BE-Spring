@@ -3,6 +3,7 @@ package com.hanium.mom4u.domain.member.entity;
 import com.hanium.mom4u.domain.calendar.entity.Schedule;
 import com.hanium.mom4u.domain.common.BaseEntity;
 import com.hanium.mom4u.domain.family.entity.Family;
+import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.common.Role;
 import com.hanium.mom4u.domain.member.common.SocialType;
 import jakarta.persistence.*;
@@ -43,8 +44,9 @@ public class Member extends BaseEntity {
     @Column(name = "role")
     private Role role;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender")
-    private String gender;
+    private Gender gender;
 
     @Column(name = "birth_date")
     private LocalDate birthDate;
@@ -52,11 +54,8 @@ public class Member extends BaseEntity {
     @Column(name = "is_pregnant")
     private boolean isPregnant;
 
-    @Column(name = "pregnant_week")
-    private int pregnantWeek;
-
-    @Column(name = "due_date")
-    private LocalDate dueDate;
+    @Column(name = "lmp_date")
+    private LocalDate lmpDate;
 
     @Column(name = "pre_pregnant")
     private Boolean prePregnant;
@@ -82,6 +81,10 @@ public class Member extends BaseEntity {
 
     @OneToMany(mappedBy = "member")
     private List<Schedule> scheduleList;
+
+    @Column(name = "has_seen_family_letters", nullable = false)
+    private boolean hasSeenFamilyLetters = false;
+
 
     @ElementCollection(targetClass = Category.class)
     @CollectionTable(name = "member_interests", joinColumns = @JoinColumn(name = "member_id"))

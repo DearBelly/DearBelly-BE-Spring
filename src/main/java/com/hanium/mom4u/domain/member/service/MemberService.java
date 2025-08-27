@@ -1,10 +1,11 @@
 package com.hanium.mom4u.domain.member.service;
 
+import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.dto.request.ProfileEditRequest;
 import com.hanium.mom4u.domain.member.dto.response.MemberInfoResponse;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
-import com.hanium.mom4u.external.s3.FileStorageService;
+import com.hanium.mom4u.external.s3.service.FileStorageService;
 import com.hanium.mom4u.domain.news.common.Category;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
@@ -30,14 +31,14 @@ public class MemberService {
 
 
     public void updateProfile(String nickname, Boolean isPregnant,
-                              LocalDate dueDate, Boolean prePregnant, String gender, LocalDate birth, Set<Category> categories) {
+                              LocalDate LmpDate, Boolean prePregnant, Gender gender, LocalDate birth, Set<Category> categories) {
         Member member = authenticatedProvider.getCurrentMember();
         member = memberRepository.findById(member.getId())
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
 
         member.setNickname(nickname);
         member.setPregnant(isPregnant);
-        member.setDueDate(dueDate);
+        member.setLmpDate(LmpDate);
         member.setPrePregnant(prePregnant);
         member.setGender(gender);
         member.setBirthDate(birth);
@@ -91,8 +92,8 @@ public class MemberService {
             member.setNickname(request.getNickname());
         }
 
-        if (request.getDueDate() != null) {
-            member.setDueDate(request.getDueDate());
+        if (request.getLmpDate() != null) {
+            member.setLmpDate(request.getLmpDate());
         }
 
         if (request.getImgUrl() != null) {
@@ -126,9 +127,9 @@ public class MemberService {
                 member.getEmail(),
                 imageUrl,
                 member.isPregnant(),
-                member.getDueDate(),
+                member.getLmpDate(),
                 member.getPrePregnant(),
-                member.getGender(),
+                member.getGender() == null ? null : member.getGender().name(),
                 member.getBirthDate(),
                 member.getInterests(),
                 member.getSocialType().name()

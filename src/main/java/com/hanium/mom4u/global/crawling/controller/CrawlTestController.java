@@ -1,7 +1,7 @@
 package com.hanium.mom4u.global.crawling.controller;
 
 import com.hanium.mom4u.domain.news.listener.S3JsonImportEvent;
-import com.hanium.mom4u.external.s3.FileStorageService;
+import com.hanium.mom4u.external.s3.service.FileStorageService;
 import com.hanium.mom4u.global.crawling.service.CrawlingTriggerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

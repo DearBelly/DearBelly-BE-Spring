@@ -42,9 +42,13 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/test/**","/v3/api-docs/**", "/swagger-ui/**",
-                                "/swagger-resources/**", "/api-docs/**","/uploads/**",
-                                "/api/v1/auth/**", "/actuator/**").permitAll()
-                        .requestMatchers("/api/v1/schedules/**","api/v1/family-code/**").authenticated()
+                                "/swagger-resources/**",
+                                "/uploads/**",
+                                "/api/v1/auth/**",
+                                "/actuator/**",
+                                "/api/v1/news/**",
+                                "/api/v1/scan")
+                        .permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)

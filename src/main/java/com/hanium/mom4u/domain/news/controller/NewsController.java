@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -32,6 +33,7 @@ public class NewsController {
     }
 
     // 정보 카테고리 별 대표 하나씩 보여주기
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "각 카테고리 별 반환 API", description = """
             각 카테고리 별로 한 개 씩 게시글들을 반환하는 API입니다.<br>
             카테고리 별로 대표 글 하나씩 반환됩니다.<br>
@@ -50,7 +52,7 @@ public class NewsController {
             각 카테고리 별로 정보 글에 대하여 전체를 조회하는 API입니다.<br>
             무한스크롤 기반이므로 page 시작은 기본 0입니다.<br>
             Order에 조회할 카테고리를 입력해주세요.<br>
-            0: 전체, 1: 건강, 2: 지원금, 3: 임신준비, 4:출산/육아, 5: 교육프로그램, 6: 정서
+            0: 전체, 1: 건강, 2: 지원금, 3: 임신준비, 4:출산/육아, 5:정서 
             """)
     @GetMapping("/category/{categoryOrder}")
     public ResponseEntity<CommonResponse<?>> getAllByCategory(

@@ -3,10 +3,7 @@ package com.hanium.mom4u.domain.news.entity;
 import com.hanium.mom4u.domain.common.BaseEntity;
 import com.hanium.mom4u.domain.news.common.Category;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 
@@ -16,6 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 public class News extends BaseEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

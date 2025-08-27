@@ -6,7 +6,6 @@ import com.hanium.mom4u.domain.family.repository.FamilyRepository;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
 import com.hanium.mom4u.global.exception.BusinessException;
-import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.List;
-import java.util.UUID;
 
 import java.util.Optional;
 
@@ -26,7 +24,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class FamilyService {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, String> redisStringTemplate;
     private final AuthenticatedProvider authenticatedProvider;
     private final MemberRepository memberRepository;
     private final FamilyRepository familyRepository;
@@ -72,10 +70,10 @@ public class FamilyService {
         String code;
         do {
             code = generateRandomCode();
-        } while (Boolean.TRUE.equals(redisTemplate.hasKey("FAMILY_CODE:" + code)));
+        } while (Boolean.TRUE.equals(redisStringTemplate.hasKey("FAMILY_CODE:" + code)));
 
-        redisTemplate.opsForList().rightPush("FAMILY_CODE:" + code, member.getId().toString());
-        redisTemplate.expire("FAMILY_CODE:" + code, CODE_EXPIRATION);
+        redisStringTemplate.opsForList().rightPush("FAMILY_CODE:" + code, member.getId().toString());
+        redisStringTemplate.expire("FAMILY_CODE:" + code, CODE_EXPIRATION);
 
         return code;
     }
@@ -92,17 +90,17 @@ public class FamilyService {
         }
 
         String key = "FAMILY_CODE:" + code;
-        if (!Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+        if (!Boolean.TRUE.equals(redisStringTemplate.hasKey(key))) {
             throw new BusinessException(StatusCode.INVALID_FAMILY_CODE);
         }
 
-        List<String> userList = redisTemplate.opsForList().range(key, 0, -1);
+        List<String> userList = redisStringTemplate.opsForList().range(key, 0, -1);
         if (userList == null || userList.isEmpty()) {
             throw new BusinessException(StatusCode.INVALID_FAMILY_CODE);
         }
 
         if (!userList.contains(member.getId().toString())) {
-            redisTemplate.opsForList().rightPush(key, member.getId().toString());
+            redisStringTemplate.opsForList().rightPush(key, member.getId().toString());
         }
 
         // 임산부 ID로부터 가족 조회
@@ -117,6 +115,7 @@ public class FamilyService {
 
 
     //코드 유효성
+    @Transactional(readOnly = true)
     public List<FamilyMemberResponse> getFamilyMembersByFamily() {
         Member member = authenticatedProvider.getCurrentMember();
         Family family = member.getFamily();
@@ -133,9 +132,6 @@ public class FamilyService {
                         .build())
                 .toList();
     }
-
-
-
 
 
 }

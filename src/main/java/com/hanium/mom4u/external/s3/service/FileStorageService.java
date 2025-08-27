@@ -1,4 +1,4 @@
-package com.hanium.mom4u.external.s3;
+package com.hanium.mom4u.external.s3.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

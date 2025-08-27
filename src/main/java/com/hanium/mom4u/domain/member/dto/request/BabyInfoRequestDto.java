@@ -1,6 +1,7 @@
 package com.hanium.mom4u.domain.member.dto.request;
 
-import com.hanium.mom4u.domain.member.common.BabyGender;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hanium.mom4u.domain.member.common.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -13,10 +14,10 @@ public class BabyInfoRequestDto {
     private long babyId;
     @Schema(description = "태아 이름")
     private String name;
-    @Schema(description = "출산 예정일")
-    private LocalDate pregnantDate;
+    @Schema(description = "마지막 생리 시작일(LMP)")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.MM.dd")
+    private LocalDate lmpDate;
     @Schema(description = "태아 성별")
-    private BabyGender babyGender;
-    @Schema(description = "주차 수")
-    private int weekLevel;
+    private Gender babyGender;
+
 }
