@@ -3,13 +3,13 @@ package com.hanium.mom4u.domain.member.entity;
 import com.hanium.mom4u.domain.calendar.entity.Schedule;
 import com.hanium.mom4u.domain.common.BaseEntity;
 import com.hanium.mom4u.domain.family.entity.Family;
+import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.common.Role;
 import com.hanium.mom4u.domain.member.common.SocialType;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import com.hanium.mom4u.domain.news.common.Category;
@@ -44,8 +44,9 @@ public class Member extends BaseEntity {
     @Column(name = "role")
     private Role role;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender")
-    private String gender;
+    private Gender gender;
 
     @Column(name = "birth_date")
     private LocalDate birthDate;

@@ -1,5 +1,6 @@
 package com.hanium.mom4u.domain.member.service;
 
+import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.dto.request.ProfileEditRequest;
 import com.hanium.mom4u.domain.member.dto.response.MemberInfoResponse;
 import com.hanium.mom4u.domain.member.entity.Member;
@@ -30,7 +31,7 @@ public class MemberService {
 
 
     public void updateProfile(String nickname, Boolean isPregnant,
-                              LocalDate LmpDate, Boolean prePregnant, String gender, LocalDate birth, Set<Category> categories) {
+                              LocalDate LmpDate, Boolean prePregnant, Gender gender, LocalDate birth, Set<Category> categories) {
         Member member = authenticatedProvider.getCurrentMember();
         member = memberRepository.findById(member.getId())
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
@@ -128,7 +129,7 @@ public class MemberService {
                 member.isPregnant(),
                 member.getLmpDate(),
                 member.getPrePregnant(),
-                member.getGender(),
+                member.getGender() == null ? null : member.getGender().name(),
                 member.getBirthDate(),
                 member.getInterests(),
                 member.getSocialType().name()

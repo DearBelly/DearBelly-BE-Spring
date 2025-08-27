@@ -1,7 +1,7 @@
 package com.hanium.mom4u.domain.member.entity;
 
 import com.hanium.mom4u.domain.common.BaseEntity;
-import com.hanium.mom4u.domain.member.common.BabyGender;
+import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.dto.request.BabyInfoRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,7 +33,7 @@ public class Baby extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "gender")
-    private BabyGender gender;
+    private Gender babyGender;
 
     @Column(name = "name")
     private String name;
@@ -48,7 +48,7 @@ public class Baby extends BaseEntity {
 
     public Baby updateInfo(BabyInfoRequestDto dto) {
         if (dto.getName() != null && !dto.getName().isBlank()) this.name = dto.getName();
-        if (dto.getBabyGender() != null) this.gender = dto.getBabyGender();
+        if (dto.getBabyGender() != null) this.babyGender = dto.getBabyGender();
         if (dto.getLmpDate() != null) this.lmpDate = dto.getLmpDate();
         return this;
     }

@@ -1,5 +1,6 @@
 package com.hanium.mom4u.domain.member.controller;
 
+import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.dto.request.CategoryUpdateRequest;
 import com.hanium.mom4u.domain.member.dto.request.ProfileEditRequest;
 import com.hanium.mom4u.domain.member.service.MemberService;
@@ -29,11 +30,11 @@ public class MemberController {
             @RequestParam("nickname") String nickname,
             @RequestParam("isPregnant") Boolean isPregnant,
             @RequestParam(value = "lmpDate", required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate lmpDate,
+            @DateTimeFormat(pattern = "yyyy.MM.dd") LocalDate lmpDate,
             @RequestParam(value = "pre_pregnant", required = false) Boolean prePregnant,
-            @RequestParam("gender") String gender,
+            @RequestParam("gender") Gender gender,
             @RequestParam("birth")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate birth,
+            @DateTimeFormat(pattern = "yyyy.MM.dd")LocalDate birth,
             @RequestParam(value = "categories", required = false) Set<Category> categories
     ) {
         memberService.updateProfile(nickname, isPregnant, lmpDate, prePregnant, gender, birth, categories);
