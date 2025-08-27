@@ -52,7 +52,7 @@ public class NewsController {
             각 카테고리 별로 정보 글에 대하여 전체를 조회하는 API입니다.<br>
             무한스크롤 기반이므로 page 시작은 기본 0입니다.<br>
             Order에 조회할 카테고리를 입력해주세요.<br>
-            0: 전체, 1: 건강, 2: 지원금, 3: 임신준비, 4:출산/육아, 5: 교육프로그램, 6: 정서
+            0: 전체, 1: 건강, 2: 지원금, 3: 임신준비, 4:출산/육아, 5:정서 
             """)
     @GetMapping("/category/{categoryOrder}")
     public ResponseEntity<CommonResponse<?>> getAllByCategory(
