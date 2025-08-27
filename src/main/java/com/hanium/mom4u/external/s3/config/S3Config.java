@@ -1,5 +1,4 @@
-package com.hanium.mom4u.global.config;
-
+package com.hanium.mom4u.external.s3.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -12,10 +11,10 @@ import software.amazon.awssdk.services.s3.S3Client;
 @Configuration
 public class S3Config {
 
-    @Value("${spring.cloud.aws.s3.access-key}") // optional - 로컬에서만 필요
+    @Value("${spring.cloud.aws.s3.access-key}")
     private String accessKey;
 
-    @Value("${spring.cloud.aws.s3.secret-key}") // optional - 로컬에서만 필요
+    @Value("${spring.cloud.aws.s3.secret-key}")
     private String secretKey;
 
     @Bean

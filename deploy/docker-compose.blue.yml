@@ -20,6 +20,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+      - /path/to/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - mynetwork
     restart: always
