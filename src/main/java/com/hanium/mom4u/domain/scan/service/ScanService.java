@@ -23,7 +23,7 @@ public class ScanService {
      * @param file
      */
     public void sendImageToS3(MultipartFile file) {
-        if (!file.getOriginalFilename().endsWith("jpeg") || !file.getOriginalFilename().endsWith("png")) {
+        if (!file.getOriginalFilename().endsWith("jpeg") && !file.getOriginalFilename().endsWith("png")) {
             log.error("유효하지 않은 파일 양식 확인...");
             throw GeneralException.of(StatusCode.NOT_ENOUGH_FORMAT);
         }

@@ -3,9 +3,7 @@ package com.hanium.mom4u.domain.scan.controller;
 import com.hanium.mom4u.domain.scan.service.ScanService;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 
@@ -17,7 +15,8 @@ public class ScanController {
     private final ScanService scanService;
 
     @PostMapping
-    public void scan(MultipartFile file) {
+    public void scan(
+            @RequestParam("file") MultipartFile file) {
         scanService.sendImageToS3(file);
 
     }
