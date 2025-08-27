@@ -6,8 +6,8 @@ public enum Category {
     FINANCIAL(2, "지원금"),
     PREGNANCY_PLANNING(3, "임신준비"),
     CHILD(4, "출산/육아"),
-    EDUCATION(5, "교육프로그램"),
-    EMOTIONAL(6, "정서");
+    EMOTIONAL(5, "정서");
+
 
     private final int order;
     private final String displayName;
