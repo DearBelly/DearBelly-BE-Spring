@@ -41,43 +41,43 @@ jobs:
           docker build -t ${{ secrets.ECR_URI }}/dearbelly-api:latest .
           docker push ${{ secrets.ECR_URI }}/dearbelly-api:latest
 
-  transfer:
-    runs-on: ubuntu-22.04
-    needs: build
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  # transfer:
+  #   runs-on: ubuntu-22.04
+  #   needs: build
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
         
-      - name: Transfer g file to ec2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./monitoring/
-          target: /home/ubuntu/
+  #     - name: Transfer g file to ec2
+  #       uses: appleboy/scp-action@master
+  #       with:
+  #         host: ${{ secrets.REMOTE_HOST }}
+  #         username: ${{ secrets.REMOTE_USER }}
+  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         source: ./monitoring/
+  #         target: /home/ubuntu/
 
-      - name: Transfer prometheus setting file to ec2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/
-          target: /home/ubuntu/dearbelly-api/
+  #     - name: Transfer prometheus setting file to ec2
+  #       uses: appleboy/scp-action@master
+  #       with:
+  #         host: ${{ secrets.REMOTE_HOST }}
+  #         username: ${{ secrets.REMOTE_USER }}
+  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         source: ./deploy/
+  #         target: /home/ubuntu/dearbelly-api/
 
-      - name: Transfer nginx directory file to ec2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./nginx/
-          target: /home/ubuntu/
+  #     - name: Transfer nginx directory file to ec2
+  #       uses: appleboy/scp-action@master
+  #       with:
+  #         host: ${{ secrets.REMOTE_HOST }}
+  #         username: ${{ secrets.REMOTE_USER }}
+  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         source: ./nginx/
+  #         target: /home/ubuntu/
 
   deploy:
     runs-on: ubuntu-22.04
-    needs: transfer
+#    needs: transfer
     steps:
       - name: SSH into EC2 server and Deploy
         env:
