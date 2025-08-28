@@ -78,6 +78,7 @@ jobs:
   deploy:
     runs-on: ubuntu-22.04
 #    needs: transfer
+    needs: build
     steps:
       - name: SSH into EC2 server and Deploy
         env:
