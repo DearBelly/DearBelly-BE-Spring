@@ -75,7 +75,7 @@ public class FileUploadEventListener {
         ImageJobMessage job = ImageJobMessage.builder()
                 .correlationId(correlationId)
                 .presignedUrl(presignedUrl)
-                .replyQueue(RedisStreamNames.JOB_STREAM)
+                .replyQueue(RedisStreamNames.RESULT_STREAM)
                 .callbackUrl(callbackUrl.isBlank() ? null : callbackUrl)
                 .createdAt(OffsetDateTime.now().toString())
                 .ttlSec(600)
