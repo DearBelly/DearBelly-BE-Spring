@@ -80,11 +80,6 @@ jobs:
     needs: transfer
     steps:
       - name: SSH into EC2 server and Deploy
-        env:
-          ECR_URI: ${{ secrets.ECR_URI }}
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-          PROMETHEUS_USER: ${{ secrets.PROMETHEUS_USER }}
-          GRAFANA_USER: ${{ secrets.GRAFANA_USER }}
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.REMOTE_HOST }}
@@ -99,6 +94,11 @@ jobs:
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
             docker pull ${{ secrets.ECR_URI }}/dearbelly-api:latest
+            
+            export ECR_URI=${{ secrets.ECR_URI }}
+            export REMOTE_HOST=${{ secrets.REMOTE_HOST }}
+            export PROMETHEUS_USER=${{ secrets.PROMETHEUS_USER }}
+            export GRAFANA_USER=${{ secrets.GRAFANA_USER }}
             
             chmod +x deploy.sh
             source deploy.sh
