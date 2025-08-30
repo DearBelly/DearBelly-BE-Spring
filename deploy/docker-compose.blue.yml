@@ -11,7 +11,7 @@ services:
       - mynetwork
     depends_on:
       - redis
-    container_name: app-blue
+    container_name: dearbelly-api-blue
 
   redis:
     image: redis:7.4.1

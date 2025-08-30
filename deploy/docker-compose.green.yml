@@ -9,7 +9,7 @@ services:
       - /home/ubuntu/dearbelly-api:/home/dearbelly
     networks:
       - mynetwork
-    container_name: app-green
+    container_name: dearbelly-api-green
 
 networks:
   mynetwork:
