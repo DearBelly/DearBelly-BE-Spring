@@ -22,6 +22,7 @@ public class NewsDetailResponseDto {
     private String content;
     private Category category;
     private String imageUrl;
+    private String link;
 
     public static NewsDetailResponseDto toDetailDto(News news) {
         return NewsDetailResponseDto.builder()
@@ -31,6 +32,7 @@ public class NewsDetailResponseDto {
                 .category(news.getCategory())
                 .imageUrl(news.getImgUrl())
                 .content(news.getContent())
+                .link(news.getLink())
                 .build();
     }
 }
