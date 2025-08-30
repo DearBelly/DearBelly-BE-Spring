@@ -16,15 +16,23 @@ trap 'echo "Error occured: $ERR_MSG. Exiting deploy script."; exit 1' ERR
 
 if sudo docker ps --filter "name=app-blue" --quiet | grep -E .; then
   echo "Blue down, Green Up "
-  docker compose -p app-green -f docker-compose.green.yml up -d
   BEFORE_COMPOSE_COLOR="blue"
   AFTER_COMPOSE_COLOR="green"
 else
   echo "Green down, Blue up"
-  docker compose -p app-blue -f docker-compose.blue.yml up -d
   BEFORE_COMPOSE_COLOR="green"
   AFTER_COMPOSE_COLOR="blue"
 fi
+
+# image 변경 사항 pull 받기
+ERR_MSG="pull new image failed"
+docker compose -p app-${AFTER_COMPOSE_COLOR} -f docker-compose.${AFTER_COMPOSE_COLOR}.yml \
+  pull dearbelly-api
+
+# 새로운 서비스만 시작하기(의존성 건드리지 않음)
+ERR_MSG="bring up new service failed"
+docker compose -p app-${AFTER_COMPOSE_COLOR} -f docker-compose.${AFTER_COMPOSE_COLOR}.yml \
+  up -d --no-deps --force-recreate dearbelly-api
 
 sleep 10
 log "Switched from $BEFORE_COMPOSE_COLOR to $AFTER_COMPOSE_COLOR."
@@ -46,8 +54,10 @@ if [ -n "$EXIST_AFTER" ]; then
   else
     log "No existing container named app-${BEFORE_COMPOSE_COLOR}. Skipping down."
   fi
+fi
 
-docker image prune -af
+ERR_MSG="image prune failed"
+docker image prune -af || true
 
 log "Deployment completed successfully."
 log "===== Deployment script ended ====="
