@@ -9,9 +9,18 @@ spring:
     username: ${LOCAL_DB_USER}
     password: ${LOCAL_DB_PASSWORD}
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
   jwt:
     refresh:
-      expiration: 604800 # 7일
+      expiration: 2592000 # 7일
     access:
       expiration: 2592000 # 30일
     secret: ${JWT_SECRET_KEY}
