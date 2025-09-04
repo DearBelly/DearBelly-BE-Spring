@@ -9,11 +9,19 @@ spring:
     username: ${DEV_DB_USER}
     password: ${DEV_DB_PASSWORD}
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
   jwt:
     refresh:
-      expiration: 86400 # 24시간
+      expiration: 2592000 # 24시간
     access:
-      expiration: 3600 # 1시간
+      expiration: 2592000 # 1시간
     secret: ${JWT_SECRET_KEY}
 
   security:
@@ -57,7 +65,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: "health", "info"
+        include:
+          - health
+          - info
   endpoint:
     health:
       show-components: always

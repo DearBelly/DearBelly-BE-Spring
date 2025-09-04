@@ -18,6 +18,7 @@ public class NewsController {
     private final NewsService newsService;
 
     // 정보 추천 별 보여주기(3개)
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "추천 정보 반환 API", description = """
             사용자가 관심있는 카테고리를 기반으로 추천 글을 불러오는 API입니다.<br>
             기본 반환 개수는 3개입니다.<br>
@@ -33,7 +34,6 @@ public class NewsController {
     }
 
     // 정보 카테고리 별 대표 하나씩 보여주기
-    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "각 카테고리 별 반환 API", description = """
             각 카테고리 별로 한 개 씩 게시글들을 반환하는 API입니다.<br>
             카테고리 별로 대표 글 하나씩 반환됩니다.<br>
