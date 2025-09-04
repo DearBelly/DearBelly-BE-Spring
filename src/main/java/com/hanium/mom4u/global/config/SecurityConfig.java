@@ -49,6 +49,7 @@ public class SecurityConfig {
                                 "/api/v1/news/**",
                                 "/api/v1/scan")
                         .permitAll()
+                        .requestMatchers("/api/v1/news").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
