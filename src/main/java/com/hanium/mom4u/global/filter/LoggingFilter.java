@@ -24,8 +24,6 @@ public class LoggingFilter extends OncePerRequestFilter {
     public static final String HEADER_REQUEST_ID = "X-Request-Id";
     public static final String MDC_REQUEST_ID = "requestId";
 
-    private static final String[] SENSITIVE_HEADERS = {"authorization", "cookie", "set-cookie"};
-
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
