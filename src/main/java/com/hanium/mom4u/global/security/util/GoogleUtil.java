@@ -1,4 +1,4 @@
-package com.hanium.mom4u.global.util;
+package com.hanium.mom4u.global.security.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package com.hanium.mom4u.global.util;
+package com.hanium.mom4u.global.security.util;
 
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
