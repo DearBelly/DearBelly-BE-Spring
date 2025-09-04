@@ -1,4 +1,4 @@
-package com.hanium.mom4u.global.util;
+package com.hanium.mom4u.global.crawling.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanium.mom4u.global.crawling.dto.CrawlingResultDto;

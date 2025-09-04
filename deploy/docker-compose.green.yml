@@ -6,6 +6,7 @@ services:
     env_file:
       - /home/ubuntu/dearbelly-api/deploy/.env
     volumes:
+      - /home/ubuntu/logs:/app/logs
       - /home/ubuntu/dearbelly-api:/home/dearbelly
     networks:
       - mynetwork

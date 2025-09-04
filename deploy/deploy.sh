@@ -26,13 +26,11 @@ fi
 
 # image 변경 사항 pull 받기
 ERR_MSG="pull new image failed"
-docker compose -p app-${AFTER_COMPOSE_COLOR} -f docker-compose.${AFTER_COMPOSE_COLOR}.yml \
-  pull dearbelly-api
+docker compose docker-compose.${AFTER_COMPOSE_COLOR}.yml pull dearbelly-api
 
 # 새로운 서비스만 시작하기(의존성 건드리지 않음)
 ERR_MSG="bring up new service failed"
-docker compose -p app-${AFTER_COMPOSE_COLOR} -f docker-compose.${AFTER_COMPOSE_COLOR}.yml \
-  up -d --no-deps --force-recreate dearbelly-api
+docker compose -f docker-compose.${AFTER_COMPOSE_COLOR}.yml up -d --no-deps --force-recreate dearbelly-api
 
 sleep 10
 log "Switched from $BEFORE_COMPOSE_COLOR to $AFTER_COMPOSE_COLOR."
