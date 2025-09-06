@@ -1,4 +1,4 @@
-package com.hanium.mom4u.global.redis.common;
+package com.hanium.mom4u.external.redis.common;
 
 import org.springframework.stereotype.Component;
 

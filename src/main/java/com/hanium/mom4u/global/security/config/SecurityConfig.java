@@ -1,4 +1,4 @@
-package com.hanium.mom4u.global.config;
+package com.hanium.mom4u.global.security.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanium.mom4u.global.response.ErrorResponse;

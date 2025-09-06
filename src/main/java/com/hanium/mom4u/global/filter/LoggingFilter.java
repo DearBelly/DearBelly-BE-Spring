@@ -29,7 +29,9 @@ public class LoggingFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
 
         return uri.startsWith("/actuator/health")
-                || uri.startsWith("/swagger-ui");
+                || uri.startsWith("/swagger-ui")
+                || uri.startsWith("/api/v1/scan")
+                ;
     }
 
     @Override
@@ -60,6 +62,8 @@ public class LoggingFilter extends OncePerRequestFilter {
             LogUtil.error(ex, requestWrapper);
         } finally {
             logResponse(responseWrapper, start, requestId);
+            // response 바디를 실제로 내보내기
+            responseWrapper.copyBodyToResponse();
             MDC.remove(MDC_REQUEST_ID);
         }
     }
