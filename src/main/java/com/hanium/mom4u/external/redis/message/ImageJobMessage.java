@@ -1,4 +1,4 @@
-package com.hanium.mom4u.global.redis.message;
+package com.hanium.mom4u.external.redis.message;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
