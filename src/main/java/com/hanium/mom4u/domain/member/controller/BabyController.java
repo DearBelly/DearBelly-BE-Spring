@@ -19,7 +19,7 @@ public class BabyController {
 
     @Operation(summary = "태아 정보 저장 API", description = """
             태아의 정보를 저장하는 API입니다.<br>
-            임산부가 아닐 경우 저장이 불가능합니다.
+            같은 가족일 경우에 공유가 가능합니다.
             """)
     @PostMapping("")
     public ResponseEntity<CommonResponse<?>> saveBaby(
@@ -32,7 +32,7 @@ public class BabyController {
 
     @Operation(summary = "태아 정보 수정 API", description = """
             태아의 정보를 수정하는 API입니다.<br>
-            임산부가 아닐 경우 수정이 불가능합니다.
+            같은 가족일 경우에 공유가 가능합니다.
             """)
     @PatchMapping("/{babyId}")
     public ResponseEntity<CommonResponse<?>> updateBaby(
@@ -66,7 +66,7 @@ public class BabyController {
 
     @Operation(summary = "특정 태아의 정보 삭제 API", description = """
             특정 태아를 삭제하는 API입니다.<br>
-            임산부가 아닐 경우 삭제가 불가능합니다.
+            같은 가족일 경우에 공유가 가능합니다.
             """)
     @DeleteMapping("/{babyId}")
     public ResponseEntity<CommonResponse<Void>> deleteBaby(@PathVariable("babyId") Long babyId) {
