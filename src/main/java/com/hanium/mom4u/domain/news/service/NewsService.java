@@ -29,96 +29,91 @@ public class NewsService {
     private final AuthenticatedProvider authenticatedProvider;
     private final NewsRepository newsRepository;
 
-    // 정보 추천 별 보여주기(3개)
+    private Long tryGetMemberId() {
+        try { return authenticatedProvider.getCurrentMemberId(); }
+        catch (Exception e) { return null; } // 비로그인/만료 등 → null
+    }
+    private Member tryGetMember() {
+        try { return authenticatedProvider.getCurrentMember(); }
+        catch (Exception e) { return null; } // 비로그인/만료 등 → null
+    }
+
     @Transactional(readOnly = true)
     public List<NewsPreviewResponseDto> getRecommend() {
-        Member member = authenticatedProvider.getCurrentMember();
-        List<Category> interests = new ArrayList<>(member.getInterests());
+        Member member = tryGetMember();            // 비로그인 허용
+        Long meId = tryGetMemberId();              // null 가능
+
+        List<Category> interests = (member == null)
+                ? Collections.emptyList()
+                : new ArrayList<>(member.getInterests());
 
         List<NewsPreviewResponseDto> recommendations = new ArrayList<>(3); // 3개 고정
-
         Map<Category, Integer> map = new LinkedHashMap<>();
-
         List<Category> categories = new ArrayList<>(List.of(Category.values()));
         Collections.shuffle(categories);
 
-        // 회원이 관심있어하는 정보로 반환
         if (interests.isEmpty()) {
-            // 랜덤으로 3개의 카테고리 선택
             List<Category> selected = categories.subList(0, Math.min(3, categories.size()));
-            for (Category category : selected) {
-                map.put(category, 1);
-            }
-        }
-        else if (interests.size() == 1) { // 관심 카테고리가 1개
-            Category category = interests.get(0);
-            map.put(category, 3);
-        }
-        else if (interests.size() == 2) {
-            Collections.shuffle(interests); // 2개 중 1개만 랜덤
+            for (Category category : selected) map.put(category, 1);
+        } else if (interests.size() == 1) {
+            map.put(interests.get(0), 3);
+        } else if (interests.size() == 2) {
+            Collections.shuffle(interests);
             Category first = interests.get(0);
             Category second = interests.get(1);
-            map.put(first, 2); // 2개 반환
+            map.put(first, 2);
             map.put(second, 1);
+        } else {
+            Collections.shuffle(interests);
+            List<Category> selected = interests.subList(0, Math.min(3, interests.size()));
+            for (Category category : selected) map.put(category, 1);
         }
-        else {  // 관심 카테고리가 3개 이상인 경우
-                Collections.shuffle(interests);
-                List<Category> selected = interests.subList(0, Math.min(3, interests.size()));
-                for (Category category : selected) {
-                    map.put(category, 1);
-                }
-            }
 
-        // 카테고리 별 할당 수만큼 반환
-        for (Map.Entry<Category, Integer> entry: map.entrySet()) {
+        for (Map.Entry<Category, Integer> entry : map.entrySet()) {
             Category category = entry.getKey();
-            int count = entry.getValue(); // 반환해야하는 카테고리 별 개수
+            int count = entry.getValue();
 
+            List<News> newsList = newsRepository.findByCategoryOrderByPostedAt(category, count);
 
-            List<News> newsList = newsRepository.findByCategoryOrderByPostedAt(
-                    category, count
-            );
-
-            recommendations
-                    .addAll(
-                            newsList.stream()
-                            .map(NewsPreviewResponseDto::toPreviewDto)
+            recommendations.addAll(
+                    newsList.stream()
+                            .map(n -> NewsPreviewResponseDto.toPreviewDto(
+                                    n, meId != null && newsRepository.isBookmarked(meId, n.getId())
+                            ))
                             .toList()
-                    );
-            for (NewsPreviewResponseDto dto : recommendations) {
-                log.info(dto.getTitle());
-            }
+            );
         }
         return recommendations;
     }
 
     @Transactional(readOnly = true)
-    // 정보 카테고리 별 대표 하나씩 보여주기
     public List<NewsPreviewResponseDto> getNewsPerCategory() {
+        Long meId = tryGetMemberId(); // null 가능
         return newsRepository.findLatestIdByCategory()
                 .stream()
-                .map(NewsPreviewResponseDto::toPreviewDto)
+                .map(n -> NewsPreviewResponseDto.toPreviewDto(
+                        n, meId != null && newsRepository.isBookmarked(meId, n.getId())
+                ))
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    // 정보 카테고리 별 보여주기 및 전체 보여주기
     public Slice<NewsPreviewResponseDto> getAllNewsPerCategory(int index, int page) {
-
         final int PAGE_SIZE = 15;
         Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+        Long meId = tryGetMemberId(); // null 가능
+
         try {
-            // 전체 조회하기
             if (index == 0) {
                 Slice<News> newsList = newsRepository.findAllOrderByPostId(pageable);
-                return newsList
-                        .map(NewsPreviewResponseDto::toPreviewDto);
-            }
-            // 카테고리 별로 조회하기
-            else {
+                return newsList.map(n -> NewsPreviewResponseDto.toPreviewDto(
+                        n, meId != null && newsRepository.isBookmarked(meId, n.getId())
+                ));
+            } else {
                 Slice<News> newsList = newsRepository.findByCategory(Category.getCategory(index), pageable);
-                return newsList
-                        .map(NewsPreviewResponseDto::toPreviewDto);
+                return newsList.map(n -> NewsPreviewResponseDto.toPreviewDto(
+                        n, meId != null && newsRepository.isBookmarked(meId, n.getId())
+                ));
             }
         } catch (Exception e) {
             throw new BusinessException(StatusCode.NEWS_OUT_OF_INDEX);
@@ -127,8 +122,44 @@ public class NewsService {
 
     @Transactional(readOnly = true)
     public NewsDetailResponseDto getDetail(Long newsId) {
-        return newsRepository.findById(newsId)
-                .map(NewsDetailResponseDto::toDetailDto)
+        Long meId = tryGetMemberId(); // null 가능
+
+        News news = newsRepository.findById(newsId)
                 .orElseThrow(() -> new GeneralException(StatusCode.NEWS_NOT_FOUND));
+
+        boolean bookmarked = (meId != null) && newsRepository.isBookmarked(meId, newsId);
+
+        return NewsDetailResponseDto.toDetailDto(news, bookmarked);
+    }
+
+    @Transactional
+    public void addBookmark(Long newsId) {
+        Member me = authenticatedProvider.getCurrentMember();
+        if (newsRepository.isBookmarked(me.getId(), newsId)) return;
+
+        News news = newsRepository.findById(newsId)
+                .orElseThrow(() -> new GeneralException(StatusCode.NEWS_NOT_FOUND));
+
+        me.getBookmarks().add(news);
+    }
+
+    @Transactional
+    public void removeBookmark(Long newsId) {
+        Member me = authenticatedProvider.getCurrentMember();
+        News news = newsRepository.findById(newsId)
+                .orElseThrow(() -> new GeneralException(StatusCode.NEWS_NOT_FOUND));
+
+        me.getBookmarks().remove(news);
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public Slice<NewsPreviewResponseDto> getMyBookmarks(int page, int size) {
+        Member me = authenticatedProvider.getCurrentMember();
+        Pageable pageable = PageRequest.of(page, size);
+
+        return newsRepository.findMyBookmarks(me.getId(), pageable)
+                .map(n -> NewsPreviewResponseDto.toPreviewDto(n, true));
     }
 }
