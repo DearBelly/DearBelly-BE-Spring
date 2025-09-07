@@ -6,6 +6,7 @@ import com.hanium.mom4u.domain.family.entity.Family;
 import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.common.Role;
 import com.hanium.mom4u.domain.member.common.SocialType;
+import com.hanium.mom4u.domain.news.entity.News;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -85,6 +86,14 @@ public class Member extends BaseEntity {
     @Column(name = "has_seen_family_letters", nullable = false)
     private boolean hasSeenFamilyLetters = false;
 
+    @ManyToMany
+    @JoinTable(
+            name = "member_news_bookmark",
+            joinColumns = @JoinColumn(name = "member_id"),
+            inverseJoinColumns = @JoinColumn(name = "news_id"),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "news_id"})
+    )
+    private Set<News> bookmarks = new HashSet<>();
 
     @ElementCollection(targetClass = Category.class)
     @CollectionTable(name = "member_interests", joinColumns = @JoinColumn(name = "member_id"))
@@ -105,6 +114,7 @@ public class Member extends BaseEntity {
         this.isInactive = true;
         this.inactiveDate = LocalDate.now();
     }
+
 
 }
 
