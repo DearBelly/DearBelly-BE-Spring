@@ -59,11 +59,16 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     // Redis
-    implementation('org.springframework.boot:spring-boot-starter-data-redis')
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Reactive Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+
+    // WebFlux
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     // s3
     implementation 'software.amazon.awssdk:s3:2.25.29'
-
 
     // swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'

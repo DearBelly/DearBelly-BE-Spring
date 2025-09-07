@@ -24,34 +24,31 @@ else
   AFTER_COMPOSE_COLOR="blue"
 fi
 
-# image 변경 사항 pull 받기
-ERR_MSG="pull new image failed"
-docker compose docker-compose.${AFTER_COMPOSE_COLOR}.yml pull dearbelly-api
+# 새로운 image pull 받기
+docker compose -f docker-compose.${AFTER_COMPOSE_COLOR}.yml pull dearbelly-api \
+  || { echo "pull new image failed"; exit 1; }
 
-# 새로운 서비스만 시작하기(의존성 건드리지 않음)
-ERR_MSG="bring up new service failed"
-docker compose -f docker-compose.${AFTER_COMPOSE_COLOR}.yml up -d --no-deps --force-recreate dearbelly-api
+# 새로운 서비스만 시작
+docker compose -f docker-compose.${AFTER_COMPOSE_COLOR}.yml up -d --no-deps dearbelly-api \
+  || { echo "bring up new service failed"; exit 1; }
+
 
 sleep 10
-log "Switched from $BEFORE_COMPOSE_COLOR to $AFTER_COMPOSE_COLOR."
+echo "Switched from $BEFORE_COMPOSE_COLOR to $AFTER_COMPOSE_COLOR."
 
 # 새로운 컨테이너가 제대로 떴는지 확인
-EXIST_AFTER=$(docker compose -p app-${AFTER_COMPOSE_COLOR} -f docker-compose.${AFTER_COMPOSE_COLOR}.yml ps | grep Up)
-if [ -n "$EXIST_AFTER" ]; then
-  # reload nginx
+if docker compose -p "$PROJECT" -f "docker-compose.${AFTER_COMPOSE_COLOR}.yml" ps \
+     --services --filter status=running | grep -q "^dearbelly-api$"; then
   log "New container ($AFTER_COMPOSE_COLOR) is running. Reloading nginx..."
-  sudo cp /home/ubuntu/nginx/nginx.${AFTER_COMPOSE_COLOR}.conf /etc/nginx/conf.d/default.conf
+  sudo cp "/home/ubuntu/nginx/nginx.${AFTER_COMPOSE_COLOR}.conf" /etc/nginx/conf.d/default.conf
   sudo nginx -s reload
 
-  # 이전 컨테이너 종료
-  log "Stopping old container ($BEFORE_COMPOSE_COLOR)..."
-  if docker ps -a --format '{{.Names}}' | grep -q "^app-${BEFORE_COMPOSE_COLOR}\$"; then
-    log "Found old container app-${BEFORE_COMPOSE_COLOR}, stopping and removing..."
-    docker stop app-${BEFORE_COMPOSE_COLOR}
-    docker rm app-${BEFORE_COMPOSE_COLOR}
-  else
-    log "No existing container named app-${BEFORE_COMPOSE_COLOR}. Skipping down."
-  fi
+  # 이전 컨테이너 종료 (compose 네이밍 규칙에 맞게 down 권장)
+  log "Stopping old stack ($BEFORE_COMPOSE_COLOR)..."
+  docker compose -p "app-${BEFORE_COMPOSE_COLOR}" -f "docker-compose.${BEFORE_COMPOSE_COLOR}.yml" down || true
+else
+  log "New container is NOT running; keeping previous stack. Inspect logs."
+  exit 1
 fi
 
 ERR_MSG="image prune failed"

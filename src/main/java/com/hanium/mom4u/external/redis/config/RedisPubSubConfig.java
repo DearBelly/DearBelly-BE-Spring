@@ -1,4 +1,4 @@
-package com.hanium.mom4u.global.redis.config;
+package com.hanium.mom4u.external.redis.config;
 
 import org.springframework.context.annotation.Configuration;
 
