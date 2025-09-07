@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -46,10 +47,12 @@ public class SecurityConfig {
                                 "/uploads/**",
                                 "/api/v1/auth/**",
                                 "/actuator/**",
-                                "/api/v1/news/**",
                                 "/api/v1/scan")
                         .permitAll()
-                        .requestMatchers("/api/v1/news").authenticated()
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/news/*/bookmark").hasRole("USER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/news/*/bookmark").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/news/bookmarks").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/news/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
