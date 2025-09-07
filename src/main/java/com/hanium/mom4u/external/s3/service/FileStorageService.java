@@ -3,7 +3,6 @@ package com.hanium.mom4u.external.s3.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,6 +11,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 
@@ -92,10 +92,46 @@ public class FileStorageService {
         s3Client.close();
     }
 
+
+    /**
+     * 다운로드용 PresignedUrl
+     * @param objectKey
+     * @return
+     */
+    public String generatePresignedGetUrl(String objectKey) {
+        S3Presigner presigner;
+
+        if (accessKey != null && !accessKey.isBlank() && secretKey != null && !secretKey.isBlank()) {
+            AwsCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
+            presigner = S3Presigner.builder()
+                    .credentialsProvider(StaticCredentialsProvider.create(credentials))
+                    .region(Region.of(region))
+                    .build();
+        } else {
+            presigner = S3Presigner.builder()
+                    .region(Region.of(region))
+                    .build();
+        }
+
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(objectKey)
+                .build();
+
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .getObjectRequest(getObjectRequest)
+                .signatureDuration(Duration.ofMinutes(3))
+                .build();
+
+        URL presignedGetUrl = presigner.presignGetObject(presignRequest).url();
+        presigner.close();
+
+        return presignedGetUrl.toString();
+    }
+
     /**
      * S3에 받은 이미지를 업로드 후 PresignedURL 반환
      */
-    @EventListener
     @Transactional
     public String uploadFileAndGetPresignedUrl(MultipartFile multipartFile) throws IOException {
 
@@ -114,7 +150,7 @@ public class FileStorageService {
                 )
         );
 
-        String presignedUrl = generatePresignedPutUrl(key);
+        String presignedUrl = generatePresignedGetUrl(key);
         log.info("업로드 및 presigned GET URL 발급 성공: {}", presignedUrl);
 
         return presignedUrl;
