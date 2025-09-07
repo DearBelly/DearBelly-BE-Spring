@@ -8,9 +8,14 @@ import lombok.Setter;
 @Setter
 @Schema(description = "CV 모델 분석 결과 DTO")
 public class ModelResponseDto {
-    private String pillName;
+    @Schema(description = "JOB의 correlationID")
     private String correlationId;
-    private String label;
-    private double confidence;
+    @Schema(description = "약 이름")
+    private String pillName;
+    @Schema(description = "적용 가능 여부")
+    private int isSafe; // 긍정이면 1, 부정이면 0
+    @Schema(description = "약품에 대한 설명")
+    private String description; // 약품에 대한 설명
+    @Schema(description = "Message의 종료")
     private String finishedAt;  // ISO-8601
 }
