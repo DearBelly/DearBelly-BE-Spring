@@ -24,16 +24,16 @@ public interface NewsRepository extends JpaRepository<News, Long>, NewsRepositor
     Slice<News> findAllOrderByPostId(Pageable pageable);
 
     @Query("""
-        select n from Member m join m.bookmarks n
-        where m.id = :memberId
-        order by n.postedAt desc
+      select nb.news from NewsBookmark nb
+      where nb.member.id = :memberId
+      order by nb.id desc
     """)
     Page<News> findMyBookmarks(@Param("memberId") Long memberId, Pageable pageable);
 
     @Query("""
-    select (count(n) > 0) from Member m join m.bookmarks n
-    where m.id = :memberId and n.id = :newsId
-""")
+      select (count(nb) > 0) from NewsBookmark nb
+      where nb.member.id = :memberId and nb.news.id = :newsId
+    """)
     boolean isBookmarked(@Param("memberId") Long memberId, @Param("newsId") Long newsId);
 
 
