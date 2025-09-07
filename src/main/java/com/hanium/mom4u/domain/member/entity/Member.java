@@ -86,14 +86,6 @@ public class Member extends BaseEntity {
     @Column(name = "has_seen_family_letters", nullable = false)
     private boolean hasSeenFamilyLetters = false;
 
-    @ManyToMany
-    @JoinTable(
-            name = "member_news_bookmark",
-            joinColumns = @JoinColumn(name = "member_id"),
-            inverseJoinColumns = @JoinColumn(name = "news_id"),
-            uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "news_id"})
-    )
-    private Set<News> bookmarks = new HashSet<>();
 
     @ElementCollection(targetClass = Category.class)
     @CollectionTable(name = "member_interests", joinColumns = @JoinColumn(name = "member_id"))
