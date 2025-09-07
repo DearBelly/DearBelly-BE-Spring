@@ -1,8 +1,7 @@
 package com.hanium.mom4u.domain.scan.registry;
 
 import com.hanium.mom4u.domain.scan.dto.response.ModelResponseDto;
-import com.hanium.mom4u.global.exception.GeneralException;
-import com.hanium.mom4u.global.response.StatusCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Sinks;
 
@@ -15,6 +14,7 @@ import java.util.concurrent.ConcurrentMap;
  * 대기열에 String CorrelationId도 추가하여 고유한 작업에 대하여 처리
  */
 @Component
+@Slf4j
 public class PendingSinkRegistry {
 
     private final ConcurrentMap<String, Sinks.One<ModelResponseDto>> waits = new ConcurrentHashMap<>();
@@ -48,7 +48,7 @@ public class PendingSinkRegistry {
      */
     public void completeTimeout(String correlationId) {
         take(correlationId).ifPresent(sink -> {
-                    throw GeneralException.of(StatusCode.FAILURE_TEST);
+            log.warn("제한 시간에 초과되어 저장소에서 삭제: {}", correlationId);
         });
     }
 }
