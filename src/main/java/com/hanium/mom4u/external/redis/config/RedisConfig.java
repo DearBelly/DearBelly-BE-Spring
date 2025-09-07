@@ -43,10 +43,19 @@ public class RedisConfig {
     @Bean
     @Primary
     public RedisTemplate<String, String> redisStringTemplate(LettuceConnectionFactory connectionFactory) {
+
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
+
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new StringRedisSerializer());
+
+        template.setDefaultSerializer(new StringRedisSerializer());
+
+        template.afterPropertiesSet();
+
         return template;
     }
 
