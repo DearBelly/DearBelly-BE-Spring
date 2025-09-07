@@ -132,8 +132,8 @@ public class BabyService {
     }
 
     // 태아 정보 수정하기
-@Transactional
-public BabyInfoResponseDto updateBaby(Long babyId, BabyInfoRequestDto requestDto) {
+    @Transactional
+    public BabyInfoResponseDto updateBaby(Long babyId, BabyInfoRequestDto requestDto) {
     Member me = authenticatedProvider.getCurrentMember();
     Baby baby = babyRepository.findById(babyId)
             .orElseThrow(() -> GeneralException.of(StatusCode.BABY_NOT_FOUND));
