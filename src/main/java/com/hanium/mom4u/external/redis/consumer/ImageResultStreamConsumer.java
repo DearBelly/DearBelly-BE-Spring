@@ -51,16 +51,17 @@ public class ImageResultStreamConsumer implements RedisStreamConsumer{
         Map<String, String> v = record.getValue();
         String type = v.get("type");
         String payload = v.get("payload");
+        String correlationId = v.get("correlationId");
 
         // image_results가 아니면 처리하지 않음
-        if (!"image_results".equals(type)) {
+        if (!"image_results".equals(type) || correlationId == null) {
             log.warn("drop invalid message id={} type={}", record.getId(), type);
             return Mono.empty(); // 0개의 데이터를 반환
         }
 
         return Mono.fromCallable(() -> objectMapper.readValue(payload, ModelResponseDto.class))
                 .doOnSuccess(res -> {
-                    registry.take(res.getCorrelationId()).ifPresent(sink -> {
+                    registry.take(correlationId).ifPresent(sink -> {
                         sink.tryEmitValue(res);
                     });
                 })
