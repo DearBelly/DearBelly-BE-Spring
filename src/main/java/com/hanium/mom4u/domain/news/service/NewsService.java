@@ -5,6 +5,8 @@ import com.hanium.mom4u.domain.news.common.Category;
 import com.hanium.mom4u.domain.news.dto.response.NewsDetailResponseDto;
 import com.hanium.mom4u.domain.news.dto.response.NewsPreviewResponseDto;
 import com.hanium.mom4u.domain.news.entity.News;
+import com.hanium.mom4u.domain.news.entity.NewsBookmark;
+import com.hanium.mom4u.domain.news.repository.NewsBookmarkRepository;
 import com.hanium.mom4u.domain.news.repository.NewsRepository;
 import com.hanium.mom4u.global.exception.BusinessException;
 import com.hanium.mom4u.global.exception.GeneralException;
@@ -28,6 +30,7 @@ public class NewsService {
 
     private final AuthenticatedProvider authenticatedProvider;
     private final NewsRepository newsRepository;
+    private final NewsBookmarkRepository bookmarkRepository;
 
     private Long tryGetMemberId() {
         try { return authenticatedProvider.getCurrentMemberId(); }
@@ -134,31 +137,26 @@ public class NewsService {
 
     @Transactional
     public void addBookmark(Long newsId) {
-        Member me = authenticatedProvider.getCurrentMember();
-        if (newsRepository.isBookmarked(me.getId(), newsId)) return;
-
-        News news = newsRepository.findById(newsId)
+        var me = authenticatedProvider.getCurrentMember();
+        if (bookmarkRepository.existsByMember_IdAndNews_Id(me.getId(), newsId)) return;
+        var news = newsRepository.findById(newsId)
                 .orElseThrow(() -> new GeneralException(StatusCode.NEWS_NOT_FOUND));
-
-        me.getBookmarks().add(news);
+        bookmarkRepository.save(new NewsBookmark(me, news));
     }
+
 
     @Transactional
     public void removeBookmark(Long newsId) {
-        Member me = authenticatedProvider.getCurrentMember();
-        News news = newsRepository.findById(newsId)
-                .orElseThrow(() -> new GeneralException(StatusCode.NEWS_NOT_FOUND));
-
-        me.getBookmarks().remove(news);
+        var me = authenticatedProvider.getCurrentMember();
+        bookmarkRepository.deleteByMember_IdAndNews_Id(me.getId(), newsId);
     }
 
 
 
     @Transactional(readOnly = true)
     public Slice<NewsPreviewResponseDto> getMyBookmarks(int page, int size) {
-        Member me = authenticatedProvider.getCurrentMember();
-        Pageable pageable = PageRequest.of(page, size);
-
+        var me = authenticatedProvider.getCurrentMember();
+        var pageable = PageRequest.of(page, size);
         return newsRepository.findMyBookmarks(me.getId(), pageable)
                 .map(n -> NewsPreviewResponseDto.toPreviewDto(n, true));
     }
