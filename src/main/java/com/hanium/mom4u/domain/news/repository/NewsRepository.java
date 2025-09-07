@@ -2,6 +2,7 @@ package com.hanium.mom4u.domain.news.repository;
 
 import com.hanium.mom4u.domain.news.common.Category;
 import com.hanium.mom4u.domain.news.entity.News;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,4 +22,19 @@ public interface NewsRepository extends JpaRepository<News, Long>, NewsRepositor
 
     @Query("SELECT n FROM News n ORDER BY n.postId DESC ")
     Slice<News> findAllOrderByPostId(Pageable pageable);
+
+    @Query("""
+        select n from Member m join m.bookmarks n
+        where m.id = :memberId
+        order by n.postedAt desc
+    """)
+    Page<News> findMyBookmarks(@Param("memberId") Long memberId, Pageable pageable);
+
+    @Query("""
+    select (count(n) > 0) from Member m join m.bookmarks n
+    where m.id = :memberId and n.id = :newsId
+""")
+    boolean isBookmarked(@Param("memberId") Long memberId, @Param("newsId") Long newsId);
+
+
 }
