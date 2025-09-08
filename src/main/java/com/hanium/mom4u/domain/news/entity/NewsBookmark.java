@@ -8,7 +8,7 @@ import jakarta.persistence.*;
         uniqueConstraints=@UniqueConstraint(columnNames={"member_id","news_id"}))
 public class NewsBookmark {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
     @ManyToOne
     Member member;
