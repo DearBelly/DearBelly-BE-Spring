@@ -86,7 +86,7 @@ public class Member extends BaseEntity {
     @Column(name = "has_seen_family_letters", nullable = false)
     private boolean hasSeenFamilyLetters = false;
 
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", orphanRemoval = true)
     private Set<NewsBookmark> newsBookmarks = new HashSet<>();
 
     @ElementCollection(targetClass = Category.class)
