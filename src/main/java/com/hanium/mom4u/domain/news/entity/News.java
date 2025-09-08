@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "news")
@@ -44,4 +46,7 @@ public class News extends BaseEntity {
 
     @Column(name = "posted_at")
     private LocalDate postedAt;
+
+    @OneToMany(mappedBy = "news")
+    private Set<NewsBookmark> newsBookmarks = new HashSet<>();
 }
