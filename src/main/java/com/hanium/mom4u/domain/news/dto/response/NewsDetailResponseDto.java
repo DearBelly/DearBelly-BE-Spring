@@ -23,8 +23,9 @@ public class NewsDetailResponseDto {
     private Category category;
     private String imageUrl;
     private String link;
+    private boolean bookmarked;
 
-    public static NewsDetailResponseDto toDetailDto(News news) {
+    public static NewsDetailResponseDto toDetailDto(News news, boolean bookmarked) {
         return NewsDetailResponseDto.builder()
                 .newsId(news.getId())
                 .title(news.getTitle())
@@ -33,6 +34,7 @@ public class NewsDetailResponseDto {
                 .imageUrl(news.getImgUrl())
                 .content(news.getContent())
                 .link(news.getLink())
+                .bookmarked(bookmarked)
                 .build();
     }
 }

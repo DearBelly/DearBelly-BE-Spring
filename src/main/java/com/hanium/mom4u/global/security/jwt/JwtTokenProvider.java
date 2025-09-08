@@ -71,13 +71,18 @@ public class JwtTokenProvider {
         Long memberId = Long.valueOf(getMemberId(token));
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
-        return new UsernamePasswordAuthenticationToken(
-                member.getId().toString(), //  name = memberId
-                null,
-                Collections.emptyList()
-        );
 
+        String roleName = member.getRole().name(); // USER, ADMIN
+        if (!roleName.startsWith("ROLE_")) {
+            roleName = "ROLE_" + roleName;         // → ROLE_USER
+        }
+        var authorities = java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(roleName));
+
+        return new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                member.getId().toString(), null, authorities
+        );
     }
+
 
     public String getMemberId(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build()
