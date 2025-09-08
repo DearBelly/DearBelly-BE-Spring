@@ -47,6 +47,6 @@ public class News extends BaseEntity {
     @Column(name = "posted_at")
     private LocalDate postedAt;
 
-    @OneToMany(mappedBy = "news")
+    @OneToMany(mappedBy = "news", orphanRemoval = true)
     private Set<NewsBookmark> newsBookmarks = new HashSet<>();
 }
