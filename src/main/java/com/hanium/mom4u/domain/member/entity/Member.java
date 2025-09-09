@@ -6,7 +6,7 @@ import com.hanium.mom4u.domain.family.entity.Family;
 import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.common.Role;
 import com.hanium.mom4u.domain.member.common.SocialType;
-import com.hanium.mom4u.domain.news.entity.News;
+import com.hanium.mom4u.domain.news.entity.NewsBookmark;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -86,6 +86,8 @@ public class Member extends BaseEntity {
     @Column(name = "has_seen_family_letters", nullable = false)
     private boolean hasSeenFamilyLetters = false;
 
+    @OneToMany(mappedBy = "member", orphanRemoval = true)
+    private Set<NewsBookmark> newsBookmarks = new HashSet<>();
 
     @ElementCollection(targetClass = Category.class)
     @CollectionTable(name = "member_interests", joinColumns = @JoinColumn(name = "member_id"))
