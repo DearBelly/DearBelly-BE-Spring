@@ -30,6 +30,7 @@ public class MemberService {
     private String DEFAULT_PROFILE_IMG_URL;
 
 
+    @Transactional
     public void updateProfile(String nickname, Boolean isPregnant,
                               LocalDate LmpDate, Boolean prePregnant, Gender gender, LocalDate birth, Set<Category> categories) {
         Member member = authenticatedProvider.getCurrentMember();
@@ -38,14 +39,26 @@ public class MemberService {
 
         member.setNickname(nickname);
         member.setPregnant(isPregnant);
-        member.setLmpDate(LmpDate);
         member.setPrePregnant(prePregnant);
         member.setGender(gender);
         member.setBirthDate(birth);
+
+        // LMP 저장 로직을 수정했습니다.
+        if (LmpDate != null) {
+            if (member.getFamily() != null) {
+                // 가족이 있으면 Family 객체에 LMP를 저장
+                member.getFamily().setLmpDate(LmpDate);
+                member.setLmpDate(null);
+            } else {
+                // 가족이 없으면 Member 객체에 직접 LMP를 저장
+                member.setLmpDate(LmpDate);
+            }
+        } else {
+            // LMP가 null로 들어오면 Member의 LMP도 null로 설정
+            member.setLmpDate(null);
+        }
+
         member.getInterests().addAll(categories);
-
-
-
         memberRepository.save(member);
     }
 
@@ -93,7 +106,15 @@ public class MemberService {
         }
 
         if (request.getLmpDate() != null) {
-            member.setLmpDate(request.getLmpDate());
+            if (member.getFamily() != null) {
+                // 가족이 있으면 LMP를 Family 객체에 저장
+                member.getFamily().setLmpDate(request.getLmpDate());
+                // 기존 Member 객체의 LMP는 null로 설정 (중복 방지)
+                member.setLmpDate(null);
+            } else {
+                // 가족이 없으면 LMP를 Member 객체에 직접 저장
+                member.setLmpDate(request.getLmpDate());
+            }
         }
 
         if (request.getImgUrl() != null) {
@@ -121,13 +142,14 @@ public class MemberService {
             imageUrl = DEFAULT_PROFILE_IMG_URL;
         }
 
+        LocalDate effectiveLmpDate = member.getFamily() != null ? member.getFamily().getLmpDate() : member.getLmpDate();
 
         return new MemberInfoResponse(
                 member.getNickname(),
                 member.getEmail(),
                 imageUrl,
                 member.isPregnant(),
-                member.getLmpDate(),
+                effectiveLmpDate,
                 member.getPrePregnant(),
                 member.getGender() == null ? null : member.getGender().name(),
                 member.getBirthDate(),

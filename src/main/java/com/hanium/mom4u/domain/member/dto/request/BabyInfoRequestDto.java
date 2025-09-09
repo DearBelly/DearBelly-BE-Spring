@@ -14,9 +14,6 @@ public class BabyInfoRequestDto {
     private long babyId;
     @Schema(description = "태아 이름")
     private String name;
-    @Schema(description = "마지막 생리 시작일(LMP)")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.MM.dd")
-    private LocalDate lmpDate;
     @Schema(description = "태아 성별")
     private Gender babyGender;
 
