@@ -49,7 +49,6 @@ public class Baby extends BaseEntity {
     public Baby updateInfo(BabyInfoRequestDto dto) {
         if (dto.getName() != null && !dto.getName().isBlank()) this.name = dto.getName();
         if (dto.getBabyGender() != null) this.babyGender = dto.getBabyGender();
-        if (dto.getLmpDate() != null) this.lmpDate = dto.getLmpDate();
         return this;
     }
 
@@ -65,4 +64,7 @@ public class Baby extends BaseEntity {
         return (lmpDate == null) ? null : lmpDate.plusWeeks(40);
     }
 
+    public void setLmpDate(LocalDate lmpDate) {
+        this.lmpDate = lmpDate;
+    }
 }
