@@ -20,14 +20,16 @@ public class NewsPreviewResponseDto {
     private String subTitle;
     private String imageUrl;
     private Category category;
+    private boolean bookmarked;
 
-    public static NewsPreviewResponseDto toPreviewDto(News news) {
+    public static NewsPreviewResponseDto toPreviewDto(News news, boolean bookmarked) {
         return NewsPreviewResponseDto.builder()
                 .newsId(news.getId())
                 .title(news.getTitle())
                 .subTitle(news.getSubTitle())
                 .category(news.getCategory())
                 .imageUrl(news.getImgUrl())
+                .bookmarked(bookmarked)
                 .build();
     }
 }

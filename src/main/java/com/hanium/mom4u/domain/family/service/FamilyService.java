@@ -61,8 +61,12 @@ public class FamilyService {
             family = member.getFamily();
         } else {
             family = new Family();
+            // LMP를 Member에서 Family로 옮기기
+            family.setLmpDate(member.getLmpDate());
             familyRepository.save(family);
             member.assignFamily(family);
+            // Member의 LMP는 null로 설정 (중복 방지)
+            member.setLmpDate(null);
             memberRepository.save(member);
         }
 

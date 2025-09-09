@@ -6,6 +6,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -13,6 +16,7 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Setter
 public class Family extends BaseEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,12 +26,13 @@ public class Family extends BaseEntity {
     @Column(name = "code")
     private String code;
 
+    @Column(name = "lmp_date")
+    private LocalDate lmpDate;
+
     @OneToMany(mappedBy = "family")
     private List<Member> memberList;
 
     @OneToMany(mappedBy = "family")
     private List<DailyQuestion> dailyQuestionList;
-
-
 
 }

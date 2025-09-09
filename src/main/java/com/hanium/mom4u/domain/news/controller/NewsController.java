@@ -18,7 +18,6 @@ public class NewsController {
     private final NewsService newsService;
 
     // 정보 추천 별 보여주기(3개)
-    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "추천 정보 반환 API", description = """
             사용자가 관심있는 카테고리를 기반으로 추천 글을 불러오는 API입니다.<br>
             기본 반환 개수는 3개입니다.<br>
@@ -76,5 +75,30 @@ public class NewsController {
                         newsService.getDetail(newsId)
                 )
         );
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @PutMapping("/{newsId}/bookmark")
+    @Operation(summary = "북마크 추가", description = "해당 정보를 내 북마크에 추가합니다.")
+    public ResponseEntity<CommonResponse<?>> addBookmark(@PathVariable Long newsId) {
+        newsService.addBookmark(newsId);
+        return ResponseEntity.ok(CommonResponse.onSuccess(null));
+    }
+    @PreAuthorize("hasRole('USER')")
+    @DeleteMapping("/{newsId}/bookmark")
+    @Operation(summary = "북마크 해제", description = "해당 정보의 북마크를 해제합니다.")
+    public ResponseEntity<CommonResponse<?>> removeBookmark(@PathVariable Long newsId) {
+        newsService.removeBookmark(newsId);
+        return ResponseEntity.ok(CommonResponse.onSuccess(null));
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/bookmarks")
+    @Operation(summary = "내 북마크 목록", description = "로그인 사용자의 북마크한 정보 목록을 조회합니다.")
+    public ResponseEntity<CommonResponse<?>> myBookmarks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(CommonResponse.onSuccess(newsService.getMyBookmarks(page, size)));
     }
 }
