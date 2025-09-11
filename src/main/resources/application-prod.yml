@@ -1,7 +1,7 @@
 spring:
   config:
     activate:
-      on-profile: "dev"
+      on-profile: "prod"
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -74,3 +74,6 @@ management:
 
 openapi:
   base-url: ${DEV_DNS_SERVER}
+springdoc:
+  swagger-ui.enabled: false
+  api-docs.enabled: false
