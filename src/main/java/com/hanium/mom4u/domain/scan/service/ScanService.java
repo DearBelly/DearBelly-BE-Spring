@@ -1,13 +1,16 @@
 package com.hanium.mom4u.domain.scan.service;
 
+import com.hanium.mom4u.domain.scan.dto.response.UploadResponseDto;
 import com.hanium.mom4u.external.redis.common.RedisStreamNames;
 import com.hanium.mom4u.external.redis.message.ImageJobMessage;
 import com.hanium.mom4u.external.redis.publisher.ImageJobPublisher;
+import com.hanium.mom4u.external.s3.event.S3DeleteEvent;
 import com.hanium.mom4u.external.s3.service.FileStorageService;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,11 +26,13 @@ public class ScanService {
     private final ImageJobPublisher imageJobPublisher;
     private final FileStorageService fileStorageService;
 
+    private final ApplicationEventPublisher applicationEventPublisher;
+
     /**
      * 전달받은 사진을 S3에 업로드
      * @param file
      */
-    public String sendImageToS3(MultipartFile file) throws IOException {
+    public UploadResponseDto sendImageToS3(MultipartFile file) throws IOException {
         if (!file.getOriginalFilename().endsWith("jpeg") && !file.getOriginalFilename().endsWith("png")) {
             log.error("유효하지 않은 파일 양식 확인...");
             throw GeneralException.of(StatusCode.NOT_ENOUGH_FORMAT);
@@ -35,6 +40,9 @@ public class ScanService {
 
         // S3에 업로드 후 PreSingedUrl 받기
         String presignedUrl = fileStorageService.uploadFileAndGetPresignedUrl(file);
+
+        // Object Key 얻기
+        String objectKey = "scan/" + file.getOriginalFilename();
 
         // Task 발행 시작
         String correlationId = UUID.randomUUID().toString();
@@ -52,8 +60,9 @@ public class ScanService {
         // Redis Queue로 발행
         imageJobPublisher.publish(job);
 
-        return correlationId;
+        return UploadResponseDto.builder()
+                .objectKey(objectKey)
+                .correlationId(correlationId)
+                .build();
     }
-
-
 }
