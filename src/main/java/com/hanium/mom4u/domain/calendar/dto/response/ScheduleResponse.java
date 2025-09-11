@@ -12,9 +12,8 @@ import java.time.LocalDate;
 @Builder
 public class ScheduleResponse {
     private Long id;
-    private String name;
+    private String schedule;
     private LocalDate startDate;
     private LocalDate endDate;
     private Color color;
-    private String healthCheck;
 }

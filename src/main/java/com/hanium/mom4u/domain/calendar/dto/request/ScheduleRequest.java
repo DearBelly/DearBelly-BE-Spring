@@ -8,11 +8,10 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class ScheduleRequest {
-    private String name;
+    private String schedule;
     private LocalDate startDate;
     private LocalDate endDate;
     private Color color;
-    private String healthCheck;
 
 
 }
