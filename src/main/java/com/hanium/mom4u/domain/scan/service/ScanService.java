@@ -1,8 +1,10 @@
 package com.hanium.mom4u.domain.scan.service;
 
+import com.hanium.mom4u.domain.scan.dto.response.UploadResponseDto;
 import com.hanium.mom4u.external.redis.common.RedisStreamNames;
 import com.hanium.mom4u.external.redis.message.ImageJobMessage;
 import com.hanium.mom4u.external.redis.publisher.ImageJobPublisher;
+import com.hanium.mom4u.external.s3.dto.response.S3ScanFolderResponseDto;
 import com.hanium.mom4u.external.s3.service.FileStorageService;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
@@ -27,18 +29,20 @@ public class ScanService {
      * 전달받은 사진을 S3에 업로드
      * @param file
      */
-    public String sendImageToS3(MultipartFile file) throws IOException {
+    public UploadResponseDto sendImageToS3(MultipartFile file) throws IOException {
         if (!file.getOriginalFilename().endsWith("jpeg") && !file.getOriginalFilename().endsWith("png")) {
             log.error("유효하지 않은 파일 양식 확인...");
             throw GeneralException.of(StatusCode.NOT_ENOUGH_FORMAT);
         }
 
-        // S3에 업로드 후 PreSingedUrl 받기
-        String presignedUrl = fileStorageService.uploadFileAndGetPresignedUrl(file);
-
-        // Task 발행 시작
         String correlationId = UUID.randomUUID().toString();
 
+        // S3에 업로드 후 PreSingedUrl 받기
+        S3ScanFolderResponseDto responseDto = fileStorageService.uploadFileAndGetPresignedUrl(file, correlationId);
+        String presignedUrl = responseDto.getPresignedUrl();
+        String objectKey = responseDto.getObjectKey();
+
+        // Task 발행 시작
         ImageJobMessage job = ImageJobMessage.builder()
                 .correlationId(correlationId)
                 .presignedUrl(presignedUrl)
@@ -52,8 +56,9 @@ public class ScanService {
         // Redis Queue로 발행
         imageJobPublisher.publish(job);
 
-        return correlationId;
+        return UploadResponseDto.builder()
+                .objectKey(objectKey)
+                .correlationId(correlationId)
+                .build();
     }
-
-
 }

@@ -19,8 +19,8 @@ public class Schedule extends BaseEntity {
     @Column(name = "calendar_id")
     private Long id;
 
-    @Column(name = "name")
-    private String name;
+    @Column(name = "schedule")
+    private String schedule;
 
     @Column(name = "start_date")
     private LocalDate startDate;
@@ -29,24 +29,20 @@ public class Schedule extends BaseEntity {
     private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "color")
+    @Column(name = "color", length = 16, nullable = false)
     private Color color;
 
     @ManyToOne
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @Column(name = "health_check")
-    private String healthCheck;
-
 
     // Schedule.java (entity)
-    public void update(String name, LocalDate startDate, LocalDate endDate, Color color, String healthCheck) {
-        this.name = name;
+    public void update(String schedule, LocalDate startDate, LocalDate endDate, Color color) {
+        this.schedule = schedule;
         this.startDate = startDate;
         this.endDate = endDate;
         this.color = color;
-        this.healthCheck = healthCheck;
     }
 
 }
