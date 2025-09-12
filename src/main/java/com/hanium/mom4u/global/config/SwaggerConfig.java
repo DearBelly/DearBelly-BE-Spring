@@ -5,11 +5,16 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class SwaggerConfig {
+
+    @Value("${openapi.base-url}")
+    private String baseUrl;
 
     @Bean
     public OpenAPI customOpenAPI() {
@@ -26,6 +31,9 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("Dear Belly")
                         .version("v1.0")
-                        .description("Dear Belly 백엔드 API 문서입니다."));
+                        .description("Dear Belly 백엔드 API 문서입니다."))
+                .addServersItem(
+                        new Server().url(baseUrl)
+                );
     }
 }

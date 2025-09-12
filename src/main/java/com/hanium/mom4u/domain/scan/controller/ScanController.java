@@ -1,13 +1,16 @@
 package com.hanium.mom4u.domain.scan.controller;
 
 import com.hanium.mom4u.domain.scan.dto.response.ModelResponseDto;
+import com.hanium.mom4u.domain.scan.dto.response.UploadResponseDto;
 import com.hanium.mom4u.domain.scan.registry.PendingSinkRegistry;
 import com.hanium.mom4u.domain.scan.service.ScanService;
+import com.hanium.mom4u.external.s3.event.S3DeleteEvent;
 import com.hanium.mom4u.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +33,8 @@ public class ScanController {
     private final ScanService scanService;
     private final PendingSinkRegistry registry;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "스캔 요청 API", description = """
             사진 파일을 업로드해주세요. png와 jpeg 확장자가 아니면 제외됩니다.
@@ -37,7 +42,9 @@ public class ScanController {
     public Mono<ResponseEntity<CommonResponse<ModelResponseDto>>> scan(
             @RequestPart("file") MultipartFile file) throws IOException {
 
-        String correlationId = scanService.sendImageToS3(file);
+        UploadResponseDto uploadResponseDto = scanService.sendImageToS3(file);
+        String objectKey = uploadResponseDto.getObjectKey();
+        String correlationId = uploadResponseDto.getCorrelationId();
 
         Sinks.One<ModelResponseDto> sink = registry.create(correlationId);
 
@@ -53,7 +60,11 @@ public class ScanController {
                     );
                     return Mono.just(ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body(body));
                 })
-                .doFinally(sig -> registry.take(correlationId));
+                .doFinally(sig -> {
+                    registry.take(correlationId);
+                    eventPublisher.publishEvent(
+                            new S3DeleteEvent(this, objectKey)
+                    );
+                });
     }
-
 }
