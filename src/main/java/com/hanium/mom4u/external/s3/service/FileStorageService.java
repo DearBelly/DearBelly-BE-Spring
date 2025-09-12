@@ -1,5 +1,6 @@
 package com.hanium.mom4u.external.s3.service;
 
+import com.hanium.mom4u.external.s3.dto.response.S3ScanFolderResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +19,6 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -131,11 +131,13 @@ public class FileStorageService {
 
     /**
      * S3에 받은 이미지를 업로드 후 PresignedURL 반환
+     * 업로드한 이미지의 이름은 JOB의 CorrelationID를 사용
      */
     @Transactional
-    public String uploadFileAndGetPresignedUrl(MultipartFile multipartFile) throws IOException {
+    public S3ScanFolderResponseDto uploadFileAndGetPresignedUrl(
+            MultipartFile multipartFile, String correlationId) throws IOException {
 
-        String key = S3_IMG_PATH + UUID.randomUUID() + "_" + multipartFile.getOriginalFilename();
+        String key = S3_IMG_PATH + correlationId + "_" + multipartFile.getOriginalFilename();
 
         PutObjectRequest objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
@@ -153,6 +155,9 @@ public class FileStorageService {
         String presignedUrl = generatePresignedGetUrl(key);
         log.info("업로드 및 presigned GET URL 발급 성공: {}", presignedUrl);
 
-        return presignedUrl;
+        return S3ScanFolderResponseDto.builder()
+                .objectKey(key)
+                .presignedUrl(presignedUrl)
+                .build();
     }
 }
