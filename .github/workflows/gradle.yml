@@ -47,32 +47,32 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
-      - name: Transfer g file to ec2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./monitoring/
-          target: /home/ubuntu/
 
-      - name: Transfer prometheus setting file to ec2
+      - name: Transfer deploy setting file to ec2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/
+          source: ./deploy/docker/
           target: /home/ubuntu/dearbelly-api/
 
-      - name: Transfer nginx directory file to ec2
+      - name: Transfer nginx file to ec2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./nginx/
+          source: ./deploy/nginx/
+          target: /home/ubuntu/
+
+      - name: Transfer monitoring file to ec2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: ./deploy/monitoring/
           target: /home/ubuntu/
 
   deploy:
@@ -87,7 +87,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd ~/dearbelly-api/deploy
+            mkdir -p ~/dearbelly-api/docker
+            cd ~/dearbelly-api/docker
             
             echo "${{ secrets.ENV }}" > .env
             
