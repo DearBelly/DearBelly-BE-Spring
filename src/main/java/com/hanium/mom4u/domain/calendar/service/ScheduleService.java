@@ -83,11 +83,10 @@ public class ScheduleService {
         }
 
         Schedule schedule = Schedule.builder()
-                .name(request.getName())
+                .schedule(request.getSchedule())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .color(request.getColor())
-                .healthCheck(request.getHealthCheck())
                 .member(member)
                 .build();
         scheduleRepository.save(schedule);
@@ -99,11 +98,10 @@ public class ScheduleService {
                 .orElseThrow(() -> GeneralException.of(StatusCode.SCHEDULE_NOT_FOUND));
         validateOwnership(schedule, member);
         schedule.update(
-                request.getName(),
+                request.getSchedule(),
                 request.getStartDate(),
                 request.getEndDate(),
-                request.getColor(),
-                request.getHealthCheck()
+                request.getColor()
         );
     }
 
@@ -134,11 +132,10 @@ public class ScheduleService {
     private ScheduleResponse toResponse(Schedule schedule) {
         return ScheduleResponse.builder()
                 .id(schedule.getId())
-                .name(schedule.getName())
+                .schedule(schedule.getSchedule())
                 .startDate(schedule.getStartDate())
                 .endDate(schedule.getEndDate())
                 .color(schedule.getColor())
-                .healthCheck(schedule.getHealthCheck())
                 .build();
     }
 }
