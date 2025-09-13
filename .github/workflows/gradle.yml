@@ -54,8 +54,8 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/docker/
-          target: /home/ubuntu/dearbelly-api/
+          source: ./deploy/docker/*
+          target: /home/ubuntu/dearbelly-api/docker/
 
       - name: Transfer nginx file to ec2
         uses: appleboy/scp-action@master
@@ -63,8 +63,8 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/nginx/
-          target: /home/ubuntu/
+          source: ./deploy/nginx/*
+          target: /home/ubuntu/nginx/
 
       - name: Transfer monitoring file to ec2
         uses: appleboy/scp-action@master
@@ -72,8 +72,8 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/monitoring/
-          target: /home/ubuntu/
+          source: ./deploy/monitoring/*
+          target: /home/ubuntu/monitoring/
 
   deploy:
     runs-on: ubuntu-22.04

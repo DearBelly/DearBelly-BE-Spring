@@ -7,6 +7,7 @@ import com.hanium.mom4u.domain.member.repository.MemberRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class MemberCleanupScheduler {
     private final BabyRepository babyRepository;
 
     // 매일 12시 정각 실행
+    @Async("schedulerExecutor")
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void deleteInactiveMembersAfter7Days() {
