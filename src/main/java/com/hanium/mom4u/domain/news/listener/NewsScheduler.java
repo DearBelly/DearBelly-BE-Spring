@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,9 +18,10 @@ public class NewsScheduler {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    @Async("schedulerExecutor")
     @Scheduled(cron = "0 0 4 * * *") // 새벽 4시에 실행
     public void triggerEvent() {
-        log.info("Event started");
+        log.info("S3 Importing Event started");
         eventPublisher.publishEvent(new S3JsonImportEvent(this, BUCKET_NAME));
     }
 }
