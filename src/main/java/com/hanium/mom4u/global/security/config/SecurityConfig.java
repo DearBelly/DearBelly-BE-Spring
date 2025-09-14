@@ -49,6 +49,9 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/api/v1/scan")
                         .permitAll()
+                        .requestMatchers("/api/v1/schedules/**").hasRole("USER")
+                        .requestMatchers("/api/v1/family-code/**").hasRole("USER")
+                        .requestMatchers("/api/v1/member/**").hasRole("USER")
                         .requestMatchers(HttpMethod.PUT,    "/api/v1/news/*/bookmark").hasRole("USER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/news/*/bookmark").hasRole("USER")
                         .requestMatchers(HttpMethod.GET,    "/api/v1/news/bookmarks").hasRole("USER")
@@ -78,7 +81,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:3000", "https://dearbelly.site"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
