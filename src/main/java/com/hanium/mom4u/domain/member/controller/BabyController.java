@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,6 +18,7 @@ public class BabyController {
 
     private final BabyService babyService;
 
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "태아 정보 저장 API", description = """
             태아의 정보를 저장하는 API입니다.<br>
             같은 가족일 경우에 공유가 가능합니다.
@@ -29,7 +31,7 @@ public class BabyController {
                 CommonResponse.onSuccess(babyService.saveBaby(requestDto))
         );
     }
-
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "태아 정보 수정 API", description = """
             태아의 정보를 수정하는 API입니다.<br>
             같은 가족일 경우에 공유가 가능합니다.
@@ -43,7 +45,7 @@ public class BabyController {
                 CommonResponse.onSuccess(babyService.updateBaby(babyId, requestDto))
         );
     }
-
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "등록된 태아 정보 전체 조회 API", description = """
             가족 구성원 간에 등록된 태아 전체를 조회합니다.<br>
             """)
@@ -53,7 +55,7 @@ public class BabyController {
                 CommonResponse.onSuccess(babyService.readAllBabyInfo())
         );
     }
-
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "특정 태아 정보 조회하기 API", description = """
             특정 태아의 정보만 조회하는 API입니다.<br>
             """)
@@ -63,7 +65,7 @@ public class BabyController {
                 CommonResponse.onSuccess(babyService.readBabyInfo(babyId))
         );
     }
-
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "특정 태아의 정보 삭제 API", description = """
             특정 태아를 삭제하는 API입니다.<br>
             같은 가족일 경우에 공유가 가능합니다.
