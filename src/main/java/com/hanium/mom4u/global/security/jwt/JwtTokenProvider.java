@@ -12,11 +12,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
-
 import java.security.Key;
-import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class JwtTokenProvider {
@@ -72,13 +72,13 @@ public class JwtTokenProvider {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
 
-        String roleName = member.getRole().name(); // USER, ADMIN
+        String roleName = member.getRole().name(); // enum 값 (ROLE_USER 또는 ROLE_ADMIN)
         if (!roleName.startsWith("ROLE_")) {
-            roleName = "ROLE_" + roleName;         // → ROLE_USER
+            roleName = "ROLE_" + roleName;
         }
-        var authorities = java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(roleName));
+        var authorities = List.of(new SimpleGrantedAuthority(roleName));
 
-        return new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+        return new UsernamePasswordAuthenticationToken(
                 member.getId().toString(), null, authorities
         );
     }
