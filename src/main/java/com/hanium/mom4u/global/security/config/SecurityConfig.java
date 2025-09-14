@@ -5,6 +5,7 @@ import com.hanium.mom4u.global.response.ErrorResponse;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.JwtAuthenticationFilter;
 import com.hanium.mom4u.global.security.jwt.JwtTokenProvider;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -61,32 +63,30 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex
-                        // 토큰 없음/무효 → 회원전용입니다
+                        // 401: 인증 실패(토큰 없음/만료/무효)
                         .authenticationEntryPoint((request, response, authEx) -> {
-                            var body = ErrorResponse.builder()
-                                    .httpStatus(StatusCode.MEMBER_ONLY.getHttpStatus())
-                                    .code(StatusCode.MEMBER_ONLY.getCode())
-                                    .message(StatusCode.MEMBER_ONLY.getDescription())   // "회원을 조회할 수 없습니다."
-                                    .build();
-
-                            response.setStatus(StatusCode.MEMBER_ONLY.getHttpStatus().value()); // 404
-                            response.setContentType("application/json;charset=UTF-8");
-                            new ObjectMapper().writeValue(response.getWriter(), body);
+                            // 필터에서 남겨준 코드가 있으면 사용
+                            StatusCode code = (StatusCode) request.getAttribute("auth_error_status");
+                            if (code == null) code = StatusCode.INVALID_JWT_TOKEN;
+                            writeError(response, code);
                         })
-                        // 인증은 됐지만 권한 부족 → 403
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            var body = ErrorResponse.builder()
-                                    .httpStatus(StatusCode.UNAUTHORIZED_ACCESS.getHttpStatus())
-                                    .code(StatusCode.UNAUTHORIZED_ACCESS.getCode())
-                                    .message(StatusCode.UNAUTHORIZED_ACCESS.getDescription())
-                                    .build();
-
-                            response.setStatus(StatusCode.UNAUTHORIZED_ACCESS.getHttpStatus().value());
-                            response.setContentType("application/json;charset=UTF-8");
-                            new ObjectMapper().writeValue(response.getWriter(), body);
+                        // 403: 권한 부족
+                        .accessDeniedHandler((request, response, accessDeniedEx) -> {
+                            writeError(response, StatusCode.UNAUTHORIZED_ACCESS);
                         })
                 )
                 .build();
+    }
+
+    private void writeError(HttpServletResponse response, StatusCode status) throws IOException {
+        var body = ErrorResponse.builder()
+                .httpStatus(status.getHttpStatus())
+                .code(status.getCode())
+                .message(status.getDescription())
+                .build();
+        response.setStatus(status.getHttpStatus().value());
+        response.setContentType("application/json;charset=UTF-8");
+        new ObjectMapper().writeValue(response.getWriter(), body);
     }
 
     @Bean
