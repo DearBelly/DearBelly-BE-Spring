@@ -9,13 +9,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 
@@ -23,11 +25,11 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private static final String ANON_KEY = "dearbelly-anon-key";
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        System.out.println("Request path: " + path);
 
         boolean shouldNotFilter = path.startsWith("/api/v1/auth") ||
                 path.startsWith("/swagger-ui/")||
@@ -36,45 +38,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/test") ||
                 path.startsWith("/actuator") ||
                 path.startsWith("/api/v1/scan");
-        System.out.println("Should not filter: " + shouldNotFilter);
 
         return shouldNotFilter;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
 
-        try {
-            String token = jwtTokenProvider.resolveToken(request);
+        String token = jwtTokenProvider.resolveToken(req);
 
+        try {
             if (token != null && jwtTokenProvider.validateToken(token)) {
                 Authentication auth = jwtTokenProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(auth);
+
+            } else {
+                Authentication anonymous = new AnonymousAuthenticationToken(
+                        ANON_KEY, "anonymousUser",
+                        List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
+                );
+                SecurityContextHolder.getContext().setAuthentication(anonymous);
             }
 
-            filterChain.doFilter(request, response);
+            chain.doFilter(req, res);
 
-        } catch (GeneralException ex) {
-            setErrorResponse(response, ex.getStatusCode());
         } catch (Exception e) {
-            setErrorResponse(response, StatusCode.TOKEN_NOT_FOUND);
+            throw e;
         }
-
     }
-
-    private void setErrorResponse(HttpServletResponse response, StatusCode statusCode) throws IOException {
-        ErrorResponse errorResponse = ErrorResponse.builder()
-                .httpStatus(statusCode.getHttpStatus())
-                .code(statusCode.getCode())
-                .message(statusCode.getDescription())
-                .build();
-
-        response.setStatus(statusCode.getHttpStatus().value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
-    }
-
 }
+
+
