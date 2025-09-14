@@ -23,7 +23,6 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
-    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "월별 일정 조회", description = "사용자의 특정 연도/월에 해당하는 모든 일정을 조회합니다.")
     @GetMapping("/monthly")
     public ResponseEntity<?> getMonthlySchedules(
@@ -34,7 +33,6 @@ public class ScheduleController {
         return ResponseEntity.ok(CommonResponse.onSuccess(schedules));
     }
 
-    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "일별 일정 조회", description = "사용자의 특정 날짜에 해당하는 모든 일정을 조회합니다.")
     @GetMapping("/daily")
     public ResponseEntity<?> getDailySchedules(
@@ -44,7 +42,6 @@ public class ScheduleController {
         return ResponseEntity.ok(CommonResponse.onSuccess(schedules));
     }
 
-    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "일정 등록", description = "사용자의 새 일정을 생성합니다.")
     @PostMapping
     public ResponseEntity<?> createSchedule(@RequestBody ScheduleRequest request) {
@@ -52,21 +49,18 @@ public class ScheduleController {
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
 
-    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "일정 수정", description = "지정한 ID의 일정을 수정합니다.")
     @PatchMapping("/{scheduleId}")
     public ResponseEntity<?> updateSchedule(@PathVariable Long scheduleId, @RequestBody ScheduleRequest request) {
         scheduleService.updateSchedule(scheduleId, request);
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
-    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "일정 삭제", description = "지정한 ID의 일정을 삭제합니다.")
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(@PathVariable Long scheduleId) {
         scheduleService.deleteSchedule(scheduleId);
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
-    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "일정 상세 조회", description = "지정한 ID의 일정 정보를 상세 조회합니다.")
     @GetMapping("/{scheduleId}")
     public ResponseEntity<?> getScheduleDetail(@PathVariable Long scheduleId) {
