@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/schedules/**").hasRole("USER")
                         .requestMatchers("/api/v1/family-code/**").hasRole("USER")
                         .requestMatchers("/api/v1/member/**").hasRole("USER")
+                        .requestMatchers("/api/v1/baby/**").hasRole("USER")
                         .requestMatchers(HttpMethod.PUT,    "/api/v1/news/*/bookmark").hasRole("USER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/news/*/bookmark").hasRole("USER")
                         .requestMatchers(HttpMethod.GET,    "/api/v1/news/bookmarks").hasRole("USER")
@@ -60,10 +61,21 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            log.error("Access denied : {}", accessDeniedException);
+                        // 토큰 없음/무효 → 회원전용입니다
+                        .authenticationEntryPoint((request, response, authEx) -> {
+                            var body = ErrorResponse.builder()
+                                    .httpStatus(StatusCode.MEMBER_ONLY.getHttpStatus())
+                                    .code(StatusCode.MEMBER_ONLY.getCode())
+                                    .message(StatusCode.MEMBER_ONLY.getDescription())   // "회원을 조회할 수 없습니다."
+                                    .build();
 
-                            ErrorResponse errorResponse = ErrorResponse.builder()
+                            response.setStatus(StatusCode.MEMBER_ONLY.getHttpStatus().value()); // 404
+                            response.setContentType("application/json;charset=UTF-8");
+                            new ObjectMapper().writeValue(response.getWriter(), body);
+                        })
+                        // 인증은 됐지만 권한 부족 → 403
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            var body = ErrorResponse.builder()
                                     .httpStatus(StatusCode.UNAUTHORIZED_ACCESS.getHttpStatus())
                                     .code(StatusCode.UNAUTHORIZED_ACCESS.getCode())
                                     .message(StatusCode.UNAUTHORIZED_ACCESS.getDescription())
@@ -71,7 +83,7 @@ public class SecurityConfig {
 
                             response.setStatus(StatusCode.UNAUTHORIZED_ACCESS.getHttpStatus().value());
                             response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write(new ObjectMapper().writeValueAsString(errorResponse));
+                            new ObjectMapper().writeValue(response.getWriter(), body);
                         })
                 )
                 .build();
