@@ -133,7 +133,6 @@ public class FileStorageService {
      * S3에 받은 이미지를 업로드 후 PresignedURL 반환
      * 업로드한 이미지의 이름은 JOB의 CorrelationID를 사용
      */
-    @Transactional
     public S3ScanFolderResponseDto uploadFileAndGetPresignedUrl(
             MultipartFile multipartFile, String correlationId) throws IOException {
 
