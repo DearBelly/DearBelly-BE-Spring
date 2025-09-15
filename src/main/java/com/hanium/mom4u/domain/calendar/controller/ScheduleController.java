@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -55,14 +55,12 @@ public class ScheduleController {
         scheduleService.updateSchedule(scheduleId, request);
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
-
     @Operation(summary = "일정 삭제", description = "지정한 ID의 일정을 삭제합니다.")
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(@PathVariable Long scheduleId) {
         scheduleService.deleteSchedule(scheduleId);
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
-
     @Operation(summary = "일정 상세 조회", description = "지정한 ID의 일정 정보를 상세 조회합니다.")
     @GetMapping("/{scheduleId}")
     public ResponseEntity<?> getScheduleDetail(@PathVariable Long scheduleId) {

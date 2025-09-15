@@ -77,14 +77,12 @@ public class NewsController {
         );
     }
 
-    @PreAuthorize("hasRole('USER')")
     @PutMapping("/{newsId}/bookmark")
     @Operation(summary = "북마크 추가", description = "해당 정보를 내 북마크에 추가합니다.")
     public ResponseEntity<CommonResponse<?>> addBookmark(@PathVariable Long newsId) {
         newsService.addBookmark(newsId);
         return ResponseEntity.ok(CommonResponse.onSuccess(null));
     }
-    @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{newsId}/bookmark")
     @Operation(summary = "북마크 해제", description = "해당 정보의 북마크를 해제합니다.")
     public ResponseEntity<CommonResponse<?>> removeBookmark(@PathVariable Long newsId) {
@@ -92,7 +90,6 @@ public class NewsController {
         return ResponseEntity.ok(CommonResponse.onSuccess(null));
     }
 
-    @PreAuthorize("hasRole('USER')")
     @GetMapping("/bookmarks")
     @Operation(summary = "내 북마크 목록", description = "로그인 사용자의 북마크한 정보 목록을 조회합니다.")
     public ResponseEntity<CommonResponse<?>> myBookmarks(
