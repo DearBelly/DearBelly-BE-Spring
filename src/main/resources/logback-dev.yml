@@ -1,2 +1,2 @@
 log.config.level=INFO
-log.config.path=./logs
+log.config.path=/app/logs
