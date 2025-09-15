@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
+    id 'org.asciidoctor.jvm.convert' version '4.0.2'
 }
 
 group = 'com.hanium'
@@ -13,10 +15,16 @@ java {
     }
 }
 
+jacoco {
+    toolVersion = "0.8.13"
+    reportsDirectory = layout.buildDirectory.dir("reports/jacoco")
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
+    asciidoctorExt
 }
 
 repositories {
@@ -41,14 +49,14 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // REST docs
+    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+
+    // Asciidoctor 문서 변환
+    asciidoctorExt 'org.springframework.restdocs:spring-restdocs-asciidoctor'
+
     // H2
     testImplementation 'com.h2database:h2:2.1.214'
-
-    // Webflux
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'
-
-    // thymeleaf
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
     // security
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -89,8 +97,76 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
+// Jacoco 제외 대상 설정
+def snippetsDir = layout.buildDirectory.dir("generated-snippets")
+ext.jacocoExclusions = [
+        '**/*Dto*.class',
+        '**/dto/**',
+        '**/Q*.class'
+]
+
 tasks.named('test') {
     useJUnitPlatform()
+    outputs.dir(snippetsDir)
+    finalizedBy(tasks.named('jacocoTestReport'))
+    finalizedBy(tasks.named('jacocoTestCoverageVerification'))
+}
+
+tasks.named('jacocoTestReport') {
+
+    classDirectories.setFrom(
+            files(classDirectories.files.collect { dir ->
+                fileTree(dir: dir, exclude: jacocoExclusions)
+            })
+    )
+
+    dependsOn(tasks.named('test'))
+    reports {
+        xml.required = false
+        csv.required = false
+        html.required = true
+        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/html"))
+    }
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    dependsOn(tasks.named('jacocoTestReport'))
+
+    classDirectories.setFrom(
+            files(tasks.named('jacocoTestReport').get().classDirectories.files.collect { dir ->
+                fileTree(dir: dir, exclude: jacocoExclusions)
+            })
+    )
+
+    // Test Coverage 설정
+//    violationRules {
+//        rule {
+//            element = 'BUNDLE'
+//            limit {
+//                counter = 'LINE'
+//                value   = 'COVEREDRATIO'
+//                minimum = 0.40
+//            }
+//            limit {
+//                counter = 'BRANCH'
+//                value   = 'COVEREDRATIO'
+//                minimum = 0.40
+//            }
+//        }
+//    }
+}
+
+tasks.named('asciidoctor') {
+    inputs.dir snippetsDir
+    configurations 'asciidoctorExt'
+    dependsOn tasks.named('test')
+}
+
+tasks.named('bootJar') {
+    dependsOn tasks.named('asciidoctor')
+    from(layout.buildDirectory.dir("docs/asciidoc")) {
+        into "static/docs"
+    }
 }
 
 def queryDslSrcDir = 'build/generated/querydsl/'
