@@ -4,13 +4,26 @@ services:
     ports:
       - "8081:8080"
     env_file:
-      - /home/ubuntu/dearbelly-api/deploy/.env
+      - /home/ubuntu/dearbelly-api/docker/.env
     volumes:
       - /home/ubuntu/logs:/app/logs
       - /home/ubuntu/dearbelly-api:/home/dearbelly
     networks:
       - mynetwork
     container_name: app-green
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+    environment:
+      JAVA_TOOL_OPTIONS: >
+        -XX:+UseG1GC
+        -XX:MaxRAMPercentage=65.0
+        -XX:InitiatingHeapOccupancyPercent=30
+        -XX:MaxGCPauseMillis=200
+        -XX:+UseStringDeduplication
+        -Xss512k
+        -XX:MaxMetaspaceSize=256m
 
 networks:
   mynetwork:
