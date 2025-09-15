@@ -36,6 +36,8 @@ spring:
       client_id: ${GOOGLE_REST_API}
       redirect_uri: ${GOOGLE_LOCAL_CALLBACK}
       secret_key: ${GOOGLE_SECRET_KEY}
+    hmac:
+      family-secret: ${FAMILY_HMAC_SECRET}
 
   data:
     redis:
