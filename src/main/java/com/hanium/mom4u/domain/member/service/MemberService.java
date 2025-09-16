@@ -98,17 +98,13 @@ public class MemberService {
     private void deleteIfCustomImage(String imageUrl) {
         if (imageUrl != null && !imageUrl.isBlank()
                 && !imageUrl.equals(DEFAULT_PROFILE_IMG_URL)) {
-            String objectKey = extractKeyFromUrl(imageUrl);
-            fileStorageService.deleteFile(objectKey);
+            String objectKey = fileStorageService.extractKeyFromUrlOrKey(imageUrl); // ← 변경
+            if (!objectKey.isBlank()) {
+                fileStorageService.deleteFile(objectKey);
+            }
         }
     }
 
-
-    private String extractKeyFromUrl(String fullUrl) {
-        int index = fullUrl.indexOf(".amazonaws.com/");
-        if (index == -1) return ""; // 예외 처리
-        return fullUrl.substring(index + ".amazonaws.com/".length());
-    }
 
     public void editProfile(ProfileEditRequest request) {
         Member member = authenticatedProvider.getCurrentMember();
