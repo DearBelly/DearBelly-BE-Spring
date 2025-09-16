@@ -1,0 +1,30 @@
+services:
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: loki
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - /home/ubuntu/monitoring/loki-config.yml:/etc/loki/config.yml:ro
+      - /home/ubuntu/monitoring/loki-data:/loki
+    ports:
+      - "3100:3100"
+    restart: always
+    networks: [mynetwork]
+
+  promtail:
+    image: grafana/promtail:2.9.8
+    container_name: promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - /home/ubuntu/monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /home/ubuntu/logs:/var/log/app:ro         # Spring Boot 로그
+      - /var/log/redis:/var/log/redis:ro  # Redis 로그
+      - /home/ubuntu/monitoring/promtail-positions.yml:/tmp/positions.yml
+    ports:
+      - "9080:9080"
+    restart: always
+    networks: [mynetwork]
+
+networks:
+  mynetwork:
+    driver: bridge
