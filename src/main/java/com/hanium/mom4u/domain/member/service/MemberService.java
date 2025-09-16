@@ -3,6 +3,7 @@ package com.hanium.mom4u.domain.member.service;
 import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.dto.request.ProfileEditRequest;
 import com.hanium.mom4u.domain.member.dto.response.MemberInfoResponse;
+import com.hanium.mom4u.domain.member.dto.response.UploadUrlResponse;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
 import com.hanium.mom4u.external.s3.service.FileStorageService;
@@ -62,11 +63,36 @@ public class MemberService {
         memberRepository.save(member);
     }
 
-    public String getPresignedUploadUrl(String filename) {
+    //  PUT presigned URL + objectKey 반환
+    public UploadUrlResponse issuePresignedPut(String filename) {
         Member member = authenticatedProvider.getCurrentMember();
-        String objectKey = "images/" + member.getId() + "/" + filename;
-        return fileStorageService.generatePresignedPutUrl(objectKey);
+        String objectKey = "images/%d/%s".formatted(member.getId(), filename);
+        String putUrl = fileStorageService.generatePresignedPutUrl(objectKey);
+        return new UploadUrlResponse(putUrl, objectKey);
     }
+
+    // 커밋 (objectKey -> 공개 URL 확정/저장)
+    public void commitProfileImage(String objectKey) {
+        Member member = authenticatedProvider.getCurrentMember();
+
+        String expected = "images/" + member.getId() + "/";
+        if (objectKey == null || !objectKey.startsWith(expected)) {
+            throw GeneralException.of(StatusCode.MEMBER_ONLY);
+        }
+        String publicUrl = fileStorageService.publicUrlOf(objectKey);
+        deleteIfCustomImage(member.getImgUrl());
+        member.setImgUrl(publicUrl);
+        memberRepository.save(member);
+    }
+
+    //기본 이미지로
+    public void resetProfileImageToDefault() {
+        Member member = authenticatedProvider.getCurrentMember();
+        deleteIfCustomImage(member.getImgUrl());
+        member.setImgUrl(DEFAULT_PROFILE_IMG_URL);
+        memberRepository.save(member);
+    }
+
 
     //기본 이미지가 아닌 경우 S3에서 삭제
     private void deleteIfCustomImage(String imageUrl) {
@@ -77,18 +103,6 @@ public class MemberService {
         }
     }
 
-
-    public void updateProfileImage(String newImgUrl) {
-        Member member = authenticatedProvider.getCurrentMember();
-        String oldImgUrl = member.getImgUrl();
-
-
-        deleteIfCustomImage(oldImgUrl);
-
-
-        member.setImgUrl(newImgUrl);
-        memberRepository.save(member);
-    }
 
     private String extractKeyFromUrl(String fullUrl) {
         int index = fullUrl.indexOf(".amazonaws.com/");
@@ -117,16 +131,6 @@ public class MemberService {
             }
         }
 
-        if (request.getImgUrl() != null) {
-            deleteIfCustomImage(member.getImgUrl());
-
-            // 새로운 값 적용
-            if (request.getImgUrl().isBlank()) {
-                member.setImgUrl(DEFAULT_PROFILE_IMG_URL);
-            } else {
-                member.setImgUrl(request.getImgUrl());
-            }
-        }
 
 
         memberRepository.save(member);
