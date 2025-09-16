@@ -17,8 +17,8 @@ services:
     command: -config.file=/etc/promtail/config.yml
     volumes:
       - /home/ubuntu/monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
-      - /home/ubuntu/logs:/var/log/app:ro         # Spring Boot 로그
-      - /var/log/redis:/var/log/redis:ro  # Redis 로그
+      - /home/ubuntu/logs:/var/log/app:ro
+      - /var/log/redis:/var/log/redis:ro
       - /home/ubuntu/monitoring/promtail-positions.yml:/tmp/positions.yml
     ports:
       - "9080:9080"
