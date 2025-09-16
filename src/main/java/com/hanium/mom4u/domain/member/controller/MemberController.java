@@ -61,6 +61,15 @@ public class MemberController {
         memberService.commitProfileImage(req.objectKey());
         return ResponseEntity.ok(CommonResponse.onSuccess());
     }
+
+    @Operation(summary = "프로필 이미지 기본값으로 리셋",
+            description = "업로드 없이 기본 이미지로 되돌립니다.")
+    @DeleteMapping("/profile/image")
+    public ResponseEntity<CommonResponse<Void>> resetProfileImage() {
+        memberService.resetProfileImageToDefault();
+        return ResponseEntity.ok(CommonResponse.onSuccess());
+    }
+
     @Operation(summary = "회원 닉네임, 출산예정일 수정", description = "마이페이지에서 닉네임, 출산 예정일을 수정합니다.")
     @PatchMapping("/profile/edit")
     public ResponseEntity<CommonResponse<Void>> editProfile(@RequestBody ProfileEditRequest request) {
