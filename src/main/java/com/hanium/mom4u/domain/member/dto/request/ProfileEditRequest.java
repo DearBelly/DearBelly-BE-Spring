@@ -14,6 +14,4 @@ public class ProfileEditRequest {
     @Schema(description = "마지막 생리 시작일")
     private LocalDate lmpDate;
 
-    @Schema(description = "프로필 이미지 URL")
-    private String imgUrl;
 }

@@ -1,6 +1,7 @@
 package com.hanium.mom4u.domain.news.dto.response;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hanium.mom4u.domain.news.common.Category;
 import com.hanium.mom4u.domain.news.entity.News;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,5 +37,10 @@ public class NewsDetailResponseDto {
                 .link(news.getLink())
                 .bookmarked(bookmarked)
                 .build();
+    }
+
+    @JsonProperty("imgUrl")
+    public String getImgUrlAlias() {
+        return imageUrl;
     }
 }
