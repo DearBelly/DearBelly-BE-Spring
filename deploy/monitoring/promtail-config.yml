@@ -19,20 +19,27 @@ scrape_configs:
           env: dev
           __path__: /var/log/app/app*.json
     pipeline_stages:
+      - timestamp:
+          source: "@timestamp"
+          format: "2006-01-02T15:04:05.000Z07:00"
+      # JSON 파싱
       - json:
           expressions:
             level: level
             logger: logger
             thread: thread
             message: message
-            traceId: traceId
-            memberId: memberId
-            correlationId: correlationId
+            # MDC key
+            requestId: mdc.requestId
+
+      # 라벨로 올릴 항목
       - labels:
           level:
           logger:
+          thread:
           traceId:
           memberId:
+          requestId:
 
   # Redis log
   - job_name: redis_logs

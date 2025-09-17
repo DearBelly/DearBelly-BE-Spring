@@ -58,10 +58,14 @@ spring:
       stack:
         auto: false
 
+log:
+  config:
+    level: INFO
+    path: /app/logs
+
 logging:
   level:
     root: INFO
-    org.hibernate.SQL: DEBUG
 
 management:
   endpoints:

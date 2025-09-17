@@ -59,10 +59,14 @@ spring:
       stack:
         auto: false
 
+log:
+  config:
+    level: INFO
+    path: ./logs
+
 logging:
   level:
     root: INFO
-    org.hibernate.SQL: DEBUG
 
 external:
   filepath: ${LOCAL_FILE_PATH}
