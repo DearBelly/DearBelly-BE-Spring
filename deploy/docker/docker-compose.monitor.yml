@@ -19,7 +19,7 @@ services:
       - /home/ubuntu/monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
       - /home/ubuntu/logs:/var/log/app:ro
       - /var/log/redis:/var/log/redis:ro
-      - /home/ubuntu/monitoring/promtail-positions.yml:/tmp/positions.yml
+      - /home/ubuntu/promtail/positions:/var/lib/promtail
     ports:
       - "9080:9080"
     restart: always
