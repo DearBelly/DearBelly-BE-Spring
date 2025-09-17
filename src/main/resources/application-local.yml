@@ -78,3 +78,8 @@ management:
 
 openapi:
   base-url: http://localhost:8080
+
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true
