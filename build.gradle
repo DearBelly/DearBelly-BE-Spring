@@ -95,6 +95,9 @@ dependencies {
 
     // prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // logback
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 }
 
 // Jacoco 제외 대상 설정
