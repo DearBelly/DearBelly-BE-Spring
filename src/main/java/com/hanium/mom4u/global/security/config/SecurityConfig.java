@@ -52,6 +52,7 @@ public class SecurityConfig {
                                 "/api/v1/scan")
                         .permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/auth/refresh").hasRole("USER")
                         .requestMatchers(HttpMethod.POST,   "/api/v1/auth/logout").hasRole("USER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/auth/withdraw").hasRole("USER")
                         .requestMatchers("/api/v1/schedules/**").hasRole("USER")
