@@ -48,10 +48,12 @@ public class SecurityConfig {
                         .requestMatchers("/test/**","/v3/api-docs/**", "/swagger-ui/**",
                                 "/swagger-resources/**",
                                 "/uploads/**",
-                                "/api/v1/auth/**",
                                 "/actuator/**",
                                 "/api/v1/scan")
                         .permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/auth/logout").hasRole("USER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/auth/withdraw").hasRole("USER")
                         .requestMatchers("/api/v1/schedules/**").hasRole("USER")
                         .requestMatchers("/api/v1/family-code/**").hasRole("USER")
                         .requestMatchers("/api/v1/member/**").hasRole("USER")
@@ -94,7 +96,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:3000", "https://dearbelly.site"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
