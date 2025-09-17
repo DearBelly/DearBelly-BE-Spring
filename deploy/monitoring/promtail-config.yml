@@ -1,0 +1,56 @@
+server:
+  http_listen_port: 9080
+  log_level: info
+
+positions:
+  filename: /var/lib/promtail/positions.yml
+
+clients:
+  - url: http://{$REMOTE_HOST}}:3100/loki/api/v1/push # PUSH to Loki
+
+scrape_configs:
+  # Spring log
+  - job_name: spring_app_logs
+    static_configs:
+      - targets: ['${REMOTE_HOST}']
+        labels:
+          job: spring-app
+          app: app
+          env: dev
+          __path__: /var/log/app/app*.json
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            logger: logger
+            thread: thread
+            message: message
+            traceId: traceId
+            memberId: memberId
+            correlationId: correlationId
+      - labels:
+          level:
+          logger:
+          traceId:
+          memberId:
+
+  # Redis log
+  - job_name: redis_logs
+    static_configs:
+      - targets: ['${REMOTE_HOST}']
+        labels:
+          job: redis
+          app: redis
+          env: dev
+          __path__: /var/log/redis/redis-server.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<ts>.+?)\s+(?P<level>[\*\#\-])\s+(?P<msg>.*)$'
+      - labels:
+          level:
+      - timestamp:
+          source: ts
+          format: '02 MMM yyyy HH:mm:ss.SSS'
+          location: Asia/Seoul
+      - output:
+          source: msg

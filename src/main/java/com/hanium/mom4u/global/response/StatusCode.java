@@ -39,6 +39,7 @@ public enum StatusCode {
 
 
     // member
+    INVALID_IMAGE_URL(HttpStatus.BAD_REQUEST, "IMG4001", "허용되지 않은 이미지 URL입니다."),
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ME4001", "회원을 조회할 수 없습니다."),
     FILE_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE5001", "파일 저장에 실패했습니다."),
     FILE_EMPTY(HttpStatus.BAD_REQUEST, "FILE4002", "파일이 비어있습니다."),
