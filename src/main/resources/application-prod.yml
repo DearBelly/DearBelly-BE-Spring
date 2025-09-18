@@ -52,6 +52,7 @@ spring:
         access-key: ${AWS_ACCESS_KEY}
         secret-key: ${AWS_SECRET_KEY}
         default-image: ${DEFAULT_IMAGE}
+        image-prefix: ${IMAGE_PREFIX}
 
       region:
         static: ${AWS_REGION}
