@@ -34,6 +34,11 @@ public class NewsRepositoryCustomImpl implements NewsRepositoryCustom {
                 .fetch();
     }
 
+    /**
+     * @param category : 보여줄 카테고리
+     * @param count : 보여줄 카테고리의 개수(1, 2, 3)
+     * @return
+     */
     @Override
     public List<News> findByCategoryOrderByPostedAt(Category category, int count) {
 
@@ -42,6 +47,18 @@ public class NewsRepositoryCustomImpl implements NewsRepositoryCustom {
                 .where(news.category.eq(category))
                 .orderBy(news.postedAt.desc())
                 .limit(count)
+                .fetch();
+    }
+
+    /*
+    지정 카테고리 별 전체 News 반환
+     */
+    @Override
+    public List<News> findAllByCategoryOrderByPostedAt(Category category) {
+        return jpaQueryFactory
+                .selectFrom(news)
+                .where(news.category.eq(category))
+                .orderBy(news.postedAt.desc())
                 .fetch();
     }
 }
