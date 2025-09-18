@@ -52,4 +52,39 @@ public class NewsScheduler {
         log.info("S3 Importing Event started");
         eventPublisher.publishEvent(new S3JsonImportEvent(this, BUCKET_NAME));
     }
+
+    // 서로 다른 이미지 보여주기
+    @Async("schedulerExecutor")
+    @Transactional
+    @Scheduled(cron = "0 30 4 * * *") // 새벽 4시 30분에 실행
+    public void triggerSaveImage() {
+        log.info("Save Image started");
+
+        for (Category category : Category.values()) {
+
+            // 하나의 카테고리에 대한 최신순 정렬(전체)
+            List<News> newsList = newsRepository.findAllByCategoryOrderByPostedAt(category);
+
+            if (newsList.isEmpty()) {
+                log.debug("No news found for {}", category);
+                continue;
+            }
+
+            List<String> urls = newsMap.get(category);
+            if (urls == null || urls.isEmpty()) {
+                log.warn("No image URLs configured for {}", category);
+                continue;
+            }
+
+            final int mod = urls.size();
+            // URL 별로 번갈아서 주소 할당
+            for (int i = 0; i < newsList.size(); i++) {
+                News news = newsList.get(i);
+                news.setImgUrl(urls.get(i % mod));
+            }
+
+            newsRepository.saveAll(newsList);
+            log.info("Assigned images to {} news in {}", newsList.size(), category);
+        }
+    }
 }
