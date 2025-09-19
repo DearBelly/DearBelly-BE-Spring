@@ -10,7 +10,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "news")
+@Table(
+        name = "news",
+        indexes = {
+                @Index(name="idx_post_category", columnList = "post_id, category")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name="uniq_post_category", columnNames = {"post_id", "category"})
+        }
+)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

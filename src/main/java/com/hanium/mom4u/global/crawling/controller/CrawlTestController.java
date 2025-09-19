@@ -18,8 +18,6 @@ public class CrawlTestController {
 
     private final CrawlingTriggerService crawlingTriggerService;
 
-    private final FileStorageService fileStorageService;
-
     private final ApplicationEventPublisher eventPublisher;
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
