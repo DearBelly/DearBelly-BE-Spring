@@ -12,33 +12,37 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
 
-@Component
+
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
 
+    private static final List<RequestMatcher> PUBLIC_MATCHERS = List.of(
+
+            new AntPathRequestMatcher("/swagger-ui/**"),
+            new AntPathRequestMatcher("/v3/api-docs/**"),
+            new AntPathRequestMatcher("/swagger-resources/**"),
+            new AntPathRequestMatcher("/test/**"),
+            new AntPathRequestMatcher("/actuator/**"),
+            new AntPathRequestMatcher("/api/v1/scan"),
+            new AntPathRequestMatcher("/api/v1/auth/**", null)    );
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        String path = request.getRequestURI();
-
-        boolean shouldNotFilter = path.startsWith("/api/v1/auth") ||
-                path.startsWith("/swagger-ui/")||
-                path.startsWith("/v3/api-docs") ||
-                path.startsWith("/swagger-resources/")||
-                path.startsWith("/test") ||
-                path.startsWith("/actuator") ||
-                path.startsWith("/api/v1/scan");
-
-        return shouldNotFilter;
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        for (RequestMatcher m : PUBLIC_MATCHERS) {
+            if (m.matches(request)) return true;
+        }
+        return false;
     }
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
