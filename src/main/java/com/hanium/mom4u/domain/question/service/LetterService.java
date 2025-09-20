@@ -9,6 +9,8 @@ import com.hanium.mom4u.domain.question.dto.response.HomeResponse;
 import com.hanium.mom4u.domain.question.dto.response.LetterResponse;
 import com.hanium.mom4u.domain.question.entity.Letter;
 import com.hanium.mom4u.domain.question.repository.LetterRepository;
+import com.hanium.mom4u.domain.sse.dto.MessageDto;
+import com.hanium.mom4u.external.redis.publisher.MessagePublisher;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.function.Predicate;
 
 @Service
 @RequiredArgsConstructor
@@ -30,9 +33,15 @@ public class LetterService {
     private final BabyRepository babyRepository;
     private final MemberRepository memberRepository;
 
+    private final MessagePublisher messagePublisher;
+
     @Transactional
     public Long create(LetterRequest req) {
-        Member me = authenticatedProvider.getCurrentMember();
+        Long memberId = authenticatedProvider.getCurrentMemberId();
+
+        Member me = memberRepository.findWithFamilyAndMembers(memberId)
+                .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
+
         String content = req.getContent().trim();
         if (content.isEmpty()) throw GeneralException.of(StatusCode.LETTER_CONTENT_REQUIRED);
         if (content.length() > 300) throw GeneralException.of(StatusCode.LETTER_CONTENT_TOO_LONG);
@@ -45,9 +54,25 @@ public class LetterService {
 
         Long id = letterRepository.save(letter).getId();
 
+        List<Long> memberIdList = List.of();
         if (me.getFamily() != null) {
             letterRepository.resetSeenFlagForFamilyExceptWriter(me.getFamily().getId(), me.getId());
             letterRepository.markSeenForMember(me.getId());
+
+            memberIdList = me.getFamily().getMemberList().stream()
+                    .map(Member::getId)
+                    .filter(Predicate.not(me.getId()::equals))
+                    .toList();
+        }
+
+        for (Long receiverId : memberIdList) {
+            messagePublisher.publish("Alarm",
+                    MessageDto.builder()
+                            .receiverId(receiverId)
+                            .title("새로운 편지가 도착했어요!")
+                            .content("새로운 편지가 도착했어요! 확인해보세요!")
+                            .build()
+            );
         }
         return id;
     }
