@@ -33,7 +33,6 @@ public class SseRepository {
 
     // key에 해당하는 모든 SSE 찾기
     public void removeByEmitter(SseEmitter emitter) {
-        // 전체 키를 스캔해 제거(수는 적으므로 괜찮음. 대규모면 역인덱스 추가)
         store.forEach((k, v) -> {
             if (v.remove(emitter) && v.isEmpty()) {
                 store.remove(k, v);

@@ -26,7 +26,6 @@ public class SseController {
             description = """
            SSE 연결을 위한 최초의 url입니다.<br>
            Header에는 Authorization으로 토큰만 넣어주시면 됩니다.<br>
-           수신할 Event의 주 타입은 SUBSCRIBE, ALARM입니다. <br>
            서버에서 설정된 시간이 만료되지 않는 이상 생성된 event는 만료되지 않습니다.
            """)
     public SseEmitter subscribe(
