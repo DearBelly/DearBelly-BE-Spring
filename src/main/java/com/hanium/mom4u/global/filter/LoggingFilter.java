@@ -31,6 +31,7 @@ public class LoggingFilter extends OncePerRequestFilter {
         return uri.startsWith("/actuator/health")
                 || uri.startsWith("/swagger-ui")
                 || uri.startsWith("/api/v1/scan")
+                || uri.startsWith("/api/v1/sse")
                 ;
     }
 

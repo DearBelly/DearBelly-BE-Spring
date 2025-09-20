@@ -29,10 +29,10 @@ public class Family extends BaseEntity {
     @Column(name = "lmp_date")
     private LocalDate lmpDate;
 
-    @OneToMany(mappedBy = "family")
+    @OneToMany(mappedBy = "family", fetch = FetchType.LAZY)
     private List<Member> memberList;
 
-    @OneToMany(mappedBy = "family")
+    @OneToMany(mappedBy = "family", fetch = FetchType.LAZY)
     private List<DailyQuestion> dailyQuestionList;
 
 }
