@@ -73,20 +73,20 @@ public class Member extends BaseEntity {
     @Column(name = "is_light_mode")
     private Boolean isLightMode;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_id")
     private Family family;
 
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
     private List<Baby> babyList;
 
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
     private List<Schedule> scheduleList;
 
     @Column(name = "has_seen_family_letters", nullable = false)
     private boolean hasSeenFamilyLetters = false;
 
-    @OneToMany(mappedBy = "member", orphanRemoval = true)
+    @OneToMany(mappedBy = "member", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<NewsBookmark> newsBookmarks = new HashSet<>();
 
     @ElementCollection(targetClass = Category.class)
