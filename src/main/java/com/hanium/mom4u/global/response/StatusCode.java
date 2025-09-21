@@ -76,6 +76,9 @@ public enum StatusCode {
     // scan
     NOT_ENOUGH_FORMAT(HttpStatus.BAD_REQUEST, "SCAN4001", "유효한 사진 파일 양식이 아닙니다."),
 
+    // SSE
+    SSE_CONNECTION_ERROR(HttpStatus.SEE_OTHER, "SSE3001", "SSE 연결에 실패하였습니다."),
+
     // server
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER5001", "서버에서 에러가 발생했습니다."),
     INVALID_JSON_FORMAT(HttpStatus.BAD_REQUEST, "JSON400", "JSON 형식 오류"),
