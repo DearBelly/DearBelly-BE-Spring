@@ -53,10 +53,6 @@ public class SecurityConfig {
             "/api/v1/schedules/**", "/api/v1/family-code/**",
             "/api/v1/member/**", "/api/v1/baby/**"
     };
-    // 인증 필요(ROLE_USER) – 메서드별
-    private static final String[] USER_POST = {
-            "/api/v1/auth/refresh", "/api/v1/auth/logout"
-    };
     private static final String[] USER_DELETE = {
             "/api/v1/auth/withdraw", "/api/v1/news/*/bookmark"
     };
@@ -72,7 +68,9 @@ public class SecurityConfig {
     private static final String[] AUTH_PUBLIC_POST = {
             "/api/v1/auth/google",   // 코드 교환
             "/api/v1/auth/kakao",
-            "/api/v1/auth/naver"
+            "/api/v1/auth/naver",
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/logout"
     };
 
     @Bean
@@ -95,12 +93,10 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> {
 
-                    // 0) CORS 프리플라이트
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
 
                     //    USER 전용 (메서드 무관/별도)
                     for (String p : USER_ANY)    auth.requestMatchers(p).hasRole("USER");
-                    for (String p : USER_POST)   auth.requestMatchers(HttpMethod.POST,   p).hasRole("USER");
                     for (String p : USER_PUT)    auth.requestMatchers(HttpMethod.PUT,    p).hasRole("USER");
                     for (String p : USER_DELETE) auth.requestMatchers(HttpMethod.DELETE, p).hasRole("USER");
 
