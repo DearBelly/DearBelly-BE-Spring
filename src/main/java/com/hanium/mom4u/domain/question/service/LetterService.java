@@ -11,6 +11,8 @@ import com.hanium.mom4u.domain.question.dto.response.*;
 import com.hanium.mom4u.domain.question.entity.Letter;
 import com.hanium.mom4u.domain.question.repository.DailyQuestionRepository;
 import com.hanium.mom4u.domain.question.repository.LetterRepository;
+import com.hanium.mom4u.domain.sse.dto.MessageDto;
+import com.hanium.mom4u.external.redis.publisher.MessagePublisher;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
@@ -31,6 +33,7 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,10 +47,14 @@ public class LetterService {
     private final MemberRepository memberRepository;
     private final DailyQuestionRepository dailyQuestionRepository;
 
+
+    private final MessagePublisher messagePublisher;
+
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private static final String THEME_COOKIE = "HOME_THEME";
-    private static final int COOKIE_MAX_AGE = 60 * 60 * 24 * 1;
+    @Value("${spring.home.theme.cookie}")
+    private int COOKIE_MAX_AGE ;
 
     @Value("${spring.cloud.aws.s3.default-image}")
     private String DEFAULT_IMAGE;
@@ -57,9 +64,17 @@ public class LetterService {
         return (url == null || url.isBlank()) ? DEFAULT_IMAGE : url;
     }
 
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    @Transactional
+    public void assignGlobalAtMidnight() {
+        ensureTodayGlobalQuestion();
+    }
+
     @Transactional
     public Long create(LetterRequest req) {
-        Member me = meWithFamily();
+        Long memberId = authenticatedProvider.getCurrentMemberId();
+        Member me = memberRepository.findWithFamilyAndMembers(memberId)
+                .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
         String content = req.getContent().trim();
         if (content.isEmpty()) throw GeneralException.of(StatusCode.LETTER_CONTENT_REQUIRED);
         if (content.length() > 300) throw GeneralException.of(StatusCode.LETTER_CONTENT_TOO_LONG);
@@ -79,10 +94,27 @@ public class LetterService {
 
         Long id = letterRepository.save(letter).getId();
 
+        List<Long> memberIdList = List.of();
         if (me.getFamily() != null) {
             letterRepository.resetSeenFlagForFamilyExceptWriter(me.getFamily().getId(), me.getId());
             letterRepository.markSeenForMember(me.getId());
+            memberIdList = me.getFamily().getMemberList().stream()
+                    .map(Member::getId)
+                    .filter(Predicate.not(me.getId()::equals))
+                    .toList();
+
+            for (Long receiverId : memberIdList) {
+                messagePublisher.publish(
+                        "Alarm",
+                        MessageDto.builder()
+                                .receiverId(receiverId)
+                                .title("새로운 편지가 도착했어요!")
+                                .content("새로운 편지가 도착했어요! 확인해보세요!")
+                                .build()
+                );
+            }
         }
+
         return id;
     }
 
@@ -91,7 +123,7 @@ public class LetterService {
         Member me = meWithFamily();
         YearMonth ym = (year == null || month == null) ? YearMonth.now(KST) : YearMonth.of(year, month);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
-        LocalDateTime end = ym.atEndOfMonth().atTime(23,59,59);
+        LocalDateTime end = ym.atEndOfMonth().atTime(23, 59, 59);
 
         List<Letter> letters;
         if (me.getFamily() != null) {
@@ -152,25 +184,24 @@ public class LetterService {
         Letter letter = letterRepository.findById(letterId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.LETTER_NOT_FOUND));
 
-        // 권한 체크
-        if (letter.getFamily() != null) {
-            if (me.getFamily() == null || !letter.getFamily().getId().equals(me.getFamily().getId())) {
-                throw GeneralException.of(StatusCode.LETTER_FORBIDDEN);
-            }
-        } else if (!letter.getWriter().getId().equals(me.getId())) {
+        Long myFamId     = (me.getFamily() == null) ? null : me.getFamily().getId();
+        Long letterFamId = (letter.getFamily() == null) ? null : letter.getFamily().getId();
+        Long writerFamId = (letter.getWriter().getFamily() == null) ? null : letter.getWriter().getFamily().getId();
+
+        boolean isMine             = letter.getWriter().getId().equals(me.getId());
+        boolean sameByLetterFamily = (letterFamId != null && myFamId != null && letterFamId.equals(myFamId));
+        boolean sameByWriterFamily = (writerFamId != null && myFamId != null && writerFamId.equals(myFamId));
+
+        if (!(isMine || sameByLetterFamily || sameByWriterFamily)) {
             throw GeneralException.of(StatusCode.LETTER_FORBIDDEN);
         }
 
-        // 남이 쓴 가족 편지라면 읽음 처리
-        boolean shouldMarkSeen =
-                letter.getFamily() != null
-                        && me.getFamily() != null
-                        && letter.getFamily().getId().equals(me.getFamily().getId())
-                        && !letter.getWriter().getId().equals(me.getId());
-
+        // 남이 쓴 가족 편지면 읽음 처리
+        boolean shouldMarkSeen = !isMine && (sameByLetterFamily || sameByWriterFamily);
         if (shouldMarkSeen) {
             letterRepository.markSeenForMember(me.getId());
         }
+
 
         Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
         String qText = getQuestionTextFor(letter.getCreatedAt().toLocalDate(), famId);
@@ -181,7 +212,7 @@ public class LetterService {
                 .nickname(letter.getWriter().getNickname())
                 .imgUrl(profileUrlOrDefault(letter.getWriter()))
                 .createdAt(letter.getCreatedAt())
-                .editable(letter.getWriter().getId().equals(me.getId()))
+                .editable(isMine)
                 .question(qText)
                 .build();
     }
@@ -194,7 +225,6 @@ public class LetterService {
         List<Baby> babies;
         if (me.getFamily() != null) {
             babies = babyRepository.findOngoingByFamilyId(me.getFamily().getId(), PageRequest.of(0, 100));
-            // (가족 기준이 비어 있고 임산부면) 개인 기준으로도 보조 조회
             if (babies.isEmpty() && me.isPregnant()) {
                 babies = babyRepository.findOngoingByMemberId(me.getId(), PageRequest.of(0, 100));
             }
@@ -204,26 +234,23 @@ public class LetterService {
             babies = java.util.Collections.emptyList();
         }
 
-        // 2) 이름 전부 합치기 (빈 이름이면 "아기" 대체)
         String babyNames = babies.isEmpty() ? null
                 : babies.stream()
                 .map(b -> (b.getName() == null || b.getName().isBlank()) ? "아기" : b.getName())
                 .distinct()
-                .collect(Collectors.joining(" · ")); // "이름1 · 이름2 · 이름3"
+                .collect(Collectors.joining(" · "));
 
-        // 3) 주차는 가족 LMP(없으면 내 LMP)로 하나만 계산
         LocalDate effectiveLmp = (me.getFamily() != null) ? me.getFamily().getLmpDate() : me.getLmpDate();
         int week = 0;
         if (effectiveLmp != null) {
             week = (int) Math.max(0, ChronoUnit.WEEKS.between(effectiveLmp, LocalDate.now(KST)));
         }
 
-        // 4) 미열람 편지 아이콘 여부
         boolean hasUnread = hasUnreadLetterIcon(me);
 
         return HomeResponse.builder()
-                .babyName(babyNames)     //  여러 아기 이름을 하나의 문자열로
-                .week(week)              // 하나의 주차
+                .babyName(babyNames)
+                .week(week)
                 .hasUnreadLetters(hasUnread)
                 .homeTheme(me.getHomeThemeOrDefault().name())
                 .build();
@@ -241,7 +268,7 @@ public class LetterService {
 
         LocalDate today = LocalDate.now(KST);
         LocalDateTime start = today.atStartOfDay();
-        LocalDateTime end   = start.plusDays(1).minusNanos(1);
+        LocalDateTime end = start.plusDays(1).minusNanos(1);
 
         Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
         DailyQuestion dq = getQuestionFor(today, famId);
@@ -251,7 +278,7 @@ public class LetterService {
 
         return TodayWriteResponse.builder()
                 .date(today)
-                .questionId(dq == null ? null : dq.getId())          // DailyQuestion PK 사용 (현행 유지)
+                .questionId(dq == null ? null : dq.getId())
                 .questionContent(dq == null ? null : dq.getQuestion())
                 .myLetterId(mineOpt.map(Letter::getId).orElse(null))
                 .myLetterContent(mineOpt.map(Letter::getContent).orElse(null))
@@ -300,19 +327,12 @@ public class LetterService {
 
     // === 질문 보장/조회 헬퍼 ===
 
-    /**
-     * 주어진 날짜의 질문을 가져온다.
-     * - 오늘(KST)이면 존재 보장(없으면 전날과 겹치지 않게 생성)
-     * - 과거 날짜는 있는 것만 조회
-     */
     private DailyQuestion getQuestionFor(LocalDate date, Long familyId) {
         if (date.equals(LocalDate.now(KST))) {
-            // 오늘은 글로벌 질문을 최소 1건 보장하고(생성),
-            // 가족용이 있으면 그걸 우선 사용, 없으면 글로벌을 사용
-            ensureTodayGlobalQuestion(); // 생성(멱등)
+            ensureTodayGlobalQuestion();
         }
         LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end   = start.plusDays(1).minusNanos(1);
+        LocalDateTime end = start.plusDays(1).minusNanos(1);
         Pageable one = PageRequest.of(0, 1);
 
         if (familyId != null) {
@@ -325,40 +345,32 @@ public class LetterService {
                 .stream().findFirst().orElse(null);
     }
 
-    /**
-     * 오늘(KST) 글로벌 질문이 없으면 전날과 겹치지 않게 1개 생성(멱등)
-     */
     private void ensureTodayGlobalQuestion() {
         LocalDate today = LocalDate.now(KST);
         LocalDateTime start = today.atStartOfDay();
-        LocalDateTime end   = start.plusDays(1).minusNanos(1);
+        LocalDateTime end = start.plusDays(1).minusNanos(1);
         if (dailyQuestionRepository.existsByFamilyIsNullAndCreatedAtBetween(start, end)) {
-            return; // 이미 오늘 글로벌 질문 있음 → 멱등 종료
+            return;
         }
 
-        // 전날 글로벌 질문 텍스트
         LocalDate yesterday = today.minusDays(1);
         LocalDateTime yStart = yesterday.atStartOfDay();
-        LocalDateTime yEnd   = yStart.plusDays(1).minusNanos(1);
+        LocalDateTime yEnd = yStart.plusDays(1).minusNanos(1);
         String yesterdayContent = dailyQuestionRepository
                 .findLatestGlobal(yStart, yEnd, PageRequest.of(0, 1))
                 .stream().findFirst().map(DailyQuestion::getQuestion).orElse(null);
 
-        // 전날과 다른 질문 랜덤 선택(없으면 아무거나)
         var pickOpt = dailyQuestionRepository.pickRandomQuestionExcludingContent(yesterdayContent);
         var pick = pickOpt.orElseGet(() -> dailyQuestionRepository.pickAnyQuestion()
                 .orElseThrow(() -> new IllegalStateException("No questions found")));
 
-        // 저장(글로벌: family=null)
         DailyQuestion created = new DailyQuestion();
         created.setFamily(null);
         created.setQuestion(pick.getContent());
         created.setQuestionId(pick.getId());
 
-
         dailyQuestionRepository.save(created);
     }
-
 
     private String getQuestionTextFor(LocalDate date, Long familyId) {
         DailyQuestion dq = getQuestionFor(date, familyId);
@@ -373,7 +385,7 @@ public class LetterService {
     private static void writeCookie(HttpServletResponse resp, String name, String value, int maxAge) {
         Cookie c = new Cookie(name, value);
         c.setPath("/");
-        c.setHttpOnly(false); // 프론트에서 읽을 수 있게
+        c.setHttpOnly(false);
         c.setMaxAge(maxAge);
         resp.addCookie(c);
     }
@@ -386,7 +398,6 @@ public class LetterService {
         return found.map(Cookie::getValue).orElse(null);
     }
 
-    /** 비로그인/로그인 공통: 현재 테마 조회 (쿠키 > 회원DB > 기본 MINT) */
     @Transactional(readOnly = true)
     public ThemeResponse getTheme(HttpServletRequest req) {
         String cookieVal = readCookie(req, THEME_COOKIE);
@@ -403,7 +414,6 @@ public class LetterService {
         return new ThemeResponse(HomeTheme.MINT.name());
     }
 
-    /** 비로그인/로그인 공통: 테마 변경 (비로그인=쿠키, 로그인=쿠키+DB) */
     @Transactional
     public ThemeResponse updateTheme(String requested, HttpServletRequest req, HttpServletResponse resp) {
         HomeTheme theme = HomeTheme.fromOrDefault(requested);
@@ -419,10 +429,5 @@ public class LetterService {
         return new ThemeResponse(theme.name());
     }
 
-    // 스케줄러: 매일 0시(KST) 글로벌 질문 확정
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-    @Transactional
-    public void assignGlobalAtMidnight() {
-        ensureTodayGlobalQuestion();
-    }
+
 }
