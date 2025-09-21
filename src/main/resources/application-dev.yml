@@ -59,6 +59,10 @@ spring:
       stack:
         auto: false
 
+  home:
+    theme:
+      cookie: ${HOME_THEME_COOKIE}
+
 log:
   config:
     level: INFO
