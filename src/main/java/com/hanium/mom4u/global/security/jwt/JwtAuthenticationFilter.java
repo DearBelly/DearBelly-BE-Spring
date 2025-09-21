@@ -34,7 +34,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             new AntPathRequestMatcher("/test/**"),
             new AntPathRequestMatcher("/actuator/**"),
             new AntPathRequestMatcher("/api/v1/scan"),
-            new AntPathRequestMatcher("/api/v1/auth/**", null)    );
+            new AntPathRequestMatcher("/api/v1/auth/url/**", "GET"),
+            new AntPathRequestMatcher("/api/v1/auth/naver",  "GET"),
+            new AntPathRequestMatcher("/api/v1/auth/google", "POST"),
+            new AntPathRequestMatcher("/api/v1/auth/kakao",  "POST"),
+            new AntPathRequestMatcher("/api/v1/auth/naver",  "POST")   );
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         for (RequestMatcher m : PUBLIC_MATCHERS) {

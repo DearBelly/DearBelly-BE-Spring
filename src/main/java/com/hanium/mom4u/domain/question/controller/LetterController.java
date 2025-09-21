@@ -1,12 +1,14 @@
 package com.hanium.mom4u.domain.question.controller;
 
 import com.hanium.mom4u.domain.question.dto.request.LetterRequest;
-import com.hanium.mom4u.domain.question.dto.response.HomeResponse;
-import com.hanium.mom4u.domain.question.dto.response.LetterResponse;
+import com.hanium.mom4u.domain.question.dto.request.ThemeRequest;
+import com.hanium.mom4u.domain.question.dto.response.*;
 import com.hanium.mom4u.domain.question.service.LetterService;
 import com.hanium.mom4u.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,14 +32,24 @@ public class LetterController {
     public ResponseEntity<CommonResponse<HomeResponse>> top() {
         return ResponseEntity.ok(CommonResponse.onSuccess(letterService.getTopBanner()));
     }
-
+    @Operation(summary = "오늘의 질문 + 내 오늘 편지 상태")
+    @GetMapping("/today")
+    public ResponseEntity<CommonResponse<TodayWriteResponse>> today() {
+        return ResponseEntity.ok(CommonResponse.onSuccess(letterService.getTodayForWrite()));
+    }
     @Operation(summary = "편지 쓰기 API", description = "편지 작성 API입니다.")
     @PostMapping
     public ResponseEntity<CommonResponse<Long>> create(@RequestBody @Valid LetterRequest request) {
         Long letterId = letterService.create(request);
         return ResponseEntity.ok(CommonResponse.onSuccess(letterId));
     }
-
+    @Operation(summary = "가족 편지 피드(전체 기간) - 각 편지에 날짜별 질문 포함")
+    @GetMapping("/feed")
+    public ResponseEntity<CommonResponse<FeedResponse>> feed(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(CommonResponse.onSuccess(letterService.getFamilyFeed(cursor, size)));
+    }
     @Operation(
             summary = "편지 월별 조회 API",
             description = "같은 가족의 편지를 월 단위로 조회합니다. year/month 미지정 시 이번 달을 기준으로 합니다."
@@ -74,6 +86,22 @@ public class LetterController {
     public ResponseEntity<CommonResponse<Void>> delete(@PathVariable Long id) {
         letterService.delete(id);
         return ResponseEntity.ok(CommonResponse.onSuccess());
+    }
+
+    @Operation(summary = "홈 테마 조회 (비로그인/로그인 공통)", description = "쿠키 > 회원DB > 기본 MINT")
+    @GetMapping("/theme")
+    public ResponseEntity<CommonResponse<ThemeResponse>> getTheme(HttpServletRequest req) {
+        return ResponseEntity.ok(CommonResponse.onSuccess(letterService.getTheme(req)));
+    }
+
+    @Operation(summary = "홈 테마 변경 (비로그인=쿠키, 로그인=쿠키+DB)", description = "body.theme = SUNSET|MINT|COTTONLIGHT|COTTONDARK|NIGHT|VIOLA")
+    @PutMapping("/theme")
+    public ResponseEntity<CommonResponse<ThemeResponse>> updateTheme(
+            @RequestBody @Valid ThemeRequest request,
+            HttpServletRequest req,
+            HttpServletResponse resp
+    ) {
+        return ResponseEntity.ok(CommonResponse.onSuccess(letterService.updateTheme(request.getTheme(), req, resp)));
     }
 }
 

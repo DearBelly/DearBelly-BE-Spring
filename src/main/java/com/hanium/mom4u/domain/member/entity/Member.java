@@ -7,6 +7,7 @@ import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.common.Role;
 import com.hanium.mom4u.domain.member.common.SocialType;
 import com.hanium.mom4u.domain.news.entity.NewsBookmark;
+import com.hanium.mom4u.domain.question.common.HomeTheme;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -96,8 +97,15 @@ public class Member extends BaseEntity {
     @Builder.Default
     private Set<Category> interests = new HashSet<>();
 
-
-
+    @Enumerated(EnumType.STRING)
+    @Column(name = "home_theme", length = 20)
+    private HomeTheme homeTheme;
+    public HomeTheme getHomeThemeOrDefault() {
+        return (this.homeTheme != null) ? this.homeTheme : HomeTheme.MINT;
+    }
+    public void changeHomeTheme(HomeTheme theme) {
+        this.homeTheme = (theme != null) ? theme : HomeTheme.MINT;
+    }
     public void assignFamily(Family family) {
         this.family = family;
     }

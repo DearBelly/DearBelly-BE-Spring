@@ -81,8 +81,7 @@ public class FamilyService {
             // LMP를 Member에서 Family로 옮기기
             family.setLmpDate(member.getLmpDate());
             familyRepository.save(family);
-            member.assignFamily(family);
-            // Member의 LMP는 null로 설정 (중복 방지)
+            family.addMember(member);
             member.setLmpDate(null);
             memberRepository.save(member);
         }
@@ -146,7 +145,7 @@ public class FamilyService {
         Family family = familyRepository.findById(familyId)
                 .orElseThrow(() -> new BusinessException(StatusCode.UNREGISTERED_FAMILY));
 
-        member.assignFamily(family);
+        family.addMember(member);
         memberRepository.save(member);
     }
 

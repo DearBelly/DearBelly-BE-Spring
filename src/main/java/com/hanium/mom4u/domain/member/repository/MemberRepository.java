@@ -22,12 +22,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query("SELECT COUNT(m) FROM Member m WHERE m.family.id = :familyId")
     long countByFamilyId(@Param("familyId") Long familyId);
 
-    @Query("""
-        select distinct m
-        from Member m
-        left join fetch m.family f
-        left join fetch f.memberList ml
-        where m.id = :id
-    """)
-    Optional<Member> findWithFamilyAndMembers(@Param("id") Long id);
+    @Query("select m from Member m left join fetch m.family where m.id = :id")
+    Optional<Member> findByIdWithFamily(@Param("id") Long id);
+
 }
