@@ -14,7 +14,7 @@ public class DailyQuestion extends BaseEntity {
     @Column(name = "question")
     private String question;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_id")
     private Family family;
 
