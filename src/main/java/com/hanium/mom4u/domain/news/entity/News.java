@@ -43,7 +43,8 @@ public class News extends BaseEntity {
     @Column(name = "sub_title")
     private String subTitle;
 
-    @Column(name = "content", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "content", columnDefinition = "LONGTEXT")
     private String content;
 
     @Column(name ="link")

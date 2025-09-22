@@ -60,14 +60,11 @@ spring:
       stack:
         auto: false
 
-log:
-  config:
-    level: INFO
-    path: ./logs
-
 logging:
   level:
     root: INFO
+  file:
+    path: ./logs
 
 external:
   filepath: ${LOCAL_FILE_PATH}
