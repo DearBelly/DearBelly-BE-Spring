@@ -27,14 +27,14 @@ spring:
   security:
     kakao:
       client_id: ${KAKAO_REST_API_KEY}
-      redirect_uri: ${KAKAO_LOCAL_CALLBACK}
+      redirect_uri: ${KAKAO_DEV_CALLBACK}
     naver:
       client_id: ${NAVER_API_KEY}
-      redirect_uri: ${NAVER_LOCAL_CALLBACK}
+      redirect_uri: ${NAVER_DEV_CALLBACK}
       secret_key: ${NAVER_SECRET_KEY}
     google:
       client_id: ${GOOGLE_REST_API}
-      redirect_uri: ${GOOGLE_LOCAL_CALLBACK}
+      redirect_uri: ${GOOGLE_DEV_CALLBACK}
       secret_key: ${GOOGLE_SECRET_KEY}
     hmac:
       family-secret: ${FAMILY_HMAC_SECRET}
@@ -44,6 +44,10 @@ spring:
       host: ${DEV_REDIS_HOST}
       port: 6379
       password: ${REDIS_PASSWORD}
+
+  home:
+    theme:
+      cookie: ${HOME_THEME_COOKIE}
 
   cloud:
     aws:
@@ -59,28 +63,17 @@ spring:
       stack:
         auto: false
 
-  home:
-    theme:
-      cookie: ${HOME_THEME_COOKIE}
-
-log:
-  config:
-    level: INFO
-    path: /app/logs
-
 logging:
   level:
     root: INFO
+  file:
+    path: /app/logs
 
 management:
   endpoints:
     web:
       exposure:
-        include:
-          - health
-          - info
-          - metrics
-          - prometheus
+        include: "*"
   endpoint:
     health:
       show-components: always

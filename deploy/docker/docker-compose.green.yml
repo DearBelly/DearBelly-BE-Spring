@@ -4,7 +4,7 @@ services:
     ports:
       - "8081:8080"
     env_file:
-      - /home/ubuntu/dearbelly-api/docker/.env
+      - /home/ubuntu/dearbelly-api/deploy/docker/.env
     volumes:
       - /home/ubuntu/logs:/app/logs
       - /home/ubuntu/dearbelly-api:/home/dearbelly

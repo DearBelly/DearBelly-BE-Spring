@@ -40,7 +40,7 @@ echo "Switched from $BEFORE_COMPOSE_COLOR to $AFTER_COMPOSE_COLOR."
 if docker compose -p "$PROJECT" -f "docker-compose.${AFTER_COMPOSE_COLOR}.yml" ps \
      --services --filter status=running | grep -q "^dearbelly-api$"; then
   log "New container ($AFTER_COMPOSE_COLOR) is running. Reloading nginx..."
-  sudo cp "/home/ubuntu/nginx/nginx.${AFTER_COMPOSE_COLOR}.conf" /etc/nginx/conf.d/default.conf
+  sudo cp "/home/ubuntu/deploy/nginx/nginx.${AFTER_COMPOSE_COLOR}.conf" /etc/nginx/conf.d/default.conf
   sudo nginx -s reload
 
   # 이전 컨테이너 종료 (compose 네이밍 규칙에 맞게 down 권장)
