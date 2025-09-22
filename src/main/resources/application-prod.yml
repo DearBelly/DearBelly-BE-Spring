@@ -27,14 +27,14 @@ spring:
   security:
     kakao:
       client_id: ${KAKAO_REST_API_KEY}
-      redirect_uri: ${KAKAO_LOCAL_CALLBACK}
+      redirect_uri: ${KAKAO_DEV_CALLBACK}
     naver:
       client_id: ${NAVER_API_KEY}
-      redirect_uri: ${NAVER_LOCAL_CALLBACK}
+      redirect_uri: ${NAVER_DEV_CALLBACK}
       secret_key: ${NAVER_SECRET_KEY}
     google:
       client_id: ${GOOGLE_REST_API}
-      redirect_uri: ${GOOGLE_LOCAL_CALLBACK}
+      redirect_uri: ${GOOGLE_DEV_CALLBACK}
       secret_key: ${GOOGLE_SECRET_KEY}
     hmac:
       family-secret: ${FAMILY_HMAC_SECRET}
@@ -62,7 +62,8 @@ spring:
 logging:
   level:
     root: INFO
-    org.hibernate.SQL: DEBUG
+  file:
+    path: /app/logs
 
 management:
   endpoints:
