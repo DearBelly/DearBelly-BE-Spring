@@ -18,5 +18,7 @@ public class LetterResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.MM.dd")
     private LocalDateTime createdAt;
     private boolean editable; // 내가 쓴 글인지
+    private String question;
+
 
 }

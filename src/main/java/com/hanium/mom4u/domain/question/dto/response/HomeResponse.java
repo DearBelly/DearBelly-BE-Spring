@@ -12,5 +12,5 @@ public class HomeResponse {
     private String babyName;          // 아기 이름
     private int week;                 // 오늘 기준 0부터
     private boolean hasUnreadLetters; // true면 편지 아이콘 표시
-
+    private String homeTheme;
 }
