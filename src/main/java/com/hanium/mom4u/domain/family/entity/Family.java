@@ -29,10 +29,13 @@ public class Family extends BaseEntity {
     @Column(name = "lmp_date")
     private LocalDate lmpDate;
 
-    @OneToMany(mappedBy = "family", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "family", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Member> memberList;
 
     @OneToMany(mappedBy = "family", fetch = FetchType.LAZY)
     private List<DailyQuestion> dailyQuestionList;
-
+    public void addMember(Member member) {
+        this.memberList.add(member);
+        member.setFamily(this);
+    }
 }

@@ -72,6 +72,7 @@ public enum StatusCode {
     LETTER_FORBIDDEN(HttpStatus.FORBIDDEN,    "LE4031", "편지에 접근 권한이 없습니다."),
     LETTER_NOT_FOUND(HttpStatus.NOT_FOUND,    "LE4041", "편지를 찾을 수 없습니다."),
     LETTER_CONTENT_TOO_LONG (HttpStatus.BAD_REQUEST, "LE4002", "편지 내용은 300자 이하여야 합니다."),
+    LETTER_TODAY_ALREADY_WRITTEN(HttpStatus.CONFLICT, "LE4091", "오늘은 이미 편지를 작성했습니다."),
 
     // scan
     NOT_ENOUGH_FORMAT(HttpStatus.BAD_REQUEST, "SCAN4001", "유효한 사진 파일 양식이 아닙니다."),

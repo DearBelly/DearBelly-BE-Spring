@@ -2,7 +2,9 @@ package com.hanium.mom4u.domain.family.entity;
 
 import com.hanium.mom4u.domain.common.BaseEntity;
 import jakarta.persistence.*;
+import lombok.Getter;
 
+@Getter
 @Entity
 @Table(name = "question")
 public class Question extends BaseEntity {
@@ -13,4 +15,5 @@ public class Question extends BaseEntity {
 
     @Column(name = "content")
     private String content;
+
 }

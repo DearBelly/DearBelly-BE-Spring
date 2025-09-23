@@ -45,6 +45,10 @@ spring:
       port: 6379
       password: ${REDIS_PASSWORD}
 
+  home:
+    theme:
+      cookie: ${HOME_THEME_COOKIE}
+
   cloud:
     aws:
       s3:
@@ -58,6 +62,8 @@ spring:
         static: ${AWS_REGION}
       stack:
         auto: false
+
+
 
 logging:
   level:

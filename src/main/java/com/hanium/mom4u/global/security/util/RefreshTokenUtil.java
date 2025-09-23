@@ -96,4 +96,23 @@ public class RefreshTokenUtil {
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
-}
+    public java.util.Optional<String> getRefreshTokenValue(jakarta.servlet.http.HttpServletRequest request) {
+        var cookies = request.getCookies();
+        if (cookies == null) return java.util.Optional.empty();
+        for (var c : cookies) {
+            if ("refreshToken".equals(c.getName())) {
+                return java.util.Optional.ofNullable(c.getValue());
+            }
+        }
+        return java.util.Optional.empty();
+    }
+
+    // 쿠키  검증 후 memberId Optional
+    public java.util.Optional<Long> getMemberIdFromCookieOptional(jakarta.servlet.http.HttpServletRequest request) {
+        return getRefreshTokenValue(request).flatMap(rt -> {
+            if (jwtTokenProvider.validateToken(rt)) {
+                return java.util.Optional.of(Long.parseLong(jwtTokenProvider.getMemberId(rt)));
+            }
+            return java.util.Optional.empty();
+        });}
+    }
