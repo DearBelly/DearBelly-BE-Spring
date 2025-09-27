@@ -36,6 +36,9 @@ public class Letter extends BaseEntity {
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
 
-    public void updateContent(String content){ this.content = content; }
+    // 편지 수정하기
+    public void updateContent(Long receiverId, String content){
+        this.content = content;
+    }
 }
 

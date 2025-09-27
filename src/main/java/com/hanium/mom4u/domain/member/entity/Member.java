@@ -84,9 +84,6 @@ public class Member extends BaseEntity {
     @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
     private List<Schedule> scheduleList;
 
-    @Column(name = "has_seen_family_letters", nullable = false)
-    private boolean hasSeenFamilyLetters = false;
-
     @OneToMany(mappedBy = "member", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<NewsBookmark> newsBookmarks = new HashSet<>();
 
@@ -100,6 +97,7 @@ public class Member extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "home_theme", length = 20)
     private HomeTheme homeTheme;
+
     public HomeTheme getHomeThemeOrDefault() {
         return (this.homeTheme != null) ? this.homeTheme : HomeTheme.MINT;
     }

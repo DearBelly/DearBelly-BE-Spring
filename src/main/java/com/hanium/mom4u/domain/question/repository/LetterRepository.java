@@ -11,6 +11,20 @@ import java.util.Optional;
 
 public interface LetterRepository extends JpaRepository<Letter, Long>, LetterRepositoryCustom {
 
+    /*
+    해당 날짜를 기준으로 한 모든 편지 읽기 및 읽음 처리
+     */
+    @Query("""
+        select l from Letter l
+        where l.receiver.id = :receiverId
+            and l.createdAt between :start and :end
+        order by l.createdAt desc
+    """)
+    List<Letter> findLetterByYearAndMonth(Long receiverId, LocalDateTime start, LocalDateTime end);
+
+    /*
+
+     */
     @Query("""
         select l from Letter l
         join fetch l.writer w
@@ -30,20 +44,6 @@ public interface LetterRepository extends JpaRepository<Letter, Long>, LetterRep
     """)
     List<Letter> findByWriterAndCreatedAtBetween(
             Member writer, LocalDateTime start, LocalDateTime end);
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("update Member m set m.hasSeenFamilyLetters = true where m.id = :memberId")
-    void markSeenForMember(@Param("memberId") Long memberId);
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-        update Member m
-           set m.hasSeenFamilyLetters = false
-         where m.family.id = :familyId
-           and m.id <> :writerId
-    """)
-    void resetSeenFlagForFamilyExceptWriter(@Param("familyId") Long familyId,
-                                            @Param("writerId") Long writerId);
 
     boolean existsByWriter_IdAndCreatedAtBetween(Long writerId, LocalDateTime start, LocalDateTime end);
 
