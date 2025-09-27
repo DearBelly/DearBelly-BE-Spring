@@ -69,6 +69,8 @@ logging:
     root: INFO
   file:
     path: ./logs
+#  file:
+#    path: /app/logs
 
 external:
   filepath: ${LOCAL_FILE_PATH}
@@ -81,6 +83,8 @@ management:
   endpoint:
     health:
       show-components: always
+#  server:
+#    address: 0.0.0.0
 
 openapi:
   base-url: http://localhost:8080

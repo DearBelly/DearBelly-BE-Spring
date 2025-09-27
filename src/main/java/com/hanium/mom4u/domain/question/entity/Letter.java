@@ -25,10 +25,20 @@ public class Letter extends BaseEntity {
     @JoinColumn(name = "writer_id")
     private Member writer;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receiver_id", nullable = true)
+    private Member receiver;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "family_id", nullable = true)
     private Family family;
 
-    public void updateContent(String content){ this.content = content; }
+    @Column(name = "is_read", nullable = false)
+    private boolean isRead;
+
+    // 편지 수정하기
+    public void updateContent(Long receiverId, String content){
+        this.content = content;
+    }
 }
 

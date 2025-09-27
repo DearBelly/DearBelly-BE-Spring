@@ -13,9 +13,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SwaggerConfig {
 
-    @Value("${openapi.base-url}")
-    private String baseUrl;
-
     @Bean
     public OpenAPI customOpenAPI() {
         SecurityScheme jwtScheme = new SecurityScheme()
@@ -31,9 +28,6 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("Dear Belly")
                         .version("v1.0")
-                        .description("Dear Belly 백엔드 API 문서입니다."))
-                .addServersItem(
-                        new Server().url(baseUrl)
-                );
+                        .description("Dear Belly 백엔드 API 문서입니다."));
     }
 }

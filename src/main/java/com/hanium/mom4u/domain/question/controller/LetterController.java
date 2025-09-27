@@ -32,16 +32,20 @@ public class LetterController {
     public ResponseEntity<CommonResponse<HomeResponse>> top() {
         return ResponseEntity.ok(CommonResponse.onSuccess(letterService.getTopBanner()));
     }
+
     @Operation(summary = "오늘의 질문 + 내 오늘 편지 상태")
     @GetMapping("/today")
     public ResponseEntity<CommonResponse<TodayWriteResponse>> today() {
         return ResponseEntity.ok(CommonResponse.onSuccess(letterService.getTodayForWrite()));
     }
+
     @Operation(summary = "편지 쓰기 API", description = "편지 작성 API입니다.")
     @PostMapping
-    public ResponseEntity<CommonResponse<Long>> create(@RequestBody @Valid LetterRequest request) {
-        Long letterId = letterService.create(request);
-        return ResponseEntity.ok(CommonResponse.onSuccess(letterId));
+    public ResponseEntity<CommonResponse<Void>> create(@RequestBody @Valid LetterRequest request) {
+        letterService.create(request);
+        return ResponseEntity.ok(
+                CommonResponse.onSuccess(
+        ));
     }
     @Operation(summary = "가족 편지 피드(전체 기간) - 각 편지에 날짜별 질문 포함")
     @GetMapping("/feed")
@@ -102,6 +106,20 @@ public class LetterController {
             HttpServletResponse resp
     ) {
         return ResponseEntity.ok(CommonResponse.onSuccess(letterService.updateTheme(request.getTheme(), req, resp)));
+    }
+
+    @Operation(summary = "안 읽은 편지 확인을 위한 API", description = """
+            읽지 않은 편지가 존재하는지에 대하여 확인합니다.<br>
+            만약 존재한다면 DTO 응답 객체가 반환되고,<br>
+            존재하지 않으면 아무것도 반환되지 않습니다.
+            """)
+    @GetMapping("/check")
+    public ResponseEntity<CommonResponse<?>> getUnCheckedLetters() {
+        return ResponseEntity.ok(
+                CommonResponse.onSuccess(
+                        letterService.getLetterCheck()
+                )
+        );
     }
 }
 
