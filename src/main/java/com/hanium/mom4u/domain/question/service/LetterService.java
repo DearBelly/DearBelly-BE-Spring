@@ -1,7 +1,6 @@
 package com.hanium.mom4u.domain.question.service;
 
 import com.hanium.mom4u.domain.family.entity.DailyQuestion;
-import com.hanium.mom4u.domain.family.repository.FamilyRepository;
 import com.hanium.mom4u.domain.member.entity.Baby;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.BabyRepository;
@@ -10,7 +9,6 @@ import com.hanium.mom4u.domain.question.common.HomeTheme;
 import com.hanium.mom4u.domain.question.dto.request.LetterRequest;
 import com.hanium.mom4u.domain.question.dto.response.*;
 import com.hanium.mom4u.domain.question.entity.Letter;
-import com.hanium.mom4u.domain.question.repository.DailyQuestionRepository;
 import com.hanium.mom4u.domain.question.repository.LetterRepository;
 import com.hanium.mom4u.domain.sse.dto.MessageDto;
 import com.hanium.mom4u.external.redis.publisher.MessagePublisher;
@@ -35,7 +33,6 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,15 +44,15 @@ public class LetterService {
     private final AuthenticatedProvider authenticatedProvider;
     private final BabyRepository babyRepository;
     private final MemberRepository memberRepository;
-    private final DailyQuestionRepository dailyQuestionRepository;
 
+    //  질문 관련 로직은 전부 QuestionService로 위임
+    private final QuestionService questionService;
 
     private final MessagePublisher messagePublisher;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
-
     private static final String THEME_COOKIE = "HOME_THEME";
-    private final FamilyRepository familyRepository;
+
     @Value("${spring.home.theme.cookie}")
     private int COOKIE_MAX_AGE ;
 
@@ -65,22 +62,17 @@ public class LetterService {
     private String profileUrlOrDefault(Member m) {
         String url = (m == null) ? null : m.getImgUrl();
         return (url == null || url.isBlank()) ? DEFAULT_IMAGE : url;
-    }
-
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-    @Transactional
-    public void assignGlobalAtMidnight() {
-        ensureTodayGlobalQuestion();
+        // DEFAULT_IMAGE는 설정값(환경변수/설정파일)에서 주입
     }
 
     /*
-    편지 작성하기
+     * 편지 작성하기
      */
     @Transactional
     public void create(LetterRequest req) {
 
         Long memberId = authenticatedProvider.getCurrentMemberId();
-        // fetch join을 통하여 미리 가족 정보까지 가져옴
+        // 가족 + 구성원까지 fetch-join (편지 수신자 리스트 필요하므로 이 경우만 무거운 조회 허용)
         Member me = memberRepository.findWithFamilyAndMembers(memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
 
@@ -90,40 +82,44 @@ public class LetterService {
 
         LocalDate today = LocalDate.now(KST);
 
-        if (letterRepository.findOneByReceiverId(memberId, today).isEmpty()) {
-            log.error("이미 작성된 편지 조회...");
+        // 버그 수정: 이미 작성된 편지가 "존재하면" 예외
+        if (letterRepository.findOneByReceiverId(memberId, today).isPresent()) {
+            log.warn("이미 오늘 편지를 작성했습니다. memberId={}, date={}", memberId, today);
             throw GeneralException.of(StatusCode.LETTER_TODAY_ALREADY_WRITTEN);
         }
 
-        // 자기 자신도 포함
-        List<Member> memberList = me.getFamily().getMemberList();
+        // 수신자: 가족 구성원 전체 (가족 없으면 본인만)
+        List<Member> memberList;
+        if (me.getFamily() == null || me.getFamily().getMemberList() == null || me.getFamily().getMemberList().isEmpty()) {
+            memberList = List.of(me);
+        } else {
+            memberList = me.getFamily().getMemberList();
+        }
 
-        // 가족 구성원의 수만큼 편지 저장
-        List<Letter> letterList = new ArrayList<>();
-        for (Member member: memberList) {
+        // 가족 구성원 수만큼 편지 저장 (수신자별 개별 행)
+        List<Letter> letterList = new ArrayList<>(memberList.size());
+        for (Member receiver : memberList) {
             Letter letter = Letter.builder()
                     .content(content)
                     .writer(me)
-                    .family(me.getFamily()) // null 가능
-                    .receiver(member) // 다른 사람
-                    .isRead(false)
+                    .family(me.getFamily())              // null 가능
+                    .receiver(receiver)                   // 수신자별 분리 저장
+                    .isRead(Objects.equals(receiver.getId(), memberId)) // 내 편지는 즉시 읽음 처리
                     .build();
-
             letterList.add(letter);
         }
         letterRepository.saveAll(letterList);
 
-        if (memberList != null || !memberList.isEmpty()) {
-            for (Member member: memberList) {
-
-                // 내가 작성한 편지가 아닐 때에만 전송
-                if (member.getId() != memberId) {
+        // 알림: 본인이 아닌 구성원에게만 전송
+        if (memberList != null && !memberList.isEmpty()) {
+            for (Member m : memberList) {
+                if (!Objects.equals(m.getId(), memberId)) {
                     messagePublisher.publish(
                             "Alarm",
                             MessageDto.builder()
-                                    .receiverId(member.getId())
+                                    .receiverId(m.getId())
                                     .title("새로운 편지가 도착했어요!")
-                                    .content("새로운 편지가 도착했어요! 확인해보세요!")
+                                    .content("가족이 보낸 편지가 도착했어요. 확인해보세요!")
                                     .build()
                     );
                 }
@@ -132,27 +128,25 @@ public class LetterService {
     }
 
     /*
-    편지 읽음
+     * 편지 월별 조회
      */
     @Transactional(readOnly = true)
     public List<LetterResponse> getByMonth(Integer year, Integer month) {
-
-        // fetch join으로 미리 받아옴
         Long memberId = authenticatedProvider.getCurrentMemberId();
+        // 편지 편집 가능 여부(작성자 비교) 때문에 나 자신 정보 + 가족 id만 필요
         Member me = memberRepository.findWithFamilyAndMembers(memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
 
-        // 입력된 년도와 달을 기준으로 시작과 끝 설정
         YearMonth ym = (year == null || month == null) ? YearMonth.now(KST) : YearMonth.of(year, month);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end = ym.atEndOfMonth().atTime(23, 59, 59);
 
-        // 자신을 receiver로 한 Letter 존재하는지 확인
         List<Letter> letters = letterRepository.findLetterByYearAndMonth(memberId, start, end);
 
+        Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
+
         return letters.stream().map(l -> {
-            Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
-            String qText = getQuestionTextFor(l.getCreatedAt().toLocalDate(), famId);
+            String qText = questionService.getTextFor(l.getCreatedAt().toLocalDate(), famId);
             return LetterResponse.builder()
                     .id(l.getId())
                     .content(l.getContent())
@@ -166,16 +160,13 @@ public class LetterService {
     }
 
     /*
-    작성한 편지에 대하여 수정하기
+     * 편지 수정
      */
     @Transactional
     public void update(Long letterId, LetterRequest req) {
-
-        // fetch join으로 미리 받아옴
         Long memberId = authenticatedProvider.getCurrentMemberId();
         Member me = memberRepository.findWithFamilyAndMembers(memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
-        List<Member> memberList = me.getFamily().getMemberList();
 
         String content = req.getContent().trim();
         if (content.isEmpty()) throw GeneralException.of(StatusCode.LETTER_CONTENT_REQUIRED);
@@ -184,16 +175,21 @@ public class LetterService {
         Letter letter = letterRepository.findById(letterId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.LETTER_NOT_FOUND));
 
-        // 자기자신이 작성한 것인지 확인
+        // 본인이 작성한 편지만 수정 가능
         if (!letter.getWriter().getId().equals(memberId))
             throw GeneralException.of(StatusCode.LETTER_FORBIDDEN);
 
-        for (Member member: memberList) {
-            letter.updateContent(member.getId(), content);
+        List<Member> memberList = (me.getFamily() == null) ? List.of(me) : me.getFamily().getMemberList();
+        if (memberList == null || memberList.isEmpty()) memberList = List.of(me);
+
+        // 수신자별 별도 행 구조를 유지한다면, 이 부분은 엔티티 내부에서 receiverId별 업데이트가 필요
+        for (Member m : memberList) {
+            letter.updateContent(m.getId(), content);
         }
         letterRepository.save(letter);
     }
 
+    @Transactional
     public void delete(Long letterId) {
         Long myId = authenticatedProvider.getCurrentMemberId();
         Letter letter = letterRepository.findById(letterId)
@@ -205,7 +201,7 @@ public class LetterService {
     }
 
     /*
-    편지 읽기
+     * 편지 상세 조회
      */
     @Transactional
     public LetterResponse getDetail(Long letterId) {
@@ -225,15 +221,12 @@ public class LetterService {
             throw GeneralException.of(StatusCode.LETTER_FORBIDDEN);
         }
 
-        // 남이 쓴 가족 편지면 읽음 처리
-        boolean shouldMarkSeen = !isMine && (sameByLetterFamily || sameByWriterFamily);
-        if (shouldMarkSeen) {
-            //letterRepository.markSeenForMember(me.getId());
-        }
+        // TODO: 남이 쓴 가족 편지면 읽음 처리 (수신자별 행 구조에 맞춰 구현)
+        // if (!isMine && (sameByLetterFamily || sameByWriterFamily)) {
+        //     letterRepository.markReadByReceiver(letter.getId(), me.getId());
+        // }
 
-
-        Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
-        String qText = getQuestionTextFor(letter.getCreatedAt().toLocalDate(), famId);
+        String qText = questionService.getTextFor(letter.getCreatedAt().toLocalDate(), myFamId);
 
         return LetterResponse.builder()
                 .id(letter.getId())
@@ -301,7 +294,10 @@ public class LetterService {
         LocalDateTime end = start.plusDays(1).minusNanos(1);
 
         Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
-        DailyQuestion dq = getQuestionFor(today, famId);
+
+        //  질문 보장 + 조회 위임
+        questionService.ensureTodayGlobalQuestion();
+        DailyQuestion dq = questionService.getFor(today, famId);
 
         var mineOpt = letterRepository.findTopByWriter_IdAndCreatedAtBetweenOrderByCreatedAtDesc(
                 me.getId(), start, end);
@@ -309,7 +305,7 @@ public class LetterService {
         return TodayWriteResponse.builder()
                 .date(today)
                 .questionId(dq == null ? null : dq.getId())
-                .questionContent(dq == null ? null : dq.getQuestion())
+                .questionText(dq == null ? null : dq.getQuestionText())
                 .myLetterId(mineOpt.map(Letter::getId).orElse(null))
                 .myLetterContent(mineOpt.map(Letter::getContent).orElse(null))
                 .canWrite(mineOpt.isEmpty())
@@ -333,7 +329,7 @@ public class LetterService {
         var qCache = new HashMap<LocalDate, String>();
         var items = letters.stream().map(l -> {
             var d = l.getCreatedAt().toLocalDate();
-            String qText = qCache.computeIfAbsent(d, dd -> getQuestionTextFor(dd, familyId));
+            String qText = qCache.computeIfAbsent(d, dd -> questionService.getTextFor(dd, familyId));
             return LetterResponse.builder()
                     .id(l.getId())
                     .content(l.getContent())
@@ -356,72 +352,18 @@ public class LetterService {
     }
 
     /*
-    오늘 날짜에 대하여 읽지 않은 편지가 존재하는지에 대해 확인
+     * 오늘 날짜에 대하여 읽지 않은 편지가 존재하는지 확인
      */
     @Transactional(readOnly = true)
     public Optional<LetterCheckResponseDto> getLetterCheck() {
         Long memberId = authenticatedProvider.getCurrentMemberId();
-        LocalDate date = LocalDate.now();
-
+        LocalDate date = LocalDate.now(KST);
         return letterRepository.findOneByReceiverId(memberId, date);
     }
 
-    // === 질문 보장/조회 헬퍼 ===
-
-    private DailyQuestion getQuestionFor(LocalDate date, Long familyId) {
-        if (date.equals(LocalDate.now(KST))) {
-            ensureTodayGlobalQuestion();
-        }
-        LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end = start.plusDays(1).minusNanos(1);
-        Pageable one = PageRequest.of(0, 1);
-
-        if (familyId != null) {
-            return dailyQuestionRepository.findLatestForFamily(familyId, start, end, one)
-                    .stream().findFirst()
-                    .orElseGet(() -> dailyQuestionRepository.findLatestGlobal(start, end, one)
-                            .stream().findFirst().orElse(null));
-        }
-        return dailyQuestionRepository.findLatestGlobal(start, end, one)
-                .stream().findFirst().orElse(null);
-    }
-
-    private void ensureTodayGlobalQuestion() {
-        LocalDate today = LocalDate.now(KST);
-        LocalDateTime start = today.atStartOfDay();
-        LocalDateTime end = start.plusDays(1).minusNanos(1);
-        if (dailyQuestionRepository.existsByFamilyIsNullAndCreatedAtBetween(start, end)) {
-            return;
-        }
-
-        LocalDate yesterday = today.minusDays(1);
-        LocalDateTime yStart = yesterday.atStartOfDay();
-        LocalDateTime yEnd = yStart.plusDays(1).minusNanos(1);
-        String yesterdayContent = dailyQuestionRepository
-                .findLatestGlobal(yStart, yEnd, PageRequest.of(0, 1))
-                .stream().findFirst().map(DailyQuestion::getQuestion).orElse(null);
-
-        var pickOpt = dailyQuestionRepository.pickRandomQuestionExcludingContent(yesterdayContent);
-        var pick = pickOpt.orElseGet(() -> dailyQuestionRepository.pickAnyQuestion()
-                .orElseThrow(() -> new IllegalStateException("No questions found")));
-
-        DailyQuestion created = new DailyQuestion();
-        created.setFamily(null);
-        created.setQuestion(pick.getContent());
-        created.setQuestionId(pick.getId());
-
-        dailyQuestionRepository.save(created);
-    }
-
-    private String getQuestionTextFor(LocalDate date, Long familyId) {
-        DailyQuestion dq = getQuestionFor(date, familyId);
-        return (dq == null) ? null : dq.getQuestion();
-    }
-
-
-    /*
-
-     */
+    // ==========================
+    // 공통 유틸
+    // ==========================
     private Member meWithFamily() {
         return memberRepository.findByIdWithFamily(authenticatedProvider.getCurrentMemberId())
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
