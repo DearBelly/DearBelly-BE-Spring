@@ -1,0 +1,94 @@
+services:
+  dearbelly-api:
+    #build: .
+    image: dearbelly-api:latest
+    ports:
+      - "8080:8080"
+    env_file:
+      - ${PJT_ROOT}/.env
+    volumes:
+      - ${PJT_ROOT}/logs:/app/logs
+    networks:
+      - mynetwork
+    depends_on:
+      - redis
+    container_name: dearbelly
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+
+  mysql:
+    container_name: mysql
+    image: mysql:8.0.33
+    environment:
+      MYSQL_ROOT_PASSWORD: 1111
+      MYSQL_DATABASE: mom4u
+      TZ: Asia/Seoul
+      LANG: C.UTF-8
+      MYSQL_INIT_CONNECT: "SET NAMES utf8mb4"
+    command:
+      [
+        "mysqld",
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_general_ci"
+      ]
+    ports:
+      - 3306:3306
+    volumes:
+      - ${PJT_LOCAL_VOLUME}/mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysql", "-u", "root", "-proot", "-e", "SELECT 1" ]
+      interval: 5s
+      retries: 10
+    networks:
+      - mynetwork
+
+  redis:
+    image: redis:7.4.1
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ${PJT_LOCAL_VOLUME}/redis-data:/data
+      - ${PJT_LOCAL_VOLUME}/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ${PJT_LOCAL_VOLUME}/local/redis:/var/log/redis:ro
+    networks:
+      - mynetwork
+    restart: always
+
+  prometheus:
+    user: root
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ${PJT_LOCAL_VOLUME}/prometheus-local.yml:/etc/prometheus/prometheus.yml:ro
+      - ${PJT_LOCAL_VOLUME}/prometheus/volume:/prometheus/data
+    ports:
+      - 9090:9090
+    command:
+      - '--web.enable-lifecycle'
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+    restart: always
+    networks:
+      - mynetwork
+
+  grafana:
+    user: root
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - ${PJT_LOCAL_VOLUME}/grafana/volume:/var/lib/grafana
+    restart: always
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  redis_data:

@@ -36,17 +36,32 @@ public class NewsJdbcRepository {
             return;
         }
 
-        // 데이터 삽입
-        String sql = "INSERT INTO news (post_id, title, sub_title, link, content, posted_at, category) " +
-                "VALUES (? ,?, ?, ?, ?, ?, ?)";
+        // postedAt null 처리
+        if (dto.getPostId() == null) {
+            // 데이터 삽입
+            String sql = "INSERT INTO news (post_id, title, sub_title, link, content, posted_at, category) " +
+                    "VALUES (? ,?, ?, ?, ?, ?, ?)";
 
-        jdbcTemplate.update(sql,
-                dto.getPostId(),
-                dto.getTitle(),
-                dto.getSubTitle(),
-                dto.getLink(),
-                dto.getContent(),
-                dto.getPostedAt(),
-                category.name());
+            jdbcTemplate.update(sql,
+                    dto.getPostId(),
+                    dto.getTitle(),
+                    dto.getSubTitle(),
+                    dto.getLink(),
+                    dto.getContent(),
+                    dto.getPostedAt(),
+                    category.name());
+        } else {
+            // 데이터 삽입
+            String sql = "INSERT INTO news (post_id, title, sub_title, link, content, category) " +
+                    "VALUES (? ,?, ?, ?, ?, ?)";
+
+            jdbcTemplate.update(sql,
+                    dto.getPostId(),
+                    dto.getTitle(),
+                    dto.getSubTitle(),
+                    dto.getLink(),
+                    dto.getContent(),
+                    category.name());
+        }
     }
 }
