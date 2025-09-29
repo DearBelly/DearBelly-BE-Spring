@@ -4,7 +4,6 @@ import com.hanium.mom4u.domain.family.entity.DailyQuestion;
 import com.hanium.mom4u.domain.family.entity.QDailyQuestion;
 import com.hanium.mom4u.domain.family.entity.QQuestion;
 import com.querydsl.core.Tuple;
-import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -21,7 +19,13 @@ public class DailyQuestionRepositoryImpl implements DailyQuestionRepositoryCusto
 
     private final JPAQueryFactory qf;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private LocalDateTime startOfDayKst(LocalDate date) {
+        return date.atStartOfDay(KST).toLocalDateTime();
+    }
 
+    private LocalDateTime nextDayStartKst(LocalDate date) {
+        return startOfDayKst(date).plusDays(1); // [start, next)
+    }
     @Override
     public Optional<DailyQuestion> findOneForDate(Long familyId, LocalDate date) {
         if (familyId != null) {
@@ -33,8 +37,8 @@ public class DailyQuestionRepositoryImpl implements DailyQuestionRepositoryCusto
 
     private Optional<DailyQuestion> findByDateAndFamily(LocalDate date, Long familyId) {
         QDailyQuestion dq = QDailyQuestion.dailyQuestion;
-        LocalDateTime sKst   = date.atStartOfDay(KST).toLocalDateTime();
-        LocalDateTime nextKst = sKst.plusDays(1); // [sKst, nextKst)
+        LocalDateTime sKst   = startOfDayKst(date);
+        LocalDateTime nextKst = nextDayStartKst(date);
 
         DailyQuestion found = qf.selectFrom(dq)
                 .where(dq.family.id.eq(familyId)
@@ -47,11 +51,12 @@ public class DailyQuestionRepositoryImpl implements DailyQuestionRepositoryCusto
         return Optional.ofNullable(found);
     }
 
+
     @Override
     public Optional<DailyQuestion> findOneGlobalOn(LocalDate date) {
         QDailyQuestion dq = QDailyQuestion.dailyQuestion;
-        LocalDateTime sKst   = date.atStartOfDay(KST).toLocalDateTime();
-        LocalDateTime nextKst = sKst.plusDays(1); // [sKst, nextKst)
+        LocalDateTime sKst   = startOfDayKst(date);
+        LocalDateTime nextKst = nextDayStartKst(date);
 
         DailyQuestion found = qf.selectFrom(dq)
                 .where(dq.family.isNull()
@@ -64,11 +69,12 @@ public class DailyQuestionRepositoryImpl implements DailyQuestionRepositoryCusto
         return Optional.ofNullable(found);
     }
 
+
     @Override
     public boolean existsGlobalOn(LocalDate date) {
         QDailyQuestion dq = QDailyQuestion.dailyQuestion;
-        LocalDateTime sKst   = date.atStartOfDay(KST).toLocalDateTime();
-        LocalDateTime nextKst = sKst.plusDays(1); // [sKst, nextKst)
+        LocalDateTime sKst   = startOfDayKst(date);
+        LocalDateTime nextKst = nextDayStartKst(date);
 
         Integer one = qf.selectOne()
                 .from(dq)
@@ -84,14 +90,39 @@ public class DailyQuestionRepositoryImpl implements DailyQuestionRepositoryCusto
     public Optional<QuestionPick> pickRandomExcluding(String excludeContent) {
         QQuestion q = QQuestion.question;
 
-        List<Tuple> rows = qf.select(q.id, q.content)
+        // min/max 한 번에 조회 ( 인덱스 사용)
+        var minExpr = q.id.min();
+        var maxExpr = q.id.max();
+        Tuple range = qf.select(minExpr, maxExpr).from(q).fetchOne();
+        if (range == null) return Optional.empty();
+
+        Long minId = range.get(minExpr);
+        Long maxId = range.get(maxExpr);
+        if (minId == null || maxId == null) return Optional.empty();
+
+        // 1) 랜덤 시작점 ≥ rand 에서 1건 (id 인덱스 사용)
+        long rand = java.util.concurrent.ThreadLocalRandom.current().nextLong(minId, maxId + 1);
+
+        Tuple first = qf.select(q.id, q.content)
+                .from(q)
+                .where(
+                        q.id.goe(rand),
+                        (excludeContent == null ? null : q.content.ne(excludeContent))
+                )
+                .orderBy(q.id.asc())
+                .limit(1)
+                .fetchOne();
+
+        // 2) 없으면 wrap-around: 테이블 앞쪽에서 1건
+        Tuple picked = (first != null) ? first
+                : qf.select(q.id, q.content)
                 .from(q)
                 .where(excludeContent == null ? null : q.content.ne(excludeContent))
-                .orderBy(Expressions.numberTemplate(Double.class, "RAND()").asc())
+                .orderBy(q.id.asc())
                 .limit(1)
-                .fetch();
+                .fetchOne();
 
-        return rows.stream().findFirst().map(t -> new QuestionPick() {
+        return Optional.ofNullable(picked).map(t -> new QuestionPick() {
             @Override public Long getId() { return t.get(q.id); }
             @Override public String getContent() { return t.get(q.content); }
         });
@@ -99,17 +130,9 @@ public class DailyQuestionRepositoryImpl implements DailyQuestionRepositoryCusto
 
     @Override
     public Optional<QuestionPick> pickAny() {
-        QQuestion q = QQuestion.question;
-
-        Tuple t = qf.select(q.id, q.content)
-                .from(q)
-                .orderBy(Expressions.numberTemplate(Double.class, "RAND()").asc())
-                .limit(1)
-                .fetchOne();
-
-        return Optional.ofNullable(t).map(tt -> new QuestionPick() {
-            @Override public Long getId() { return tt.get(q.id); }
-            @Override public String getContent() { return tt.get(q.content); }
-        });
+        // exclude 없이 동일 로직 재사용
+        return pickRandomExcluding(null);
     }
+
+
 }
