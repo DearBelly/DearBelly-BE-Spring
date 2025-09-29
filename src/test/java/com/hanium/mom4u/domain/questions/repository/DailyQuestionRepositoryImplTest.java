@@ -18,7 +18,6 @@ import org.springframework.test.context.ActiveProfiles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
