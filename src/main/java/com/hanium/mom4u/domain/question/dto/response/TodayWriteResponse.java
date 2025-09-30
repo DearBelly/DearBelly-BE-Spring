@@ -14,7 +14,7 @@ public class TodayWriteResponse {
     private LocalDate date;           // 오늘 날짜
 
     private Long questionId;          // DailyQuestion.id
-    private String questionContent;   // DailyQuestion.question
+    private String questionText;   // DailyQuestion.question
 
     private Long myLetterId;
     private String myLetterContent;

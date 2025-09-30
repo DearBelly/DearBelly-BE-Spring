@@ -15,8 +15,8 @@ public class DailyQuestion extends BaseEntity {
     @Column(name = "daily_question_id")
     private Long id;
 
-    @Column(name = "question")
-    private String question;
+    @Column(name = "daily_question_text", nullable = false) // ← 그날 배정된 질문 텍스트
+    private String questionText;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_id")
@@ -28,6 +28,7 @@ public class DailyQuestion extends BaseEntity {
     @Column(name = "answer")
     private String answer;
 
-    @Column(name = "question_id", nullable = false)
+    @Column(name = "origin_question_id", nullable = false) // ← 원본 Question FK
     private Long questionId;
 }
+

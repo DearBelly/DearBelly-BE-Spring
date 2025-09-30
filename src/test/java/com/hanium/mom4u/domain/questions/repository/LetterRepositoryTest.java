@@ -25,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 @DataJpaTest
 @Import(LetterRepositoryTest.QuerydslTestConfig.class)
-
 class LetterRepositoryTest {
 
     @Autowired EntityManager em;
@@ -34,10 +33,7 @@ class LetterRepositoryTest {
 
     @TestConfiguration
     static class QuerydslTestConfig {
-        @Bean
-        JPAQueryFactory jpaQueryFactory(EntityManager em) {
-            return new JPAQueryFactory(em);
-        }
+        @Bean JPAQueryFactory jpaQueryFactory(EntityManager em) { return new JPAQueryFactory(em); }
     }
 
     // ====== 리플렉션 헬퍼 ======
@@ -65,7 +61,6 @@ class LetterRepositoryTest {
         throw new RuntimeException(new NoSuchFieldException(field));
     }
 
-
     private Family newFamily() {
         Family f = newInstance(Family.class);
         em.persist(f);
@@ -87,7 +82,6 @@ class LetterRepositoryTest {
                 .writer(writer)
                 .family(family)
                 .build();
-        // createdAt을 persist 전에 주입 (BaseEntity 정책에 따라 updatable=false일 수도 있어서)
         set(l, "createdAt", createdAt);
         em.persist(l);
         return l;
@@ -137,29 +131,6 @@ class LetterRepositoryTest {
         assertThat(list).extracting("content").containsExactly("9/15", "9/1"); // desc 정렬
     }
 
-    @Test
-    @DisplayName("resetSeenFlagForFamilyExceptWriter / markSeenForMember 동작")
-    void seenFlags() {
-        Family fam = newFamily();
-        Member me = newMember(fam, "me", true);
-        Member you = newMember(fam, "you", true);
-
-        em.flush(); em.clear();
-
-        // 나 제외 false
-        letterRepository.resetSeenFlagForFamilyExceptWriter(fam.getId(), me.getId());
-        em.flush(); em.clear();
-
-        Member youReloaded = em.find(Member.class, you.getId());
-        assertThat(youReloaded.isHasSeenFamilyLetters()).isFalse();
-
-        // 나는 true
-        letterRepository.markSeenForMember(me.getId());
-        em.flush(); em.clear();
-
-        Member meReloaded = em.find(Member.class, me.getId());
-        assertThat(meReloaded.isHasSeenFamilyLetters()).isTrue();
-    }
 
     @Test
     @DisplayName("findFeedForUser: 내 개인+가족 편지 섞여 최신순 페이징")

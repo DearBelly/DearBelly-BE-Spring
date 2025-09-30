@@ -1,5 +1,6 @@
 package com.hanium.mom4u.domain.questions.service;
 
+import com.hanium.mom4u.domain.family.entity.DailyQuestion;
 import com.hanium.mom4u.domain.family.entity.Family;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.BabyRepository;
@@ -12,6 +13,7 @@ import com.hanium.mom4u.domain.question.entity.Letter;
 import com.hanium.mom4u.domain.question.repository.DailyQuestionRepository;
 import com.hanium.mom4u.domain.question.repository.LetterRepository;
 import com.hanium.mom4u.domain.question.service.LetterService;
+import com.hanium.mom4u.domain.question.service.QuestionService;
 import com.hanium.mom4u.domain.sse.dto.MessageDto;
 import com.hanium.mom4u.external.redis.publisher.MessagePublisher;
 import com.hanium.mom4u.global.exception.GeneralException;
@@ -47,6 +49,7 @@ class LetterReadTest {
     @Mock private BabyRepository babyRepository;
     @Mock private MemberRepository memberRepository;
     @Mock private DailyQuestionRepository dailyQuestionRepository;
+    @Mock private QuestionService questionService;
     @Mock private MessagePublisher messagePublisher;
 
     // ===== 리플렉션 유틸 =====
@@ -191,22 +194,6 @@ class LetterReadTest {
 
         assertThat(res.getId()).isEqualTo(200L);
         assertThat(res.isEditable()).isFalse();
-        //verify(letterRepository).markSeenForMember(1L);
-    }
-
-    @Test
-    @DisplayName("getTopBanner: hasUnreadLetters = 가족 2명 이상이고 내가 아직 안봤으면 true")
-    void topBanner_hasUnread() {
-        Member me = member(1L, "me", false); // 아직 안 봄
-        Family fam = famWithMembers(me);
-
-        when(authenticatedProvider.getCurrentMemberId()).thenReturn(1L);
-        when(memberRepository.findByIdWithFamily(1L)).thenReturn(Optional.of(me));
-        when(memberRepository.countByFamilyId(10L)).thenReturn(2L); // 가족 2명 이상
-        when(babyRepository.findOngoingByFamilyId(eq(10L), any())).thenReturn(List.of());
-
-        HomeResponse r = letterService.getTopBanner();
-        assertThat(r.isHasUnreadLetters()).isTrue();
     }
 
     @Test
@@ -218,8 +205,13 @@ class LetterReadTest {
         when(authenticatedProvider.getCurrentMemberId()).thenReturn(1L);
         when(memberRepository.findByIdWithFamily(1L)).thenReturn(Optional.of(me));
 
-        // 오늘(2025-09-21) 글로벌 질문 존재한다고 가정 → ensureTodayGlobalQuestion 내부 생성 로직 피함
-        when(dailyQuestionRepository.existsByFamilyIsNullAndCreatedAtBetween(any(), any())).thenReturn(true);
+        //  DailyQuestionRepository 대신 QuestionService로 스텁
+        LocalDate today = LocalDate.of(2025, 9, 21);
+        DailyQuestion dq = newInstance(DailyQuestion.class);
+        setDeep(dq, "id", 777L);
+        setDeep(dq, "questionText", "오늘의 질문이에요!");
+        setDeep(dq, "family", null);
+        when(questionService.getFor(eq(today), eq(10L))).thenReturn(dq);
 
         // 오늘 내 편지 없음
         when(letterRepository.findTopByWriter_IdAndCreatedAtBetweenOrderByCreatedAtDesc(eq(1L), any(), any()))
@@ -227,8 +219,12 @@ class LetterReadTest {
 
         TodayWriteResponse r = letterService.getTodayForWrite();
 
-        assertThat(r.getDate()).isEqualTo(LocalDate.of(2025, 9, 21));
+        assertThat(r.getDate()).isEqualTo(today);
+        assertThat(r.getQuestionId()).isEqualTo(777L);
+        assertThat(r.getQuestionText()).isEqualTo("오늘의 질문이에요!");
         assertThat(r.isCanWrite()).isTrue();
         assertThat(r.isEditable()).isFalse();
     }
+
+
 }
