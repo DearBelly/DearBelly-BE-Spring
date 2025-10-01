@@ -13,7 +13,7 @@ public class Question extends BaseEntity {
     @Column(name = "question_id")
     private Long id;
 
-    @Column(name = "content")
+    @Column(name = "content", nullable = false)
     private String content;
 
 }
