@@ -33,9 +33,10 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
-      - /path/to/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - /home/ubuntu/deploy/redis/redis-data:/data
+      - /home/ubuntu/deploy/redis/redis.conf:/etc/redis/redis.conf
       - /var/log/redis:/var/log/redis:ro
+    command: ["redis-server", "/etc/redis/redis.conf"]
     networks:
       - mynetwork
     restart: always
