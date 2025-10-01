@@ -66,7 +66,10 @@ spring:
 logging:
   level:
     root: INFO
-  file:
+
+log:
+  config:
+    level: INFO
     path: /app/logs
 
 management:
