@@ -1,5 +1,6 @@
 package com.hanium.mom4u.global.security.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
@@ -14,6 +15,7 @@ public class NaverProfileResponseDto {
     public Response response;
 
     @Getter
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Response {
         @JsonProperty("id")
         public String id;
