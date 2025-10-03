@@ -34,4 +34,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     """)
     Optional<Member> findWithFamilyAndMembers(@Param("id") Long id);
 
+    Optional<Member> findBySocialTypeAndProviderIdAndIsInactiveFalse(
+            SocialType socialType, String providerId);
 }
