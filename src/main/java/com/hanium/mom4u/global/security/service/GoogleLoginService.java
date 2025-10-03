@@ -11,6 +11,7 @@ import com.hanium.mom4u.global.security.util.GoogleUtil;
 import com.hanium.mom4u.global.security.util.RefreshTokenUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,18 +35,34 @@ public class GoogleLoginService {
         GoogleProfileResponseDto profile = googleUtil.findProfile(
                 googleUtil.getToken(code).getAccessToken())
                 ;
-        Member member = memberRepository.findByEmailAndSocialTypeAndIsInactiveFalse(
-                        profile.getEmail(), SocialType.GOOGLE)
-                .orElseGet(() -> {
-                    Member newMember = Member.builder()
-                            .name(profile.getName())
-                            .nickname(profile.getGivenName())
-                            .email(profile.getEmail())
-                            .role(Role.ROLE_USER)
-                            .socialType(SocialType.GOOGLE)
-                            .build();
-                    return memberRepository.save(newMember);
-                });
+
+        String providerId = profile.getId();
+        String email      = profile.getEmail();
+        String name       = profile.getName();
+        String nickname   = profile.getGivenName();
+
+        var found = memberRepository.findBySocialTypeAndProviderIdAndIsInactiveFalse(
+                SocialType.GOOGLE, providerId);
+        boolean isNew = found.isEmpty();
+
+        Member member = found.orElseGet(() -> {
+            Member m = Member.builder()
+                    .socialType(SocialType.GOOGLE)
+                    .providerId(providerId)
+                    .email(email)
+                    .name(name)
+                    .nickname(nickname)
+                    .role(Role.ROLE_USER)
+                    .isInactive(false)
+                    .build();
+            try {
+                return memberRepository.save(m);
+            } catch (DataIntegrityViolationException e) {
+                // 동시 가입 시도 등 유니크 충돌 대비 멱등 처리
+                return memberRepository.findBySocialTypeAndProviderIdAndIsInactiveFalse(
+                        SocialType.GOOGLE, providerId).orElseThrow();
+            }
+        });
 
 
         String accessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getRole());
@@ -59,6 +76,7 @@ public class GoogleLoginService {
                 .email(member.getEmail())
                 .nickname(member.getNickname())
                 .socialType(member.getSocialType())
+                .isNew(isNew)
                 .build();
     }
 
