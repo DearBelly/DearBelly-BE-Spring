@@ -12,6 +12,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import com.hanium.mom4u.domain.news.common.Category;
@@ -82,10 +83,12 @@ public class Member extends BaseEntity {
     private Family family;
 
     @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
-    private List<Baby> babyList;
+    @Builder.Default
+    private List<Baby> babyList = new ArrayList<>();
 
     @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
-    private List<Schedule> scheduleList;
+    @Builder.Default
+    private List<Schedule> scheduleList = new ArrayList<>();
 
     @OneToMany(mappedBy = "member", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<NewsBookmark> newsBookmarks = new HashSet<>();
