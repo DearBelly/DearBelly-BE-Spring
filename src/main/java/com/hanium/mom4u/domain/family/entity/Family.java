@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -30,10 +31,12 @@ public class Family extends BaseEntity {
     private LocalDate lmpDate;
 
     @OneToMany(mappedBy = "family", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Member> memberList;
+    private List<Member> memberList = new ArrayList<>();
+
 
     @OneToMany(mappedBy = "family", fetch = FetchType.LAZY)
-    private List<DailyQuestion> dailyQuestionList;
+    private List<DailyQuestion> dailyQuestionList = new ArrayList<>();
+
     public void addMember(Member member) {
         this.memberList.add(member);
         member.setFamily(this);
