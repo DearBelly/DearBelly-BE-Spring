@@ -1,15 +1,17 @@
-package com.hanium.mom4u.domain.question.service;
+package com.hanium.mom4u.domain.letter.service;
 
 import com.hanium.mom4u.domain.family.entity.DailyQuestion;
+import com.hanium.mom4u.domain.letter.entity.LetterRead;
+import com.hanium.mom4u.domain.letter.repository.LetterReadRepository;
 import com.hanium.mom4u.domain.member.entity.Baby;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.BabyRepository;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
-import com.hanium.mom4u.domain.question.common.HomeTheme;
-import com.hanium.mom4u.domain.question.dto.request.LetterRequest;
-import com.hanium.mom4u.domain.question.dto.response.*;
-import com.hanium.mom4u.domain.question.entity.Letter;
-import com.hanium.mom4u.domain.question.repository.LetterRepository;
+import com.hanium.mom4u.domain.letter.common.HomeTheme;
+import com.hanium.mom4u.domain.letter.dto.request.LetterRequest;
+import com.hanium.mom4u.domain.letter.dto.response.*;
+import com.hanium.mom4u.domain.letter.entity.Letter;
+import com.hanium.mom4u.domain.letter.repository.LetterRepository;
 import com.hanium.mom4u.domain.sse.dto.MessageDto;
 import com.hanium.mom4u.external.redis.publisher.MessagePublisher;
 import com.hanium.mom4u.global.exception.GeneralException;
@@ -22,15 +24,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,8 +37,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class LetterService {
 
-    private final LetterRepository letterRepository;
     private final AuthenticatedProvider authenticatedProvider;
+
+    private final LetterRepository letterRepository;
+    private final LetterReadRepository letterReadRepository;
     private final BabyRepository babyRepository;
     private final MemberRepository memberRepository;
 
@@ -73,8 +72,7 @@ public class LetterService {
 
         Long memberId = authenticatedProvider.getCurrentMemberId();
         // 가족 + 구성원까지 fetch-join (편지 수신자 리스트 필요하므로 이 경우만 무거운 조회 허용)
-        Member me = memberRepository.findWithFamilyAndMembers(memberId)
-                .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
+        Member me = meWithFamily(memberId);
 
         String content = req.getContent().trim();
         if (content.isEmpty()) throw GeneralException.of(StatusCode.LETTER_CONTENT_REQUIRED);
@@ -83,7 +81,7 @@ public class LetterService {
         LocalDate today = LocalDate.now(KST);
 
         // 버그 수정: 이미 작성된 편지가 "존재하면" 예외
-        if (letterRepository.findOneByReceiverId(memberId, today).isPresent()) {
+        if (letterRepository.findExistsByMemberId(memberId, today)) {
             log.warn("이미 오늘 편지를 작성했습니다. memberId={}, date={}", memberId, today);
             throw GeneralException.of(StatusCode.LETTER_TODAY_ALREADY_WRITTEN);
         }
@@ -96,19 +94,24 @@ public class LetterService {
             memberList = me.getFamily().getMemberList();
         }
 
-        // 가족 구성원 수만큼 편지 저장 (수신자별 개별 행)
-        List<Letter> letterList = new ArrayList<>(memberList.size());
-        for (Member receiver : memberList) {
-            Letter letter = Letter.builder()
-                    .content(content)
-                    .writer(me)
-                    .family(me.getFamily())              // null 가능
-                    .receiver(receiver)                   // 수신자별 분리 저장
-                    .isRead(Objects.equals(receiver.getId(), memberId)) // 내 편지는 즉시 읽음 처리
-                    .build();
-            letterList.add(letter);
-        }
-        letterRepository.saveAll(letterList);
+        // 편지 저장
+        Letter letter = Letter.builder()
+                .content(content)
+                .writer(me)
+                .family(me.getFamily())
+                .build();
+        letterRepository.save(letter);
+
+        // 가족 구성원 수만큼 편지읽음 여부에 대하여 저장 (수신자별 개별 행)
+        LocalDateTime now = ZonedDateTime.now(KST).toLocalDateTime();
+        final List<LetterRead> letterReadList = memberList.stream()
+                .map(r -> LetterRead.builder()
+                        .letter(letter)
+                        .member(r)
+                        .readAt(Objects.equals(r.getId(), memberId) ? now : null) // 작성자 -> 읽음 처리
+                        .build())
+                .collect(Collectors.toList());
+        letterReadRepository.saveAll(letterReadList);
 
         // 알림: 본인이 아닌 구성원에게만 전송
         if (memberList != null && !memberList.isEmpty()) {
@@ -134,14 +137,14 @@ public class LetterService {
     public List<LetterResponse> getByMonth(Integer year, Integer month) {
         Long memberId = authenticatedProvider.getCurrentMemberId();
         // 편지 편집 가능 여부(작성자 비교) 때문에 나 자신 정보 + 가족 id만 필요
-        Member me = memberRepository.findWithFamilyAndMembers(memberId)
-                .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
+        Member me = meWithFamily(memberId);
+        Long familyId = me.getFamily().getId();
 
         YearMonth ym = (year == null || month == null) ? YearMonth.now(KST) : YearMonth.of(year, month);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end = ym.atEndOfMonth().atTime(23, 59, 59);
 
-        List<Letter> letters = letterRepository.findLetterByYearAndMonth(memberId, start, end);
+        List<Letter> letters = letterRepository.findLetterByYearAndMonth(familyId, start, end);
 
         Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
 
@@ -165,8 +168,7 @@ public class LetterService {
     @Transactional
     public void update(Long letterId, LetterRequest req) {
         Long memberId = authenticatedProvider.getCurrentMemberId();
-        Member me = memberRepository.findWithFamilyAndMembers(memberId)
-                .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
+        Member me = meWithFamily(memberId);
 
         String content = req.getContent().trim();
         if (content.isEmpty()) throw GeneralException.of(StatusCode.LETTER_CONTENT_REQUIRED);
@@ -205,7 +207,9 @@ public class LetterService {
      */
     @Transactional
     public LetterResponse getDetail(Long letterId) {
-        Member me = meWithFamily();
+        Long memberId = authenticatedProvider.getCurrentMemberId();
+        Member me = meWithFamily(memberId);
+
         Letter letter = letterRepository.findById(letterId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.LETTER_NOT_FOUND));
 
@@ -221,10 +225,18 @@ public class LetterService {
             throw GeneralException.of(StatusCode.LETTER_FORBIDDEN);
         }
 
-        // TODO: 남이 쓴 가족 편지면 읽음 처리 (수신자별 행 구조에 맞춰 구현)
-        // if (!isMine && (sameByLetterFamily || sameByWriterFamily)) {
-        //     letterRepository.markReadByReceiver(letter.getId(), me.getId());
-        // }
+        // 이미 읽었는지에 대하여 확인
+        LetterRead letterRead = letterReadRepository
+                .findByLetterIdAndMemberId(letterId, memberId)
+                .orElseThrow(() -> GeneralException.of(StatusCode.LETTER_FORBIDDEN));
+
+        // 이미 읽지 않은 경우에 대하여만 처리
+        if (letterRead.getReadAt() == null) {
+
+            LocalDateTime now = LocalDateTime.now(KST);
+            letterRead.setReadAt(now);
+            letterReadRepository.save(letterRead);
+        }
 
         String qText = questionService.getTextFor(letter.getCreatedAt().toLocalDate(), myFamId);
 
@@ -239,9 +251,14 @@ public class LetterService {
                 .build();
     }
 
+    /*
+    읽지 않은 것이 존재할 때의 아이콘
+     */
     @Transactional(readOnly = true)
     public HomeResponse getTopBanner() {
-        Member me = meWithFamily();
+
+        Long memberId = authenticatedProvider.getCurrentMemberId();
+        Member me = meWithFamily(memberId);
 
         // 1) 진행 중인 아기들 전부 가져오기
         List<Baby> babies;
@@ -268,7 +285,7 @@ public class LetterService {
             week = (int) Math.max(0, ChronoUnit.WEEKS.between(effectiveLmp, LocalDate.now(KST)));
         }
 
-        boolean hasUnread = hasUnreadLetterIcon(me);
+        boolean hasUnread = letterReadRepository.existsByLetterIdAndMemberId(memberId);
 
         return HomeResponse.builder()
                 .babyName(babyNames)
@@ -278,16 +295,10 @@ public class LetterService {
                 .build();
     }
 
-    private boolean hasUnreadLetterIcon(Member me) {
-        if (me.getFamily() == null) return false;
-        if (memberRepository.countByFamilyId(me.getFamily().getId()) <= 1) return false;
-        //return !me.isHasSeenFamilyLetters();
-        return true; // TODO : temp
-    }
-
     @Transactional
     public TodayWriteResponse getTodayForWrite() {
-        Member me = meWithFamily();
+        Long memberId = authenticatedProvider.getCurrentMemberId();
+        Member me = meWithFamily(memberId);
 
         LocalDate today = LocalDate.now(KST);
         LocalDateTime start = today.atStartOfDay();
@@ -315,7 +326,8 @@ public class LetterService {
 
     @Transactional(readOnly = true)
     public FeedResponse getFamilyFeed(String cursorIso, int size) {
-        Member me = meWithFamily();
+        Long memberId = authenticatedProvider.getCurrentMemberId();
+        Member me = meWithFamily(memberId);
         Long meId = me.getId();
         Long familyId = (me.getFamily() == null) ? null : me.getFamily().getId();
 
@@ -355,17 +367,26 @@ public class LetterService {
      * 오늘 날짜에 대하여 읽지 않은 편지가 존재하는지 확인
      */
     @Transactional(readOnly = true)
-    public Optional<LetterCheckResponseDto> getLetterCheck() {
+    public LetterCheckResponseDto getLetterCheck() {
         Long memberId = authenticatedProvider.getCurrentMemberId();
         LocalDate date = LocalDate.now(KST);
-        return letterRepository.findOneByReceiverId(memberId, date);
+        boolean exists = letterRepository.findExistsByMemberId(memberId, date);
+        // 안 읽은 거 있으면 반환
+        return LetterCheckResponseDto.builder()
+                .memberId(memberId)
+                .isRead(exists)
+                .build();
     }
 
     // ==========================
     // 공통 유틸
     // ==========================
-    private Member meWithFamily() {
-        return memberRepository.findByIdWithFamily(authenticatedProvider.getCurrentMemberId())
+
+    /*
+    가족 + 구성원까지 fetch-join 으로 전부 불러옴
+     */
+    private Member meWithFamily(Long memberId) {
+        return memberRepository.findWithFamilyAndMembers(memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
     }
 
