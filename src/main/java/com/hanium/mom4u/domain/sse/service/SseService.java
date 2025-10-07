@@ -2,7 +2,6 @@ package com.hanium.mom4u.domain.sse.service;
 
 import com.hanium.mom4u.domain.sse.dto.MessageDto;
 import com.hanium.mom4u.domain.sse.repository.SseRepository;
-import com.hanium.mom4u.external.redis.publisher.MessagePublisher;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
@@ -24,7 +23,6 @@ public class SseService {
     private final SseRepository sseRepository;
 
     private final AuthenticatedProvider authenticatedProvider;
-    private final MessagePublisher messagePublisher;
 
     private static final String EVENT_NAME_ALARM = "ALARM";
 
@@ -99,7 +97,6 @@ public class SseService {
             if (targets == null || targets.isEmpty()) {
                 log.warn("[SSE] no active emitters for receiverId={}, dto={}", receiverId, messageDto);
 
-                messagePublisher.publish("Alarm", messageDto);
                 return;
             }
             log.info("[SSE] send to {} emitters for receiverId={}", targets.size(), receiverId);
