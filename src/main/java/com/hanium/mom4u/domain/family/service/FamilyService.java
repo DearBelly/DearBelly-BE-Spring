@@ -9,6 +9,7 @@ import com.hanium.mom4u.global.exception.BusinessException;
 import com.hanium.mom4u.global.response.StatusCode;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.List;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class FamilyService {
 
@@ -32,7 +34,7 @@ public class FamilyService {
     private final MemberRepository memberRepository;
     private final FamilyRepository familyRepository;
 
-    private static final Duration CODE_EXPIRATION = Duration.ofMinutes(3);
+    private static final Duration CODE_EXPIRATION = Duration.ofMinutes(6);
 
     @Value("${spring.security.hmac.family-secret}")
     private String secretKey;
@@ -145,8 +147,13 @@ public class FamilyService {
         Family family = familyRepository.findById(familyId)
                 .orElseThrow(() -> new BusinessException(StatusCode.UNREGISTERED_FAMILY));
 
-        family.addMember(member);
-        memberRepository.save(member);
+        member.setFamily(family);          // FK 세팅
+        family.getMemberList().add(member);
+
+        memberRepository.saveAndFlush(member);
+
+        log.info("[joinFamily] member {} joined family {}", member.getId(), family.getId());
+
     }
 
     // 코드 유효성

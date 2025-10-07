@@ -1,5 +1,5 @@
 services:
-  dearbelly-api:
+  app-green:
     image: ${ECR_URI}/dearbelly-api:latest
     ports:
       - "8081:8080"

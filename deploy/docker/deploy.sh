@@ -25,11 +25,11 @@ else
 fi
 
 # 새로운 image pull 받기
-docker compose -f docker-compose.${AFTER_COMPOSE_COLOR}.yml pull dearbelly-api \
+docker compose -f docker-compose.${AFTER_COMPOSE_COLOR}.yml pull app-${AFTER_COMPOSE_COLOR} \
   || { echo "pull new image failed"; exit 1; }
 
 # 새로운 서비스만 시작
-docker compose -f docker-compose.${AFTER_COMPOSE_COLOR}.yml up -d --no-deps dearbelly-api \
+docker compose -f docker-compose.${AFTER_COMPOSE_COLOR}.yml up -d --no-deps app-${AFTER_COMPOSE_COLOR} \
   || { echo "bring up new service failed"; exit 1; }
 
 
@@ -38,14 +38,14 @@ echo "Switched from $BEFORE_COMPOSE_COLOR to $AFTER_COMPOSE_COLOR."
 
 # 새로운 컨테이너가 제대로 떴는지 확인
 if docker compose -p "$PROJECT" -f "docker-compose.${AFTER_COMPOSE_COLOR}.yml" ps \
-     --services --filter status=running | grep -q "^dearbelly-api$"; then
+     --services --filter status=running | grep -q "app-${AFTER_COMPOSE_COLOR}"; then
   log "New container ($AFTER_COMPOSE_COLOR) is running. Reloading nginx..."
   sudo cp "/home/ubuntu/deploy/nginx/nginx.${AFTER_COMPOSE_COLOR}.conf" /etc/nginx/conf.d/default.conf
   sudo nginx -s reload
 
   # 이전 컨테이너 종료 (compose 네이밍 규칙에 맞게 down 권장)
   log "Stopping old stack ($BEFORE_COMPOSE_COLOR)..."
-  docker compose -p "app-${BEFORE_COMPOSE_COLOR}" -f "docker-compose.${BEFORE_COMPOSE_COLOR}.yml" down || true
+  docker stop app-${BEFORE_COMPOSE_COLOR} || true
 else
   log "New container is NOT running; keeping previous stack. Inspect logs."
   exit 1
