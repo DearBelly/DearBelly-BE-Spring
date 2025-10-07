@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.question.common;
+package com.hanium.mom4u.domain.letter.common;
 
 public enum HomeTheme {
     SUNSET, MINT, COTTONLIGHT, COTTONDARK, NIGHT, VIOLA;

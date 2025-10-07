@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.question.repository;
+package com.hanium.mom4u.domain.letter.repository;
 
 import com.hanium.mom4u.domain.family.entity.DailyQuestion;
 import com.hanium.mom4u.domain.family.entity.QDailyQuestion;

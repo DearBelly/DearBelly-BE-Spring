@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.question.entity;
+package com.hanium.mom4u.domain.letter.entity;
 
 import com.hanium.mom4u.domain.common.BaseEntity;
 import com.hanium.mom4u.domain.family.entity.Family;
@@ -25,16 +25,9 @@ public class Letter extends BaseEntity {
     @JoinColumn(name = "writer_id")
     private Member writer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receiver_id", nullable = true)
-    private Member receiver;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "family_id", nullable = true)
     private Family family;
-
-    @Column(name = "is_read", nullable = false)
-    private boolean isRead;
 
     // 편지 수정하기
     public void updateContent(Long receiverId, String content){

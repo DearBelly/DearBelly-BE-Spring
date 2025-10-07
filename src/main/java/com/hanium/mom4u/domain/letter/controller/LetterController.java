@@ -1,11 +1,14 @@
-package com.hanium.mom4u.domain.question.controller;
+package com.hanium.mom4u.domain.letter.controller;
 
-import com.hanium.mom4u.domain.question.dto.request.LetterRequest;
-import com.hanium.mom4u.domain.question.dto.request.ThemeRequest;
-import com.hanium.mom4u.domain.question.dto.response.*;
-import com.hanium.mom4u.domain.question.service.LetterService;
+import com.hanium.mom4u.domain.letter.dto.request.LetterRequest;
+import com.hanium.mom4u.domain.letter.dto.request.ThemeRequest;
+import com.hanium.mom4u.domain.letter.dto.response.*;
+import com.hanium.mom4u.domain.letter.service.LetterService;
 import com.hanium.mom4u.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,11 +18,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/v1/letters")
 @RequiredArgsConstructor
-@Tag(name = "홈 페이지")
+@Tag(name = "편지 API Controller")
 public class LetterController {
 
     private final LetterService letterService;
@@ -110,9 +114,13 @@ public class LetterController {
 
     @Operation(summary = "안 읽은 편지 확인을 위한 API", description = """
             읽지 않은 편지가 존재하는지에 대하여 확인합니다.<br>
-            만약 존재한다면 DTO 응답 객체가 반환되고,<br>
-            존재하지 않으면 아무것도 반환되지 않습니다.
+            단순 존재 여부에 대한 DTO를 반환합니다.<br>
+            편지 아이콘에 사용해주세요.
             """)
+    @ApiResponse(responseCode = "200",
+    content = @Content(
+            schema = @Schema(implementation = LetterCheckResponseDto.class)
+    ))
     @GetMapping("/check")
     public ResponseEntity<CommonResponse<?>> getUnCheckedLetters() {
         return ResponseEntity.ok(
