@@ -1,10 +1,11 @@
-package com.hanium.mom4u.domain.question.repository;
+package com.hanium.mom4u.domain.letter.repository;
 
 import com.hanium.mom4u.domain.family.entity.Family;
 import com.hanium.mom4u.domain.member.entity.Member;
-import com.hanium.mom4u.domain.question.entity.Letter;
+import com.hanium.mom4u.domain.letter.entity.Letter;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -16,14 +17,18 @@ public interface LetterRepository extends JpaRepository<Letter, Long>, LetterRep
      */
     @Query("""
         select l from Letter l
-        where l.receiver.id = :receiverId
+            where l.family.id = :familyId
             and l.createdAt between :start and :end
         order by l.createdAt desc
     """)
-    List<Letter> findLetterByYearAndMonth(Long receiverId, LocalDateTime start, LocalDateTime end);
+    List<Letter> findLetterByYearAndMonth(
+            @Param("familyId") Long familyId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end);
+
 
     /*
-
+    작성 날짜와 fmailyId로 Letter List 조회
      */
     @Query("""
         select l from Letter l
