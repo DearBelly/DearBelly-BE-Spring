@@ -38,7 +38,8 @@ public class Family extends BaseEntity {
     private List<DailyQuestion> dailyQuestionList = new ArrayList<>();
 
     public void addMember(Member member) {
-        this.memberList.add(member);
-        member.setFamily(this);
+        if (member == null) return;
+        if (!memberList.contains(member)) memberList.add(member);
+        if (member.getFamily() != this) member.setFamily(this);
     }
 }
