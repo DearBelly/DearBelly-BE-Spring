@@ -2,8 +2,8 @@ package com.hanium.mom4u.domain.questions.repository;
 
 import com.hanium.mom4u.domain.family.entity.Family;
 import com.hanium.mom4u.domain.member.entity.Member;
-import com.hanium.mom4u.domain.question.entity.Letter;
-import com.hanium.mom4u.domain.question.repository.LetterRepository;
+import com.hanium.mom4u.domain.letter.entity.Letter;
+import com.hanium.mom4u.domain.letter.repository.LetterRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;

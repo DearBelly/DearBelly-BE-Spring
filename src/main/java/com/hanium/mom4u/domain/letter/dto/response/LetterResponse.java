@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.question.dto.response;
+package com.hanium.mom4u.domain.letter.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,7 +21,8 @@ public class LetterResponse {
     private String nickname;
     @Schema(name = "작성자 프로필 사진")
     private String imgUrl;
-
+    @Schema(name = "읽었는지의 여부", description = "true면 읽었음, false면 읽지 않음")
+    private boolean isRead;
     @Schema(name = "작성 날짜")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.MM.dd")
     private LocalDateTime createdAt;

@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.question.dto.response;
+package com.hanium.mom4u.domain.letter.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.question.dto.request;
+package com.hanium.mom4u.domain.letter.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

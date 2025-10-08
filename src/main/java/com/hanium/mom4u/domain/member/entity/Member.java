@@ -7,7 +7,7 @@ import com.hanium.mom4u.domain.member.common.Gender;
 import com.hanium.mom4u.domain.member.common.Role;
 import com.hanium.mom4u.domain.member.common.SocialType;
 import com.hanium.mom4u.domain.news.entity.NewsBookmark;
-import com.hanium.mom4u.domain.question.common.HomeTheme;
+import com.hanium.mom4u.domain.letter.common.HomeTheme;
 import jakarta.persistence.*;
 import lombok.*;
 
