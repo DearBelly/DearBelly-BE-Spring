@@ -113,9 +113,9 @@ public class LetterController {
     }
 
     @Operation(summary = "안 읽은 편지 확인을 위한 API", description = """
-            읽지 않은 편지가 존재하는지에 대하여 확인합니다.<br>
-            단순 존재 여부에 대한 DTO를 반환합니다.<br>
-            편지 아이콘에 사용해주세요.
+            읽지 않은 편지가 존재하는지에 대하여 확인합니다. 단순 존재 여부에 대한 DTO를 반환합니다. <br>
+            isUnreadExist 필드가 true면 읽지 않은 게 존재, false면 읽지 않은 게 존재하지 않습니다. <br>
+            편지 아이콘에 사용해주세요.<ㅠㄱ>
             """)
     @ApiResponse(responseCode = "200",
     content = @Content(
