@@ -11,8 +11,24 @@ import java.util.Optional;
 @Repository
 public interface LetterReadRepository extends JpaRepository<LetterRead, Long> {
 
-    // 작성 편지의 ID와 회원 ID를 통하여 조회
-    Optional<LetterRead> findByLetterIdAndMemberId(Long letterId, Long memberId);
+    /*
+    특정 편지 읽음 객체에 대하여 letterId와 memberId를 통하여 조회
+     */
+    Optional<LetterRead> findByLetterIdAndMemberId(
+            @Param("letterId") Long letterId, @Param("memberId") Long memberId);
+    /*
+    특정 편지에 대하여 읽었는지 안읽었는지에 대하여 반환
+     */
+    @Query("""
+    select exists (
+                select 1
+            from LetterRead lr
+            where lr.letter.id = :letterId and lr.member.id = :memberId
+                and lr.readAt is not null
+        )
+    """)
+    boolean findExistByLetterIdAndMemberId(
+            @Param("letterId") Long letterId, @Param("memberId") Long memberId);
 
     /*
     날짜 상관없이 아직 안 읽은 것이 있는지 반환
