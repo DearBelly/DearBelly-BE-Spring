@@ -44,4 +44,25 @@ public class LetterRepositoryCustomImpl implements LetterRepositoryCustom {
 
         return exists != null;
     }
+
+    /*
+    작성자가 자기 자신이고, 오늘자 날짜로 작성 있는지 확인
+     */
+    @Override
+    public Optional<Letter> findTodayByWriterId(Long memberId, LocalDate today) {
+
+        LocalDateTime start = today.atStartOfDay();
+        LocalDateTime end   = start.plusDays(1);
+
+        Letter result = jpaQueryFactory
+                .selectFrom(letter)
+                .where(
+                        letter.writer.id.eq(memberId),
+                        letter.createdAt.goe(start),
+                        letter.createdAt.lt(end)
+                )
+                .orderBy(letter.createdAt.desc())
+                .fetchOne();
+        return Optional.ofNullable(result);
+    }
 }
