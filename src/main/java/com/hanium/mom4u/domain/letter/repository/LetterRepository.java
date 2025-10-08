@@ -1,7 +1,6 @@
 package com.hanium.mom4u.domain.letter.repository;
 
 import com.hanium.mom4u.domain.family.entity.Family;
-import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.letter.entity.Letter;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -40,15 +39,6 @@ public interface LetterRepository extends JpaRepository<Letter, Long>, LetterRep
     List<Letter> findByFamilyAndCreatedAtBetween(
             Family family, LocalDateTime start, LocalDateTime end);
 
-    @Query("""
-      select l from Letter l
-      join fetch l.writer w
-      where l.writer = :writer
-        and l.createdAt between :start and :end
-      order by l.createdAt desc
-    """)
-    List<Letter> findByWriterAndCreatedAtBetween(
-            Member writer, LocalDateTime start, LocalDateTime end);
 
     boolean existsByWriter_IdAndCreatedAtBetween(Long writerId, LocalDateTime start, LocalDateTime end);
 
