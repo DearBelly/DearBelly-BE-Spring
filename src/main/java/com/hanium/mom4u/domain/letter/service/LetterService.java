@@ -73,6 +73,7 @@ public class LetterService {
         Long memberId = authenticatedProvider.getCurrentMemberId();
         // 가족 + 구성원까지 fetch-join (편지 수신자 리스트 필요하므로 이 경우만 무거운 조회 허용)
         Member me = meWithFamily(memberId);
+        Long familyId = me.getFamily().getId();
 
         String content = req.getContent().trim();
         if (content.isEmpty()) throw GeneralException.of(StatusCode.LETTER_CONTENT_REQUIRED);
@@ -81,7 +82,7 @@ public class LetterService {
         LocalDate today = LocalDate.now(KST);
 
         // 버그 수정: 이미 작성된 편지가 "존재하면" 예외
-        if (letterRepository.findExistsByMemberId(memberId, today)) {
+        if (letterRepository.findTodayByWriterId(memberId, today).isPresent()) {
             log.warn("이미 오늘 편지를 작성했습니다. memberId={}, date={}", memberId, today);
             throw GeneralException.of(StatusCode.LETTER_TODAY_ALREADY_WRITTEN);
         }
@@ -150,11 +151,14 @@ public class LetterService {
 
         return letters.stream().map(l -> {
             String qText = questionService.getTextFor(l.getCreatedAt().toLocalDate(), famId);
+            // 해당 특정한 Letter에 대하여 읽었는지 여부에 대하여 확인
+            boolean isRead = letterReadRepository.findExistByLetterIdAndMemberId(l.getId(), memberId);
             return LetterResponse.builder()
                     .id(l.getId())
                     .content(l.getContent())
                     .nickname(l.getWriter().getNickname())
                     .imgUrl(profileUrlOrDefault(l.getWriter()))
+                    .isRead(isRead)
                     .createdAt(l.getCreatedAt())
                     .editable(l.getWriter().getId().equals(me.getId()))
                     .question(qText)
@@ -232,7 +236,6 @@ public class LetterService {
 
         // 이미 읽지 않은 경우에 대하여만 처리
         if (letterRead.getReadAt() == null) {
-
             LocalDateTime now = LocalDateTime.now(KST);
             letterRead.setReadAt(now);
             letterReadRepository.save(letterRead);
@@ -245,6 +248,7 @@ public class LetterService {
                 .content(letter.getContent())
                 .nickname(letter.getWriter().getNickname())
                 .imgUrl(profileUrlOrDefault(letter.getWriter()))
+                .isRead(true)
                 .createdAt(letter.getCreatedAt())
                 .editable(isMine)
                 .question(qText)
@@ -328,7 +332,7 @@ public class LetterService {
     public FeedResponse getFamilyFeed(String cursorIso, int size) {
         Long memberId = authenticatedProvider.getCurrentMemberId();
         Member me = meWithFamily(memberId);
-        Long meId = me.getId();
+
         Long familyId = (me.getFamily() == null) ? null : me.getFamily().getId();
 
         LocalDateTime cursor = (cursorIso == null || cursorIso.isBlank())
@@ -336,19 +340,21 @@ public class LetterService {
 
         var pageable = PageRequest.of(0, Math.max(1, Math.min(size, 50)));
 
-        List<Letter> letters = letterRepository.findFeedForUser(meId, familyId, cursor, pageable);
+        List<Letter> letters = letterRepository.findFeedForUser(memberId, familyId, cursor, pageable);
 
         var qCache = new HashMap<LocalDate, String>();
         var items = letters.stream().map(l -> {
             var d = l.getCreatedAt().toLocalDate();
             String qText = qCache.computeIfAbsent(d, dd -> questionService.getTextFor(dd, familyId));
+            boolean isRead = letterReadRepository.findExistByLetterIdAndMemberId(l.getId(), memberId);
             return LetterResponse.builder()
                     .id(l.getId())
                     .content(l.getContent())
                     .nickname(l.getWriter().getNickname())
                     .imgUrl(profileUrlOrDefault(l.getWriter()))
+                    .isRead(isRead)
                     .createdAt(l.getCreatedAt())
-                    .editable(l.getWriter().getId().equals(meId))
+                    .editable(l.getWriter().getId().equals(memberId))
                     .question(qText)
                     .build();
         }).toList();
@@ -369,12 +375,14 @@ public class LetterService {
     @Transactional(readOnly = true)
     public LetterCheckResponseDto getLetterCheck() {
         Long memberId = authenticatedProvider.getCurrentMemberId();
+
         LocalDate date = LocalDate.now(KST);
+
         boolean exists = letterRepository.findExistsByMemberId(memberId, date);
         // 안 읽은 거 있으면 반환
         return LetterCheckResponseDto.builder()
                 .memberId(memberId)
-                .isRead(exists)
+                .isUnreadExist(exists)
                 .build();
     }
 
