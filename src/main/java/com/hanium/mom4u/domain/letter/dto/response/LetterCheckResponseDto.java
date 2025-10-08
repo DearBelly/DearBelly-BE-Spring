@@ -13,6 +13,6 @@ public class LetterCheckResponseDto {
 
     @Schema(name = "회원의 ID")
     private Long memberId;
-    @Schema(name = "읽음 여부")
-    private boolean isRead;
+    @Schema(name = "읽지 않은 것이 존재하는지에 대한 여부")
+    private boolean isUnreadExist;
 }
