@@ -1,9 +1,12 @@
 package com.hanium.mom4u.domain.letter.service;
 
 import com.hanium.mom4u.domain.family.entity.DailyQuestion;
+import com.hanium.mom4u.domain.family.entity.Question;
 import com.hanium.mom4u.domain.letter.repository.DailyQuestionRepository;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -22,7 +25,10 @@ public class QuestionService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final DailyQuestionRepository dailyQuestionRepository;
 
-    /**  매일 0시: 트리거(신호) */
+    @PersistenceContext
+    private EntityManager em; // ★ JPA 레퍼런스 주입
+
+    /** 매일 0시: 트리거(신호) */
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     public void scheduleEnsureToday() {
         log.info("[SCHED] ensureTodayGlobalQuestion START");
@@ -48,7 +54,7 @@ public class QuestionService {
         }
     }
 
-    /**전역 ‘오늘 질문’ 없으면 생성 */
+    /** 전역 ‘오늘 질문’ 없으면 생성 */
     void ensureTodayGlobalQuestionCore() {
         LocalDate today = LocalDate.now(KST);
 
@@ -62,21 +68,26 @@ public class QuestionService {
                 .map(DailyQuestion::getQuestionText)
                 .orElse(null);
 
+        // 리턴 타입이 QuestionPick(프로젝션)
         var pick = dailyQuestionRepository.pickRandomExcluding(yesterday)
                 .or(() -> dailyQuestionRepository.pickAny())
                 .orElseThrow(() -> GeneralException.of(StatusCode.QUESTION_NOT_FOUND));
 
+        // 엔티티 쿼리 없이 프록시로 연관관계 세팅
+        Question qRef = em.getReference(Question.class, pick.getId());
+
         DailyQuestion created = new DailyQuestion();
-        created.setFamily(null); // 전역
-        created.setQuestionText(pick.getContent());
-        created.setQuestionId(pick.getId());
+        created.setFamily(null);                         // 전역
+        created.setQuestion(qRef);                      // FK -> question_id
+        created.setOriginQuestion(qRef);                // FK -> origin_question_id
+        created.setDailyQuestionText(pick.getContent()); // 스냅샷 텍스트
+
         dailyQuestionRepository.save(created);
 
         log.info("[QUESTION] created global date={} originId={} content='{}'",
                 today, pick.getId(), pick.getContent());
     }
 
-    /**  날짜/가족 기준 1건 조회 (가족 우선 → 없으면 전역) */
     @Transactional(readOnly = true)
     public DailyQuestion getFor(LocalDate date, Long familyIdOrNull) {
         if (familyIdOrNull != null) {
@@ -87,7 +98,6 @@ public class QuestionService {
         return dailyQuestionRepository.findOneGlobalOn(date).orElse(null);
     }
 
-    /**  질문 ‘텍스트’만 필요할 때 */
     @Transactional(readOnly = true)
     public String getTextFor(LocalDate date, Long familyIdOrNull) {
         DailyQuestion dq = getFor(date, familyIdOrNull);

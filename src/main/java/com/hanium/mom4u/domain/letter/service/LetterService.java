@@ -73,7 +73,6 @@ public class LetterService {
         Long memberId = authenticatedProvider.getCurrentMemberId();
         // 가족 + 구성원까지 fetch-join (편지 수신자 리스트 필요하므로 이 경우만 무거운 조회 허용)
         Member me = meWithFamily(memberId);
-        Long familyId = me.getFamily().getId();
 
         String content = req.getContent().trim();
         if (content.isEmpty()) throw GeneralException.of(StatusCode.LETTER_CONTENT_REQUIRED);
@@ -137,22 +136,26 @@ public class LetterService {
     @Transactional(readOnly = true)
     public List<LetterResponse> getByMonth(Integer year, Integer month) {
         Long memberId = authenticatedProvider.getCurrentMemberId();
-        // 편지 편집 가능 여부(작성자 비교) 때문에 나 자신 정보 + 가족 id만 필요
         Member me = meWithFamily(memberId);
-        Long familyId = me.getFamily().getId();
 
         YearMonth ym = (year == null || month == null) ? YearMonth.now(KST) : YearMonth.of(year, month);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
-        LocalDateTime end = ym.atEndOfMonth().atTime(23, 59, 59);
-
-        List<Letter> letters = letterRepository.findLetterByYearAndMonth(familyId, start, end);
+        LocalDateTime end   = ym.plusMonths(1).atDay(1).atStartOfDay();
 
         Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
 
+        var letters = letterRepository.findLetters(
+                memberId,             // meId
+                famId,                // familyId (null이면 내 글 규칙 적용)
+                start, end,
+                null,                 // cursor
+                PageRequest.of(0, 500),
+                true
+        );
+
         return letters.stream().map(l -> {
             String qText = questionService.getTextFor(l.getCreatedAt().toLocalDate(), famId);
-            // 해당 특정한 Letter에 대하여 읽었는지 여부에 대하여 확인
-            boolean isRead = letterReadRepository.findExistByLetterIdAndMemberId(l.getId(), memberId);
+            boolean isRead = letterReadRepository.existsByLetter_IdAndMember_IdAndReadAtIsNotNull(l.getId(), memberId);
             return LetterResponse.builder()
                     .id(l.getId())
                     .content(l.getContent())
@@ -165,6 +168,7 @@ public class LetterService {
                     .build();
         }).toList();
     }
+
 
     /*
      * 편지 수정
@@ -231,7 +235,7 @@ public class LetterService {
 
         // 이미 읽었는지에 대하여 확인
         LetterRead letterRead = letterReadRepository
-                .findByLetterIdAndMemberId(letterId, memberId)
+                .findByLetter_IdAndMember_Id(letterId, memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.LETTER_FORBIDDEN));
 
         // 이미 읽지 않은 경우에 대하여만 처리
@@ -289,7 +293,7 @@ public class LetterService {
             week = (int) Math.max(0, ChronoUnit.WEEKS.between(effectiveLmp, LocalDate.now(KST)));
         }
 
-        boolean hasUnread = letterReadRepository.existsByLetterIdAndMemberId(memberId);
+        boolean hasUnread = letterReadRepository.existsByMember_IdAndReadAtIsNull(memberId);
 
         return HomeResponse.builder()
                 .babyName(babyNames)
@@ -306,7 +310,7 @@ public class LetterService {
 
         LocalDate today = LocalDate.now(KST);
         LocalDateTime start = today.atStartOfDay();
-        LocalDateTime end = start.plusDays(1).minusNanos(1);
+        LocalDateTime end   = start.plusDays(1);
 
         Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
 
@@ -337,16 +341,23 @@ public class LetterService {
 
         LocalDateTime cursor = (cursorIso == null || cursorIso.isBlank())
                 ? null : LocalDateTime.parse(cursorIso);
+        int pageSize = Math.max(1, Math.min(size, 50));
+        var pageable = PageRequest.of(0, pageSize);
+        List<Letter> letters = letterRepository.findLetters(
+                memberId,
+                familyId,
+                null, null,
+                cursor,             //  createdAt < cursor
+                pageable,
+                true
+        );
 
-        var pageable = PageRequest.of(0, Math.max(1, Math.min(size, 50)));
-
-        List<Letter> letters = letterRepository.findFeedForUser(memberId, familyId, cursor, pageable);
 
         var qCache = new HashMap<LocalDate, String>();
         var items = letters.stream().map(l -> {
             var d = l.getCreatedAt().toLocalDate();
             String qText = qCache.computeIfAbsent(d, dd -> questionService.getTextFor(dd, familyId));
-            boolean isRead = letterReadRepository.findExistByLetterIdAndMemberId(l.getId(), memberId);
+            boolean isRead = letterReadRepository.existsByLetter_IdAndMember_IdAndReadAtIsNotNull(l.getId(), memberId);
             return LetterResponse.builder()
                     .id(l.getId())
                     .content(l.getContent())
