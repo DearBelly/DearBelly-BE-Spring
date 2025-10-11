@@ -25,6 +25,16 @@ public interface LetterRepository extends JpaRepository<Letter, Long>, LetterRep
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
 
+    @Query("""
+        select l from Letter l
+        join fetch l.writer w
+        where l.writer.id = :memberId
+          and l.createdAt between :start and :end
+        order by l.createdAt desc
+    """)
+    List<Letter> findMineByCreatedBetween(@Param("memberId") Long memberId,
+                                          @Param("start") LocalDateTime start,
+                                          @Param("end") LocalDateTime end);
 
     /*
     작성 날짜와 fmailyId로 Letter List 조회
