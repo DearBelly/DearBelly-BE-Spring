@@ -1,17 +1,13 @@
 package com.hanium.mom4u.domain.family.entity;
-
 import com.hanium.mom4u.domain.common.BaseEntity;
-import jakarta.persistence.*;
-import lombok.Getter;
+import jakarta.persistence.*; import lombok.Getter;
 import lombok.Setter;
-
 @Entity
 @Table(name = "daily_question")
-@Getter @Setter
+@Getter
+@Setter
 public class DailyQuestion extends BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "daily_question_id")
     private Long id;
 
@@ -38,7 +34,4 @@ public class DailyQuestion extends BaseEntity {
     private String writer;
 
     /** 기존 코드 호환용: getQuestionText()를 daily_question_text로 매핑 */
-    public String getQuestionText() {
-        return this.dailyQuestionText;
-    }
-}
+    public String getQuestionText() { return this.dailyQuestionText; } }
