@@ -5,30 +5,40 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
 @Entity
 @Table(name = "daily_question")
+@Getter @Setter
 public class DailyQuestion extends BaseEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "daily_question_id")
     private Long id;
 
-    @Column(name = "daily_question_text", nullable = false) // ← 그날 배정된 질문 텍스트
-    private String questionText;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "family_id")
+    @JoinColumn(name = "family_id") // NULL 허용(전역 질문)
     private Family family;
 
-    @Column(name = "writer")
-    private String writer;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id", nullable = false)
+    private Question question;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "origin_question_id",
+            foreignKey = @ForeignKey(name = "fk_dq_origin_question"))
+    private Question originQuestion;
+
+    @Column(name = "question_text", nullable = false, length = 500)
+    private String dailyQuestionText;
 
     @Column(name = "answer")
     private String answer;
 
-    @Column(name = "origin_question_id", nullable = false) // ← 원본 Question FK
-    private Long questionId;
-}
+    @Column(name = "writer")
+    private String writer;
 
+    /** 기존 코드 호환용: getQuestionText()를 daily_question_text로 매핑 */
+    public String getQuestionText() {
+        return this.dailyQuestionText;
+    }
+}
