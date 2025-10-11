@@ -140,20 +140,22 @@ public class LetterService {
 
         YearMonth ym = (year == null || month == null) ? YearMonth.now(KST) : YearMonth.of(year, month);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
-        LocalDateTime end = ym.atEndOfMonth().atTime(23, 59, 59);
+        LocalDateTime end   = ym.plusMonths(1).atDay(1).atStartOfDay();
 
         Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
 
-        List<Letter> letters;
-        if (famId == null) {
-                letters = letterRepository.findMineByCreatedBetween(memberId, start, end);
-        } else {
-            letters = letterRepository.findLetterByYearAndMonth(famId, start, end);
-        }
+        var letters = letterRepository.findLetters(
+                memberId,             // meId
+                famId,                // familyId (null이면 내 글 규칙 적용)
+                start, end,
+                null,                 // cursor
+                PageRequest.of(0, 500),
+                true
+        );
 
         return letters.stream().map(l -> {
             String qText = questionService.getTextFor(l.getCreatedAt().toLocalDate(), famId);
-            boolean isRead = letterReadRepository.findExistByLetterIdAndMemberId(l.getId(), memberId);
+            boolean isRead = letterReadRepository.existsByLetter_IdAndMember_IdAndReadAtIsNotNull(l.getId(), memberId);
             return LetterResponse.builder()
                     .id(l.getId())
                     .content(l.getContent())
@@ -291,7 +293,7 @@ public class LetterService {
             week = (int) Math.max(0, ChronoUnit.WEEKS.between(effectiveLmp, LocalDate.now(KST)));
         }
 
-        boolean hasUnread = letterReadRepository.existsUnreadByMemberId(memberId);
+        boolean hasUnread = letterReadRepository.existsByMember_IdAndReadAtIsNull(memberId);
 
         return HomeResponse.builder()
                 .babyName(babyNames)
@@ -308,7 +310,7 @@ public class LetterService {
 
         LocalDate today = LocalDate.now(KST);
         LocalDateTime start = today.atStartOfDay();
-        LocalDateTime end = start.plusDays(1).minusNanos(1);
+        LocalDateTime end   = start.plusDays(1);
 
         Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
 
@@ -339,16 +341,23 @@ public class LetterService {
 
         LocalDateTime cursor = (cursorIso == null || cursorIso.isBlank())
                 ? null : LocalDateTime.parse(cursorIso);
+        int pageSize = Math.max(1, Math.min(size, 50));
+        var pageable = PageRequest.of(0, pageSize);
+        List<Letter> letters = letterRepository.findLetters(
+                memberId,
+                familyId,
+                null, null,
+                cursor,             //  createdAt < cursor
+                pageable,
+                true
+        );
 
-        var pageable = PageRequest.of(0, Math.max(1, Math.min(size, 50)));
-
-        List<Letter> letters = letterRepository.findFeedForUser(memberId, familyId, cursor, pageable);
 
         var qCache = new HashMap<LocalDate, String>();
         var items = letters.stream().map(l -> {
             var d = l.getCreatedAt().toLocalDate();
             String qText = qCache.computeIfAbsent(d, dd -> questionService.getTextFor(dd, familyId));
-            boolean isRead = letterReadRepository.findExistByLetterIdAndMemberId(l.getId(), memberId);
+            boolean isRead = letterReadRepository.existsByLetter_IdAndMember_IdAndReadAtIsNotNull(l.getId(), memberId);
             return LetterResponse.builder()
                     .id(l.getId())
                     .content(l.getContent())
