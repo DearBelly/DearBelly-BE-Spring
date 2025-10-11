@@ -73,7 +73,6 @@ public class LetterService {
         Long memberId = authenticatedProvider.getCurrentMemberId();
         // 가족 + 구성원까지 fetch-join (편지 수신자 리스트 필요하므로 이 경우만 무거운 조회 허용)
         Member me = meWithFamily(memberId);
-        Long familyId = me.getFamily().getId();
 
         String content = req.getContent().trim();
         if (content.isEmpty()) throw GeneralException.of(StatusCode.LETTER_CONTENT_REQUIRED);
@@ -137,21 +136,23 @@ public class LetterService {
     @Transactional(readOnly = true)
     public List<LetterResponse> getByMonth(Integer year, Integer month) {
         Long memberId = authenticatedProvider.getCurrentMemberId();
-        // 편지 편집 가능 여부(작성자 비교) 때문에 나 자신 정보 + 가족 id만 필요
         Member me = meWithFamily(memberId);
-        Long familyId = me.getFamily().getId();
 
         YearMonth ym = (year == null || month == null) ? YearMonth.now(KST) : YearMonth.of(year, month);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end = ym.atEndOfMonth().atTime(23, 59, 59);
 
-        List<Letter> letters = letterRepository.findLetterByYearAndMonth(familyId, start, end);
-
         Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
+
+        List<Letter> letters;
+        if (famId == null) {
+                letters = letterRepository.findMineByCreatedBetween(memberId, start, end);
+        } else {
+            letters = letterRepository.findLetterByYearAndMonth(famId, start, end);
+        }
 
         return letters.stream().map(l -> {
             String qText = questionService.getTextFor(l.getCreatedAt().toLocalDate(), famId);
-            // 해당 특정한 Letter에 대하여 읽었는지 여부에 대하여 확인
             boolean isRead = letterReadRepository.findExistByLetterIdAndMemberId(l.getId(), memberId);
             return LetterResponse.builder()
                     .id(l.getId())
@@ -165,6 +166,7 @@ public class LetterService {
                     .build();
         }).toList();
     }
+
 
     /*
      * 편지 수정
@@ -231,7 +233,7 @@ public class LetterService {
 
         // 이미 읽었는지에 대하여 확인
         LetterRead letterRead = letterReadRepository
-                .findByLetterIdAndMemberId(letterId, memberId)
+                .findByLetter_IdAndMember_Id(letterId, memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.LETTER_FORBIDDEN));
 
         // 이미 읽지 않은 경우에 대하여만 처리
@@ -289,7 +291,7 @@ public class LetterService {
             week = (int) Math.max(0, ChronoUnit.WEEKS.between(effectiveLmp, LocalDate.now(KST)));
         }
 
-        boolean hasUnread = letterReadRepository.existsByLetterIdAndMemberId(memberId);
+        boolean hasUnread = letterReadRepository.existsUnreadByMemberId(memberId);
 
         return HomeResponse.builder()
                 .babyName(babyNames)
