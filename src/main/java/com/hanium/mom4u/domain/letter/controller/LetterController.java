@@ -37,12 +37,6 @@ public class LetterController {
         return ResponseEntity.ok(CommonResponse.onSuccess(letterService.getTopBanner()));
     }
 
-    @Operation(summary = "오늘의 질문 + 내 오늘 편지 상태")
-    @GetMapping("/today")
-    public ResponseEntity<CommonResponse<TodayWriteResponse>> today() {
-        return ResponseEntity.ok(CommonResponse.onSuccess(letterService.getTodayForWrite()));
-    }
-
     @Operation(summary = "편지 쓰기 API", description = "편지 작성 API입니다.")
     @PostMapping
     public ResponseEntity<CommonResponse<Void>> create(@RequestBody @Valid LetterRequest request) {

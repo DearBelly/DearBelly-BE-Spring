@@ -51,7 +51,7 @@ public class SecurityConfig {
     // 인증 필요(ROLE_USER 이상) – 메서드 무관
     private static final String[] USER_ANY = {
             "/api/v1/schedules/**", "/api/v1/family-code/**",
-            "/api/v1/member/**", "/api/v1/baby/**"
+            "/api/v1/member/**", "/api/v1/baby/**", "/api/v1/letters/**"
     };
     private static final String[] USER_DELETE = {
             "/api/v1/auth/withdraw", "/api/v1/news/*/bookmark"
