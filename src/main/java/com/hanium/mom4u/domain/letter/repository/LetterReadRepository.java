@@ -1,9 +1,9 @@
 package com.hanium.mom4u.domain.letter.repository;
 
 import com.hanium.mom4u.domain.letter.entity.LetterRead;
-import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -11,35 +11,27 @@ import java.util.Optional;
 @Repository
 public interface LetterReadRepository extends JpaRepository<LetterRead, Long> {
 
-    /*
-    특정 편지 읽음 객체에 대하여 letterId와 memberId를 통하여 조회
-     */
-    Optional<LetterRead> findByLetterIdAndMemberId(
+    /** 특정 편지/회원의 읽음 엔티티 조회 */
+    Optional<LetterRead> findByLetter_IdAndMember_Id(
             @Param("letterId") Long letterId, @Param("memberId") Long memberId);
-    /*
-    특정 편지에 대하여 읽었는지 안읽었는지에 대하여 반환
-     */
+
+    /** 편지 단건에 대해 '읽었는지' 여부 (readAt not null) */
     @Query("""
-    select exists (
-                select 1
-            from LetterRead lr
-            where lr.letter.id = :letterId and lr.member.id = :memberId
-                and lr.readAt is not null
-        )
+        select (count(lr) > 0)
+        from LetterRead lr
+        where lr.letter.id = :letterId
+          and lr.member.id = :memberId
+          and lr.readAt is not null
     """)
     boolean findExistByLetterIdAndMemberId(
             @Param("letterId") Long letterId, @Param("memberId") Long memberId);
 
-    /*
-    날짜 상관없이 아직 안 읽은 것이 있는지 반환
-     */
+    /** 회원 기준으로 아직 읽지 않은 편지가 존재하는지 (날짜 무관, readAt is null) */
     @Query("""
-    select exists (
-        select 1
-            from LetterRead lr
-            where lr.member.id = :memberId
-                and lr.readAt is null
-        )
+        select (count(lr) > 0)
+        from LetterRead lr
+        where lr.member.id = :memberId
+          and lr.readAt is null
     """)
-    boolean existsByLetterIdAndMemberId(@Param("memberId") Long memberId);
+    boolean existsUnreadByMemberId(@Param("memberId") Long memberId);
 }
