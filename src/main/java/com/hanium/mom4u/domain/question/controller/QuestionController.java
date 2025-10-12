@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.letter.controller;
+package com.hanium.mom4u.domain.question.controller;
 
 import com.hanium.mom4u.domain.letter.dto.response.TodayWriteResponse;
 import com.hanium.mom4u.domain.letter.service.LetterService;

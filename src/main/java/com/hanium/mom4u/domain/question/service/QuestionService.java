@@ -1,16 +1,14 @@
-package com.hanium.mom4u.domain.letter.service;
+package com.hanium.mom4u.domain.question.service;
 
 import com.hanium.mom4u.domain.family.entity.DailyQuestion;
 import com.hanium.mom4u.domain.family.entity.Question;
-import com.hanium.mom4u.domain.letter.repository.DailyQuestionRepository;
+import com.hanium.mom4u.domain.question.repository.DailyQuestionRepository;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,25 +20,19 @@ import java.time.ZoneId;
 @RequiredArgsConstructor
 public class QuestionService {
 
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final DailyQuestionRepository dailyQuestionRepository;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @PersistenceContext
-    private EntityManager em; // ★ JPA 레퍼런스 주입
+    private EntityManager em;
 
-    /** 매일 0시: 트리거(신호) */
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-    public void scheduleEnsureToday() {
-        log.info("[SCHED] ensureTodayGlobalQuestion START");
-        ensureTodayGlobalQuestionAsync();
-    }
-
+    /** 동기 호출용 (트랜잭션 적용) */
     @Transactional
     public void ensureTodayGlobalQuestion() {
         ensureTodayGlobalQuestionCore();
     }
 
-    @Async("asyncExecutor")
+    /** 비동기 호출용 (트랜잭션 적용 + 예외 처리) */
     @Transactional
     public void ensureTodayGlobalQuestionAsync() {
         long t0 = System.nanoTime();
@@ -48,14 +40,15 @@ public class QuestionService {
             ensureTodayGlobalQuestionCore();
         } catch (Exception e) {
             log.error("[SCHED] ensureTodayGlobalQuestion FAILED", e);
+            throw e; // ★ 트랜잭션 롤백을 위해 예외 재던지기
         } finally {
             long tookMs = (System.nanoTime() - t0) / 1_000_000;
             log.info("[SCHED] ensureTodayGlobalQuestion END took={}ms", tookMs);
         }
     }
 
-    /** 전역 ‘오늘 질문’ 없으면 생성 */
-    void ensureTodayGlobalQuestionCore() {
+    /** 전역 '오늘 질문' 없으면 생성 */
+    private void ensureTodayGlobalQuestionCore() {
         LocalDate today = LocalDate.now(KST);
 
         if (dailyQuestionRepository.existsGlobalOn(today)) {

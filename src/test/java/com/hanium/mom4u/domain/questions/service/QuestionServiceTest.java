@@ -1,9 +1,9 @@
 package com.hanium.mom4u.domain.questions.service;
 
 import com.hanium.mom4u.domain.family.entity.DailyQuestion;
-import com.hanium.mom4u.domain.letter.repository.DailyQuestionRepository;
-import com.hanium.mom4u.domain.letter.repository.DailyQuestionRepositoryCustom;
-import com.hanium.mom4u.domain.letter.service.QuestionService;
+import com.hanium.mom4u.domain.question.repository.DailyQuestionRepository;
+import com.hanium.mom4u.domain.question.repository.DailyQuestionRepositoryCustom;
+import com.hanium.mom4u.domain.question.service.QuestionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
