@@ -59,7 +59,11 @@ public class MemberService {
             member.setLmpDate(null);
         }
 
-        member.getInterests().addAll(categories);
+        if (categories != null && !categories.isEmpty()) {
+            member.getInterests().addAll(categories);
+        }
+        ensureDefaultImage(member);
+
         memberRepository.save(member);
     }
 
@@ -83,6 +87,12 @@ public class MemberService {
         deleteIfCustomImage(member.getImgUrl());
         member.setImgUrl(publicUrl);
         memberRepository.save(member);
+    }
+
+    private void ensureDefaultImage(Member member) {
+        if (member.getImgUrl() == null || member.getImgUrl().isBlank()) {
+            member.setImgUrl(DEFAULT_PROFILE_IMG_URL);
+        }
     }
 
     //기본 이미지로
@@ -127,7 +137,7 @@ public class MemberService {
             }
         }
 
-
+        ensureDefaultImage(member);
 
         memberRepository.save(member);
     }

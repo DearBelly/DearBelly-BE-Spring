@@ -14,7 +14,7 @@ public class QuestionScheduler {
     private final QuestionService questionService;
 
     /** 매일 0시: 트리거(신호) */
-    @Async("asyncExecutor")
+    @Async("schedulerExecutor")
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     public void scheduleEnsureToday() {
         log.info("[SCHED] ensureTodayGlobalQuestion START");
