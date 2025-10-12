@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.letter.repository;
+package com.hanium.mom4u.domain.question.repository;
 
 import com.hanium.mom4u.domain.family.entity.DailyQuestion;
 import org.springframework.data.jpa.repository.JpaRepository;
