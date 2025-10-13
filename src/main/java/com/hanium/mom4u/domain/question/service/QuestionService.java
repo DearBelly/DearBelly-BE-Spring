@@ -1,7 +1,7 @@
 package com.hanium.mom4u.domain.question.service;
 
-import com.hanium.mom4u.domain.family.entity.DailyQuestion;
-import com.hanium.mom4u.domain.family.entity.Question;
+import com.hanium.mom4u.domain.question.entity.DailyQuestion;
+import com.hanium.mom4u.domain.question.entity.Question;
 import com.hanium.mom4u.domain.question.repository.DailyQuestionRepository;
 import com.hanium.mom4u.global.exception.GeneralException;
 import com.hanium.mom4u.global.response.StatusCode;

@@ -1,5 +1,6 @@
-package com.hanium.mom4u.domain.family.entity;
+package com.hanium.mom4u.domain.question.entity;
 import com.hanium.mom4u.domain.common.BaseEntity;
+import com.hanium.mom4u.domain.family.entity.Family;
 import jakarta.persistence.*; import lombok.Getter;
 import lombok.Setter;
 @Entity
