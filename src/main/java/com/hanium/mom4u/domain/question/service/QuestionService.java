@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.ZoneId;
 
@@ -60,7 +59,7 @@ public class QuestionService {
             lockName = generateLockName(today);
             locked = getLock(lockName);
 
-            if (locked) {
+            if (!locked) {
                 log.warn("[LOCK] failed to acquire lock: {}", lockName);
                 throw GeneralException.of(StatusCode.FAILED_TO_GET_LOCK);
             }
