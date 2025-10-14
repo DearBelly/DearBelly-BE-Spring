@@ -3,6 +3,7 @@ package com.hanium.mom4u.domain.questions.service;
 import com.hanium.mom4u.domain.question.entity.DailyQuestion;
 import com.hanium.mom4u.domain.question.repository.DailyQuestionRepository;
 import com.hanium.mom4u.domain.question.service.QuestionService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -25,6 +26,7 @@ class QuestionServiceTest {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Test
+    @DisplayName("오늘의 질문이 없을 때 생성")
     void ensureTodayGlobalQuestion_creates_when_absent() {
 //        LocalDate today = LocalDate.now(KST);
 //        when(repo.existsGlobalOn(today)).thenReturn(false);
