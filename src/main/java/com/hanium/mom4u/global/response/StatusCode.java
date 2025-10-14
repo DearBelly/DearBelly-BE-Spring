@@ -73,14 +73,20 @@ public enum StatusCode {
     LETTER_NOT_FOUND(HttpStatus.NOT_FOUND,    "LE4041", "편지를 찾을 수 없습니다."),
     LETTER_CONTENT_TOO_LONG (HttpStatus.BAD_REQUEST, "LE4002", "편지 내용은 300자 이하여야 합니다."),
     LETTER_TODAY_ALREADY_WRITTEN(HttpStatus.CONFLICT, "LE4091", "오늘은 이미 편지를 작성했습니다."),
-    QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QU4001", "질문을 찾을 수 없습니다."),
-
 
     // scan
     NOT_ENOUGH_FORMAT(HttpStatus.BAD_REQUEST, "SCAN4001", "유효한 사진 파일 양식이 아닙니다."),
 
     // SSE
     SSE_CONNECTION_ERROR(HttpStatus.SEE_OTHER, "SSE3001", "SSE 연결에 실패하였습니다."),
+
+    // question
+    QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QU4001", "질문을 찾을 수 없습니다."),
+    QUESTION_SCHEDULER_ERROR(HttpStatus.BAD_REQUEST, "QU4002", "데일리 질문에 대한 스케줄링 중 오류가 발생하였습니다."),
+    FAILED_CREATE_DAILY_Q(HttpStatus.BAD_REQUEST, "QU4003", "오늘의 질문 생성 후 저장에 실패하였습니다."),
+
+    // lock
+    FAILED_TO_GET_LOCK(HttpStatus.CONFLICT, "LOCK4091", "LOCK 도중 오류가 발생하였습니다."),
 
     // server
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER5001", "서버에서 에러가 발생했습니다."),

@@ -1,4 +1,4 @@
-package com.hanium.mom4u.domain.family.entity;
+package com.hanium.mom4u.domain.question.entity;
 
 import com.hanium.mom4u.domain.common.BaseEntity;
 import jakarta.persistence.*;

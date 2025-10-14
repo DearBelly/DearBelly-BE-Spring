@@ -1,6 +1,6 @@
 package com.hanium.mom4u.domain.letter.service;
 
-import com.hanium.mom4u.domain.family.entity.DailyQuestion;
+import com.hanium.mom4u.domain.question.entity.DailyQuestion;
 import com.hanium.mom4u.domain.letter.entity.LetterRead;
 import com.hanium.mom4u.domain.letter.repository.LetterReadRepository;
 import com.hanium.mom4u.domain.member.entity.Baby;
