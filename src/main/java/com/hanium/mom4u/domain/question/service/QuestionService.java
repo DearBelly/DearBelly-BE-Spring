@@ -96,18 +96,18 @@ public class QuestionService {
      */
     private boolean getLock(String lockName) {
         try {
-            BigInteger result = (BigInteger) em.createNativeQuery(
+            Object result = em.createNativeQuery(
                     "SELECT GET_LOCK(:lockName, :timeout)")
                     .setParameter("lockName", lockName)
                     .setParameter("timeout", LOCK_TIMEOUT_SECONDS)
                     .getSingleResult();
 
             // Lock 획득(완료여부)
-            boolean acquired = (result != null && result.intValue() == 1);
+            boolean acquired = (result != null && ((Number)result).intValue() == 1);
 
             if (acquired) {
                 log.info("[LOCK] acquired lock={}", lockName);
-            } else if (result != null && result.intValue() == 0) {
+            } else if (result != null && ((Number)result).intValue() == 0) {
                 log.warn("[LOCK] lock timeout = {}", lockName);
             } else {
                 log.error("[LOCK] lock not acquired={} (NULL of -1)", lockName);
@@ -128,12 +128,12 @@ public class QuestionService {
 
     private void releaseLock(String lockName) {
         try {
-            BigInteger result = (BigInteger) em.createNativeQuery(
+            Object result = em.createNativeQuery(
                     "SELECT RELEASE_LOCK(:lockName)")
                     .setParameter("lockName", lockName)
                     .getSingleResult();
 
-            if (result != null && result.intValue() == 1) {
+            if (result != null && ((Number)result).intValue() == 1) {
                 log.info("[LOCK] lock successfully released={}", lockName);
             } else {
                 log.warn("[LOCK] lock not released={}", lockName);

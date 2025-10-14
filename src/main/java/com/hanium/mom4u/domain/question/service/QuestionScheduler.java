@@ -27,6 +27,9 @@ public class QuestionScheduler {
         } catch (Exception e) {
             log.error("[SCHED] Daily Question Scheduling FAILED", e);
             throw GeneralException.of(StatusCode.QUESTION_SCHEDULER_ERROR);
+        } finally {
+            // 트랜잭션 별도 관리하지 않아도 됨
+            log.info("[SCHED] ensureTodayGlobalQuestion END");
         }
     }
 }
