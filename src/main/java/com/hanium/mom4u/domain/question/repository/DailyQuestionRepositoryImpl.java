@@ -1,8 +1,8 @@
 package com.hanium.mom4u.domain.question.repository;
 
 import com.hanium.mom4u.domain.question.entity.DailyQuestion;
-import com.hanium.mom4u.domain.family.entity.QDailyQuestion;
-import com.hanium.mom4u.domain.family.entity.QQuestion;
+import com.hanium.mom4u.domain.question.entity.QDailyQuestion;
+import com.hanium.mom4u.domain.question.entity.QQuestion;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -133,6 +133,4 @@ public class DailyQuestionRepositoryImpl implements DailyQuestionRepositoryCusto
         // exclude 없이 동일 로직 재사용
         return pickRandomExcluding(null);
     }
-
-
 }
