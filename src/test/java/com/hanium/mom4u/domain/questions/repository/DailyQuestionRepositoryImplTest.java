@@ -1,8 +1,8 @@
 package com.hanium.mom4u.domain.questions.repository;
 
-import com.hanium.mom4u.domain.family.entity.DailyQuestion;
+import com.hanium.mom4u.domain.question.entity.DailyQuestion;
 import com.hanium.mom4u.domain.family.entity.Family;
-import com.hanium.mom4u.domain.family.entity.Question;
+import com.hanium.mom4u.domain.question.entity.Question;
 import com.hanium.mom4u.domain.question.repository.DailyQuestionRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;

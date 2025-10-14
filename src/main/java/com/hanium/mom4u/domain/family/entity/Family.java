@@ -2,6 +2,7 @@ package com.hanium.mom4u.domain.family.entity;
 
 import com.hanium.mom4u.domain.common.BaseEntity;
 import com.hanium.mom4u.domain.member.entity.Member;
+import com.hanium.mom4u.domain.question.entity.DailyQuestion;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
