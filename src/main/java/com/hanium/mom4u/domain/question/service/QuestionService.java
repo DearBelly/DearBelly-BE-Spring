@@ -11,6 +11,7 @@ import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -19,7 +20,6 @@ import java.time.ZoneId;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class QuestionService {
 
     private final DailyQuestionRepository dailyQuestionRepository;
@@ -146,7 +146,7 @@ public class QuestionService {
     실제 오늘 질문을 생성하는 메서드
     오늘 날짜와 Projection Interface 사용
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 5)
     public void createDailyQuestion(LocalDate today, DailyQuestionRepositoryCustom.QuestionPick pick) {
 
         // 락 획득 후 다시 확인 (더블 체크)
