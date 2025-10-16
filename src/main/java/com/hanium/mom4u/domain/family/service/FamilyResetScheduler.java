@@ -6,6 +6,7 @@ import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ public class FamilyResetScheduler {
     private final MemberRepository memberRepository;
 
     // 실제 운영용: 매일 자정(00:00) 실행
+    @Async("schedulerExecutor")
     @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
     public void resetOldFamilies() {

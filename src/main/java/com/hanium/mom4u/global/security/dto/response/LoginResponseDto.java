@@ -13,4 +13,5 @@ public class LoginResponseDto {
     private String email;
     private String nickname;
     private SocialType socialType;
+    private boolean isNew;
 }

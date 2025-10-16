@@ -1,10 +1,10 @@
 services:
-  dearbelly-api:
+  app-blue:
     image: ${ECR_URI}/dearbelly-api:latest
     ports:
       - "8080:8080"
     env_file:
-      - /home/ubuntu/dearbelly-api/deploy/.env
+      - /home/ubuntu/dearbelly-api/deploy/docker/.env
     volumes:
       - /home/ubuntu/logs:/app/logs
       - /home/ubuntu/dearbelly-api:/home/dearbelly
@@ -13,6 +13,19 @@ services:
     depends_on:
       - redis
     container_name: app-blue
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+    environment:
+      JAVA_TOOL_OPTIONS: >
+        -XX:+UseG1GC
+        -XX:MaxRAMPercentage=65.0
+        -XX:InitiatingHeapOccupancyPercent=30
+        -XX:MaxGCPauseMillis=200
+        -XX:+UseStringDeduplication
+        -Xss512k
+        -XX:MaxMetaspaceSize=256m
 
   redis:
     image: redis:7.4.1
@@ -20,40 +33,13 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
-      - /path/to/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - /home/ubuntu/deploy/redis/redis-data:/data
+      - /home/ubuntu/deploy/redis/redis.conf:/etc/redis/redis.conf
+      - /var/log/redis:/var/log/redis:ro
+    command: ["redis-server", "/etc/redis/redis.conf"]
     networks:
       - mynetwork
     restart: always
-
-  prometheus:
-    user: ${PROMETHEUS_USER}
-    image: prom/prometheus:latest
-    container_name: prometheus
-    volumes:
-      - /home/ubuntu/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - /home/ubuntu/monitoring/volume:/prometheus/data
-    ports:
-      - 9090:9090
-    command:
-      - '--web.enable-lifecycle'
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=15d'
-    restart: always
-    networks:
-      - mynetwork
-
-  grafana:
-    user: ${GRAFANA_USER}
-    image: grafana/grafana:latest
-    container_name: grafana
-    ports:
-      - 3000:3000
-    volumes:
-      - /home/ubuntu/grafana/volume:/var/lib/grafana
-    restart: always
-    networks:
-      - mynetwork
 
 networks:
   mynetwork:

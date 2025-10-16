@@ -32,8 +32,6 @@ public class SwaggerConfig {
                         .title("Dear Belly")
                         .version("v1.0")
                         .description("Dear Belly 백엔드 API 문서입니다."))
-                .addServersItem(
-                        new Server().url(baseUrl)
-                );
+                .addServersItem(new Server().url(baseUrl));
     }
 }

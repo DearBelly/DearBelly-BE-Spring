@@ -54,8 +54,8 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/docker/*
-          target: /home/ubuntu/dearbelly-api/docker/
+          source: ./deploy/docker
+          target: /home/ubuntu/dearbelly-api/
 
       - name: Transfer nginx file to ec2
         uses: appleboy/scp-action@master
@@ -63,8 +63,8 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/nginx/*
-          target: /home/ubuntu/nginx/
+          source: ./deploy/nginx
+          target: /home/ubuntu/
 
       - name: Transfer monitoring file to ec2
         uses: appleboy/scp-action@master
@@ -72,8 +72,8 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./deploy/monitoring/*
-          target: /home/ubuntu/monitoring/
+          source: ./deploy/monitoring
+          target: /home/ubuntu/
 
   deploy:
     runs-on: ubuntu-22.04
@@ -87,8 +87,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            mkdir -p ~/dearbelly-api/docker
-            cd ~/dearbelly-api/docker
+            mkdir -p ~/dearbelly-api/deploy/docker
+            cd ~/dearbelly-api/deploy/docker
             
             echo "${{ secrets.ENV }}" > .env
             

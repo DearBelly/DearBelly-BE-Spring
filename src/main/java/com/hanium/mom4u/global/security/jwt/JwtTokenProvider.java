@@ -12,14 +12,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
-
 import java.security.Key;
-import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class JwtTokenProvider {
+
+    private static final String ROLES_CLAIM = "roles";
 
     @Value("${spring.jwt.secret}")
     private String secretKey;
@@ -44,12 +46,12 @@ public class JwtTokenProvider {
     }
 
     public String createAccessToken(Long memberId, Role role) {
-        Claims claims = Jwts.claims().setSubject(memberId.toString());
-        claims.put("role", role);
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInSeconds * 1000);
+
         return Jwts.builder()
-                .setClaims(claims)
+                .setSubject(memberId.toString())
+                .claim(ROLES_CLAIM, List.of(role.name()))
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -68,21 +70,30 @@ public class JwtTokenProvider {
     }
 
     public Authentication getAuthentication(String token) {
-        Long memberId = Long.valueOf(getMemberId(token));
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
 
-        String roleName = member.getRole().name(); // USER, ADMIN
-        if (!roleName.startsWith("ROLE_")) {
-            roleName = "ROLE_" + roleName;         // → ROLE_USER
+        String memberId = claims.getSubject();
+
+        // 토큰의 roles 클레임 사용
+        List<String> roles = claims.get(ROLES_CLAIM, List.class);
+
+        // 예전 토큰 등 roles가 없으면 DB fallback (정합성↑)
+        if (roles == null || roles.isEmpty()) {
+            Member member = memberRepository.findById(Long.valueOf(memberId))
+                    .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
+            roles = List.of(member.getRole().name());
         }
-        var authorities = java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(roleName));
 
-        return new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                member.getId().toString(), null, authorities
-        );
+        var authorities = roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+
+        return new UsernamePasswordAuthenticationToken(memberId, null, authorities);
     }
-
 
     public String getMemberId(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build()
@@ -100,10 +111,10 @@ public class JwtTokenProvider {
         }
     }
 
-
     public String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-        return (bearerToken != null && bearerToken.startsWith("Bearer ")) ?
-                bearerToken.substring(7) : null;
+        return (bearerToken != null && bearerToken.startsWith("Bearer "))
+                ? bearerToken.substring(7)
+                : null;
     }
 }

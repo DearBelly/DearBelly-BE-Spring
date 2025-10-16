@@ -12,7 +12,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
@@ -37,12 +37,18 @@ spring:
       client_id: ${GOOGLE_REST_API}
       redirect_uri: ${GOOGLE_LOCAL_CALLBACK}
       secret_key: ${GOOGLE_SECRET_KEY}
+    hmac:
+      family-secret: ${FAMILY_HMAC_SECRET}
 
   data:
     redis:
       host: ${LOCAL_REDIS_HOST}
       port: 6379
       password: ${LOCAL_REDIS_PASSWORD}
+
+  home:
+    theme:
+      cookie: ${HOME_THEME_COOKIE}
 
   cloud:
     aws:
@@ -51,6 +57,7 @@ spring:
         access-key: ${AWS_ACCESS_KEY}
         secret-key: ${AWS_SECRET_KEY}
         default-image: ${DEFAULT_IMAGE}
+        image-prefix: ${IMAGE_PREFIX}
 
       region:
         static: ${AWS_REGION}
@@ -60,7 +67,10 @@ spring:
 logging:
   level:
     root: INFO
-    org.hibernate.SQL: DEBUG
+  file:
+    path: ./logs
+#  file:
+#    path: /app/logs
 
 external:
   filepath: ${LOCAL_FILE_PATH}
@@ -73,6 +83,13 @@ management:
   endpoint:
     health:
       show-components: always
+#  server:
+#    address: 0.0.0.0
 
 openapi:
   base-url: http://localhost:8080
+
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true

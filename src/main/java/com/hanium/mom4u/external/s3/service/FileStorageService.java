@@ -42,19 +42,7 @@ public class FileStorageService {
     private final static String S3_IMG_PATH = "scan/";
 
     public String generatePresignedPutUrl(String objectKey) {
-        S3Presigner presigner;
-
-        if (accessKey != null && !accessKey.isBlank() && secretKey != null && !secretKey.isBlank()) {
-            AwsCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
-            presigner = S3Presigner.builder()
-                    .credentialsProvider(StaticCredentialsProvider.create(credentials))
-                    .region(Region.of(region))
-                    .build();
-        } else {
-            presigner = S3Presigner.builder()
-                    .region(Region.of(region))
-                    .build();
-        }
+        S3Presigner presigner = buildPresigner();
 
         PutObjectRequest objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
@@ -66,30 +54,28 @@ public class FileStorageService {
                 .signatureDuration(Duration.ofMinutes(5))
                 .build();
 
-        URL presignedPutUrl = presigner.presignPutObject(presignRequest).url();
+        URL url = presigner.presignPutObject(presignRequest).url();
         presigner.close();
-
-        return presignedPutUrl.toString();
+        return url.toString();
     }
 
+    public String publicUrlOf(String objectKey) {
+        return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + objectKey;
+    }
+    public String extractKeyFromUrlOrKey(String fullUrl) {
+        if (fullUrl == null || fullUrl.isBlank()) return "";
+        int idx = fullUrl.indexOf(".amazonaws.com/");
+        if (idx != -1) {
+            return fullUrl.substring(idx + ".amazonaws.com/".length());
+        }
+        return "";
+    }
 
     public void deleteFile(String objectKey) {
-        S3Client s3Client = S3Client.builder()
-                .region(Region.of(region))
-                .credentialsProvider(
-                        (accessKey != null && secretKey != null) ?
-                                StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)) :
-                                DefaultCredentialsProvider.create()
-                )
-                .build();
-
-        DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+        s3Client.deleteObject(DeleteObjectRequest.builder()
                 .bucket(bucketName)
                 .key(objectKey)
-                .build();
-
-        s3Client.deleteObject(deleteRequest);
-        s3Client.close();
+                .build());
     }
 
 
@@ -133,7 +119,6 @@ public class FileStorageService {
      * S3에 받은 이미지를 업로드 후 PresignedURL 반환
      * 업로드한 이미지의 이름은 JOB의 CorrelationID를 사용
      */
-    @Transactional
     public S3ScanFolderResponseDto uploadFileAndGetPresignedUrl(
             MultipartFile multipartFile, String correlationId) throws IOException {
 
@@ -159,5 +144,13 @@ public class FileStorageService {
                 .objectKey(key)
                 .presignedUrl(presignedUrl)
                 .build();
+    }
+    private S3Presigner buildPresigner() {
+        S3Presigner.Builder builder = S3Presigner.builder().region(Region.of(region));
+        if (accessKey != null && !accessKey.isBlank() && secretKey != null && !secretKey.isBlank()) {
+            AwsCredentials cred = AwsBasicCredentials.create(accessKey, secretKey);
+            builder = builder.credentialsProvider(StaticCredentialsProvider.create(cred));
+        }
+        return builder.build();
     }
 }

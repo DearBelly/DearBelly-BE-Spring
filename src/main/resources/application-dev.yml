@@ -27,21 +27,27 @@ spring:
   security:
     kakao:
       client_id: ${KAKAO_REST_API_KEY}
-      redirect_uri: ${KAKAO_LOCAL_CALLBACK}
+      redirect_uri: ${KAKAO_DEV_CALLBACK}
     naver:
       client_id: ${NAVER_API_KEY}
-      redirect_uri: ${NAVER_LOCAL_CALLBACK}
+      redirect_uri: ${NAVER_DEV_CALLBACK}
       secret_key: ${NAVER_SECRET_KEY}
     google:
       client_id: ${GOOGLE_REST_API}
-      redirect_uri: ${GOOGLE_LOCAL_CALLBACK}
+      redirect_uri: ${GOOGLE_DEV_CALLBACK}
       secret_key: ${GOOGLE_SECRET_KEY}
+    hmac:
+      family-secret: ${FAMILY_HMAC_SECRET}
 
   data:
     redis:
       host: ${DEV_REDIS_HOST}
       port: 6379
       password: ${REDIS_PASSWORD}
+
+  home:
+    theme:
+      cookie: ${HOME_THEME_COOKIE}
 
   cloud:
     aws:
@@ -50,6 +56,7 @@ spring:
         access-key: ${AWS_ACCESS_KEY}
         secret-key: ${AWS_SECRET_KEY}
         default-image: ${DEFAULT_IMAGE}
+        image-prefix: ${IMAGE_PREFIX}
 
       region:
         static: ${AWS_REGION}
@@ -59,15 +66,19 @@ spring:
 logging:
   level:
     root: INFO
-    org.hibernate.SQL: DEBUG
+  file:
+    path: /app/logs
+
+log:
+  config:
+    level: INFO
+    path: /app/logs
 
 management:
   endpoints:
     web:
       exposure:
-        include:
-          - health
-          - info
+        include: "*"
   endpoint:
     health:
       show-components: always

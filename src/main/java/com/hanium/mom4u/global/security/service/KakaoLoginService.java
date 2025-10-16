@@ -14,6 +14,7 @@ import com.hanium.mom4u.global.security.util.RefreshTokenUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -49,21 +50,31 @@ public class KakaoLoginService {
 
     // 반환 타입 변경
     private KakaoLoginResult loginWithKakao(HttpServletResponse response, KakaoUserInfoResponseDto userInfo) {
+        String providerId = String.valueOf(userInfo.getId());
         String email = userInfo.getKakaoAccount().getEmail();
         String nickname = userInfo.getKakaoAccount().getProfile().getNickname();
 
-        Member member = memberRepository
-                .findByEmailAndSocialTypeAndIsInactiveFalse(email, SocialType.KAKAO)
-                .orElseGet(() -> {
-                    Member newMember = Member.builder()
-                            .email(email)
-                            .name(nickname)
-                            .nickname(nickname)
-                            .role(Role.ROLE_USER)
-                            .socialType(SocialType.KAKAO)
-                            .build();
-                    return memberRepository.save(newMember);
-                });
+        var found = memberRepository.findBySocialTypeAndProviderIdAndIsInactiveFalse(SocialType.KAKAO, providerId);
+        boolean isNew = found.isEmpty();
+
+        Member member = found.orElseGet(() -> {
+            Member m = Member.builder()
+                    .socialType(SocialType.KAKAO)
+                    .providerId(providerId)
+                    .email(email)
+                    .name(nickname)
+                    .nickname(nickname)
+                    .role(Role.ROLE_USER)
+                    .isInactive(false)
+                    .build();
+            try {
+                return memberRepository.save(m);
+            } catch (DataIntegrityViolationException ex) {
+                // 동시 가입 시도 등 유니크 충돌 대비 멱등 처리
+                return memberRepository.findBySocialTypeAndProviderIdAndIsInactiveFalse(SocialType.KAKAO, providerId)
+                        .orElseThrow();
+            }
+        });
 
 
 
@@ -76,14 +87,14 @@ public class KakaoLoginService {
         refreshTokenUtil.addRefreshTokenCookie(response, refreshToken);
 
         // 사용자 정보 DTO 생성
-        LoginResponseDto userInfoDto = new LoginResponseDto(
-                accessToken,
-                member.getEmail(),
-                member.getName(),
-                member.getSocialType()
-        );
+        LoginResponseDto userInfoDto = LoginResponseDto.builder()
+                .accessToken(accessToken)
+                .email(member.getEmail())
+                .nickname(member.getNickname())
+                .socialType(member.getSocialType())
+                .isNew(isNew)
+                .build();
 
-        // KakaoLoginResult로 토큰과 사용자 정보 함께 반환
         return new KakaoLoginResult(accessToken, refreshToken, userInfoDto);
     }
 }
