@@ -12,9 +12,9 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
  * REST Docs 문서를 위한 커스텀
  * 스니펫 생성 위치 : build/generated-snippets/{class-name}/{identifier}/...
  */
-public class CustomRestDocsHandler {
+public interface CustomRestDocsHandler {
 
-    private CustomRestDocsHandler() {}
+    //private CustomRestDocsHandler() {}
 
     /**
      *  가장 기본이 되는 문서화 : 기본 전처리(Pretty Print) + {class-name}/{identifier}/... 패턴

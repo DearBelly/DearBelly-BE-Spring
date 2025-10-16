@@ -3,6 +3,8 @@ package com.hanium.mom4u.global.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import jakarta.servlet.Filter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -15,6 +17,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
 import org.springframework.web.filter.CharacterEncodingFilter;
 
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 /**
@@ -31,6 +34,10 @@ public abstract class RestDocsSupport {
 
     protected Object[] initControllerAdvices() {
         return new Object[0];
+    }
+
+    protected Filter[] initFilters() {
+        return new Filter[0];
     }
 
     @BeforeEach
@@ -53,7 +60,14 @@ public abstract class RestDocsSupport {
             builder.setControllerAdvice(advices);
         }
 
-        mockMvc = builder.build();
+        Filter[] filters = initFilters();
+        if (filters != null && filters.length > 0) {
+            builder.addFilters(filters);
+        }
+
+        mockMvc = builder
+                .apply(documentationConfiguration(provider))
+                .build();
     }
 
     /**
