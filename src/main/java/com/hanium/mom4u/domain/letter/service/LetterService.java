@@ -137,26 +137,32 @@ public class LetterService {
     @Transactional(readOnly = true)
     public List<LetterResponse> getByMonth(Integer year, Integer month) {
         Long memberId = authenticatedProvider.getCurrentMemberId();
-        Member me = meWithFamily(memberId);
+
+        // 가족 ID만 가볍게 조회
+        Long famId = memberRepository.findFamilyIdByMemberId(memberId).orElse(null);
 
         YearMonth ym = (year == null || month == null) ? YearMonth.now(KST) : YearMonth.of(year, month);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end   = ym.plusMonths(1).atDay(1).atStartOfDay();
 
-        Long famId = (me.getFamily() == null) ? null : me.getFamily().getId();
-
         var letters = letterRepository.findLetters(
-                memberId,             // meId
-                famId,                // familyId (null이면 내 글 규칙 적용)
-                start, end,
-                null,                 // cursor
-                PageRequest.of(0, 500),
-                true
+                memberId, famId, start, end,
+                null, PageRequest.of(0, 500), true
         );
 
+        // N+1 방지: 한 번에 읽음 여부 로딩
+        List<Long> letterIds = letters.stream().map(Letter::getId).toList();
+        Map<Long, Boolean> readMap = batchReadMap(memberId, letterIds);
+
+        // 질문 텍스트는 날짜별 캐시 사용 (최대 31회)
+        var qCache = new HashMap<LocalDate, String>();
+
         return letters.stream().map(l -> {
-            String qText = questionService.getTextFor(l.getCreatedAt().toLocalDate(), famId);
-            boolean isRead = letterReadRepository.existsByLetter_IdAndMember_IdAndReadAtIsNotNull(l.getId(), memberId);
+            String qText = qCache.computeIfAbsent(
+                    l.getCreatedAt().toLocalDate(),
+                    d -> questionService.getTextFor(d, famId)
+            );
+            boolean isRead = readMap.getOrDefault(l.getId(), false);
             return LetterResponse.builder()
                     .id(l.getId())
                     .content(l.getContent())
@@ -164,11 +170,12 @@ public class LetterService {
                     .imgUrl(profileUrlOrDefault(l.getWriter()))
                     .isRead(isRead)
                     .createdAt(l.getCreatedAt())
-                    .editable(l.getWriter().getId().equals(me.getId()))
+                    .editable(l.getWriter().getId().equals(memberId))
                     .question(qText)
                     .build();
         }).toList();
     }
+
 
 
     /*
@@ -235,16 +242,7 @@ public class LetterService {
         }
 
         // 이미 읽었는지에 대하여 확인
-        LetterRead letterRead = letterReadRepository
-                .findByLetter_IdAndMember_Id(letterId, memberId)
-                .orElseThrow(() -> GeneralException.of(StatusCode.LETTER_FORBIDDEN));
-
-        // 이미 읽지 않은 경우에 대하여만 처리
-        if (letterRead.getReadAt() == null) {
-            LocalDateTime now = LocalDateTime.now(KST);
-            letterRead.setReadAt(now);
-            letterReadRepository.save(letterRead);
-        }
+        letterReadRepository.markRead(letterId, memberId, LocalDateTime.now(KST));
 
         String qText = questionService.getTextFor(letter.getCreatedAt().toLocalDate(), myFamId);
 
@@ -267,12 +265,14 @@ public class LetterService {
     public HomeResponse getTopBanner() {
 
         Long memberId = authenticatedProvider.getCurrentMemberId();
-        Member me = meWithFamily(memberId);
+        Member me = memberRepository.findById(memberId)
+                .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
+        Long familyId = (me.getFamily() == null) ? null : me.getFamily().getId();
 
         // 1) 진행 중인 아기들 전부 가져오기
         List<Baby> babies;
-        if (me.getFamily() != null) {
-            babies = babyRepository.findOngoingByFamilyId(me.getFamily().getId(), PageRequest.of(0, 100));
+        if (familyId != null) {
+            babies = babyRepository.findOngoingByFamilyId(familyId, PageRequest.of(0, 100));
             if (babies.isEmpty() && me.isPregnant()) {
                 babies = babyRepository.findOngoingByMemberId(me.getId(), PageRequest.of(0, 100));
             }
@@ -282,18 +282,21 @@ public class LetterService {
             babies = java.util.Collections.emptyList();
         }
 
+
         String babyNames = babies.isEmpty() ? null
                 : babies.stream()
                 .map(b -> (b.getName() == null || b.getName().isBlank()) ? "아기" : b.getName())
                 .distinct()
                 .collect(Collectors.joining(" · "));
 
-        LocalDate effectiveLmp = (me.getFamily() != null) ? me.getFamily().getLmpDate() : me.getLmpDate();
+        LocalDate effectiveLmp = (me.getFamily() != null && me.getFamily().getLmpDate() != null)
+                ? me.getFamily().getLmpDate()
+                : me.getLmpDate();
+
         int week = 0;
         if (effectiveLmp != null) {
             week = (int) Math.max(0, ChronoUnit.WEEKS.between(effectiveLmp, LocalDate.now(KST)));
         }
-
         boolean hasUnread = letterReadRepository.existsByMember_IdAndReadAtIsNull(memberId);
 
         return HomeResponse.builder()
@@ -336,29 +339,28 @@ public class LetterService {
     @Transactional(readOnly = true)
     public FeedResponse getFamilyFeed(String cursorIso, int size) {
         Long memberId = authenticatedProvider.getCurrentMemberId();
-        Member me = meWithFamily(memberId);
 
-        Long familyId = (me.getFamily() == null) ? null : me.getFamily().getId();
+        Long familyId = memberRepository.findFamilyIdByMemberId(memberId).orElse(null);
 
-        LocalDateTime cursor = (cursorIso == null || cursorIso.isBlank())
-                ? null : LocalDateTime.parse(cursorIso);
+        LocalDateTime cursor = (cursorIso == null || cursorIso.isBlank()) ? null : LocalDateTime.parse(cursorIso);
         int pageSize = Math.max(1, Math.min(size, 50));
         var pageable = PageRequest.of(0, pageSize);
+
         List<Letter> letters = letterRepository.findLetters(
-                memberId,
-                familyId,
+                memberId, familyId,
                 null, null,
-                cursor,             //  createdAt < cursor
-                pageable,
-                true
+                cursor, pageable, true
         );
 
+        // N+1 방지: 읽음 여부 배치 조회
+        List<Long> letterIds = letters.stream().map(Letter::getId).toList();
+        Map<Long, Boolean> readMap = batchReadMap(memberId, letterIds);
 
         var qCache = new HashMap<LocalDate, String>();
         var items = letters.stream().map(l -> {
             var d = l.getCreatedAt().toLocalDate();
             String qText = qCache.computeIfAbsent(d, dd -> questionService.getTextFor(dd, familyId));
-            boolean isRead = letterReadRepository.existsByLetter_IdAndMember_IdAndReadAtIsNotNull(l.getId(), memberId);
+            boolean isRead = readMap.getOrDefault(l.getId(), false);
             return LetterResponse.builder()
                     .id(l.getId())
                     .content(l.getContent())
@@ -402,11 +404,21 @@ public class LetterService {
     // 공통 유틸
     // ==========================
 
+    private Map<Long, Boolean> batchReadMap(Long memberId, List<Long> letterIds) {
+        if (letterIds.isEmpty()) return Collections.emptyMap();
+        var reads = letterReadRepository.findByMember_IdAndLetter_IdIn(memberId, letterIds);
+        Map<Long, Boolean> map = new HashMap<>(reads.size() * 2);
+        for (LetterRead lr : reads) {
+            map.put(lr.getLetter().getId(), lr.getReadAt() != null);
+        }
+        return map;
+    }
+
     /*
     가족 + 구성원까지 fetch-join 으로 전부 불러옴
      */
     private Member meWithFamily(Long memberId) {
-        return memberRepository.findWithFamilyAndMembers(memberId)
+        return memberRepository.findById(memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
     }
 
