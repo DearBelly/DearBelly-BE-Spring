@@ -108,9 +108,9 @@ public class LetterRepositoryCustomImpl implements LetterRepositoryCustom {
         if (familyId == null) {
             predicates.add(
                     letter.writer.id.eq(meId)
-                            .or(letter.writer.id.eq(meId).and(letter.family.isNull()))
-            );
-        } else {
+                            .or(letter.family.isNull())
+            );}
+        else {
             predicates.add(letter.family.id.eq(familyId));
         }
 
