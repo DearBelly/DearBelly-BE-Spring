@@ -1,34 +1,27 @@
 package com.hanium.mom4u.domain.news.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hanium.mom4u.domain.member.repository.MemberRepository;
 import com.hanium.mom4u.domain.news.common.Category;
 import com.hanium.mom4u.domain.news.dto.response.NewsDetailResponseDto;
 import com.hanium.mom4u.domain.news.dto.response.NewsPreviewResponseDto;
-import com.hanium.mom4u.domain.news.repository.NewsRepository;
 import com.hanium.mom4u.domain.news.service.NewsService;
-import com.hanium.mom4u.global.config.TestSecurityConfig;
 import com.hanium.mom4u.global.security.config.SecurityConfig;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
 import com.hanium.mom4u.global.security.jwt.JwtAuthenticationFilter;
-import com.hanium.mom4u.global.util.RestDocsSupport;
-import org.springframework.context.annotation.ComponentScan.Filter;
+import com.hanium.mom4u.global.security.jwt.JwtTokenProvider;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.mockito.Mockito;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
 import org.springframework.restdocs.payload.FieldDescriptor;
-import org.springframework.restdocs.snippet.Snippet;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,9 +32,11 @@ import java.util.List;
 
 import static com.hanium.mom4u.global.util.CustomRestDocsHandler.customDocument;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
@@ -56,60 +51,30 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWit
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(
         controllers = com.hanium.mom4u.domain.news.controller.NewsController.class,
-        excludeFilters = {
-                @Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class),
-                @Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthenticationFilter.class),
-                @Filter(type = FilterType.ASSIGNABLE_TYPE, classes = EnableJpaAuditing.class)
+        excludeAutoConfiguration = {
+                DataSourceAutoConfiguration.class,           // DataSource 제외
+                JpaRepositoriesAutoConfiguration.class,      // JPA Repository 제외
+                HibernateJpaAutoConfiguration.class          // Hibernate 제외
         }
 )
-@AutoConfigureRestDocs
-@AutoConfigureMockMvc(addFilters = false)
-@Import(TestSecurityConfig.class)
-class NewsControllerTest extends RestDocsSupport {
+@AutoConfigureRestDocs(uriScheme = "https", uriHost = "mom4u.hanium.com")
+@Import({JwtAuthenticationFilter.class, SecurityConfig.class})
+class NewsControllerTest{
 
-    @Autowired
-    MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
 
-    @Autowired
-    ObjectMapper objectMapper;
+    @Autowired private ObjectMapper objectMapper;
 
-    @MockitoBean
-    NewsService newsService;
+    @MockitoBean private NewsService newsService;
 
-    @InjectMocks
-    private NewsController newsController;
+    @MockitoBean private AuthenticatedProvider authenticatedProvider;
 
-    @Mock
-    NewsRepository newsRepository;
-    @Mock
-    MemberRepository memberRepository;
-    @Mock
-    AuthenticatedProvider authenticatedProvider;
+    @MockitoBean private JwtTokenProvider jwtTokenProvider;
 
-    // Service 주입하여 Controller 생성
-    @Override
-    protected Object initController() {
-        return new NewsController(newsService);
+    @BeforeEach
+    void setUp() {
+        given(jwtTokenProvider.validateToken(anyString())).willReturn(true);
     }
-
-    @Override
-    protected RestDocumentationResultHandler doc(String identifier, Snippet... snippets) {
-        return super.doc(identifier, snippets);
-    }
-
-    @Override
-    protected RestDocumentationResultHandler doc(String identifier, String[] sensitiveRequestHeadersToRemove, String[] sensitiveResponseHeadersToRemove, Snippet... snippets) {
-        return super.doc(identifier, sensitiveRequestHeadersToRemove, sensitiveResponseHeadersToRemove, snippets);
-    }
-
-
-    // 공통 응답에 맞춰서 작성
-    private final FieldDescriptor[] envelope = new FieldDescriptor[]{
-            fieldWithPath("isSuccess").type(BOOLEAN).description("요청 성공 여부"),
-            fieldWithPath("httpStatus").type(NUMBER).description("HTTP 상태 코드"),
-            fieldWithPath("message").type(STRING).description("응답 메시지"),
-            fieldWithPath("data").type(VARIES).description("응답 데이터")
-    };
 
     // 인증 헤더 스니펫
     private final HeaderDescriptor[] authHeader = new HeaderDescriptor[]{
@@ -143,17 +108,25 @@ class NewsControllerTest extends RestDocsSupport {
         given(newsService.getRecommend()).willReturn(newsPreviewResponseDtoList);
 
         // then
+        FieldDescriptor[] envelope = new FieldDescriptor[]{
+                fieldWithPath("httpStatus").type(NUMBER).description("HTTP 상태 코드"),
+                fieldWithPath("message").type(STRING).description("응답 메시지"),
+                fieldWithPath("data").type(ARRAY).description("뉴스 목록"),
+                fieldWithPath("success").type(BOOLEAN).description("성공 여부")
+        };
+
         mockMvc.perform(get("/api/v1/news").accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(doc(
+                .andDo(document(
                         "recommend",
                         responseFields(envelope)
                                 .andWithPrefix("data[].",
-                                        fieldWithPath("id").type(NUMBER).description("정보 ID"),
+                                        fieldWithPath("newsId").type(NUMBER).description("정보 ID"),
                                         fieldWithPath("title").type(STRING).description("제목"),
                                         fieldWithPath("subTitle").type(STRING).description("보조 제목"),
                                         fieldWithPath("imageUrl").type(STRING).description("대표 이미지 URL"),
+                                        fieldWithPath("imgUrl").type(STRING).description("대표 이미지 URL"),
                                         fieldWithPath("category").type(STRING).description("카테고리"),
                                         fieldWithPath("bookmarked").type(BOOLEAN).description("북마크 여부")
                                 )
@@ -181,6 +154,13 @@ class NewsControllerTest extends RestDocsSupport {
         when(newsService.getDetail(anyLong())).thenReturn(detail);
 
         // then
+        FieldDescriptor[] envelope = new FieldDescriptor[]{
+                fieldWithPath("httpStatus").type(NUMBER).description("HTTP 상태 코드"),
+                fieldWithPath("message").type(STRING).description("응답 메시지"),
+                fieldWithPath("data").type(OBJECT).description("뉴스 내용"),
+                fieldWithPath("success").type(BOOLEAN).description("성공 여부")
+        };
+
         mockMvc.perform(get("/api/v1/news/{newsId}", 777L).accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -195,6 +175,7 @@ class NewsControllerTest extends RestDocsSupport {
                                         fieldWithPath("content").type(STRING).description("내용"),
                                         fieldWithPath("category").type(STRING).description("카테고리"),
                                         fieldWithPath("imageUrl").type(STRING).description("대표 이미지 URL"),
+                                        fieldWithPath("imgUrl").type(STRING).description("대표 이미지 URL"),
                                         fieldWithPath("link").type(STRING).description("원문 링크"),
                                         fieldWithPath("bookmarked").type(BOOLEAN).description("북마크 여부")
                                 )
@@ -220,6 +201,7 @@ class NewsControllerTest extends RestDocsSupport {
                         pathParameters(parameterWithName("newsId").description("정보 ID")),
                         requestHeaders(authHeader),
                         responseFields(
+                                fieldWithPath("httpStatus").type(NUMBER).description("HTTP 상태 코드"),
                                 fieldWithPath("success").type(BOOLEAN).description("요청 성공 여부"),
                                 fieldWithPath("message").type(STRING).description("응답 메시지"),
                                 fieldWithPath("data").type(NULL).description("본문 데이터(없음)")
