@@ -418,7 +418,7 @@ public class LetterService {
     가족 + 구성원까지 fetch-join 으로 전부 불러옴
      */
     private Member meWithFamily(Long memberId) {
-        return memberRepository.findById(memberId)
+        return memberRepository.findWithFamilyAndMembers(memberId)
                 .orElseThrow(() -> GeneralException.of(StatusCode.MEMBER_NOT_FOUND));
     }
 
