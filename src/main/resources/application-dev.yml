@@ -67,12 +67,8 @@ logging:
   level:
     root: INFO
   file:
-    path: /app/logs
-
-log:
-  config:
-    level: INFO
-    path: /app/logs
+    path: ./logs
+  config: classpath:logback-spring.xml
 
 management:
   endpoints:

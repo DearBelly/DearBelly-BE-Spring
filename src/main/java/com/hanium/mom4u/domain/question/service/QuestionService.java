@@ -164,6 +164,7 @@ public class QuestionService {
         created.setDailyQuestionText(pick.getContent());
 
         dailyQuestionRepository.save(created);
+        em.close();
     }
 
 

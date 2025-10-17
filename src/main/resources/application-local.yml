@@ -69,6 +69,7 @@ logging:
     root: INFO
   file:
     path: ./logs
+  config: classpath:logback-spring.xml
 #  file:
 #    path: /app/logs
 
