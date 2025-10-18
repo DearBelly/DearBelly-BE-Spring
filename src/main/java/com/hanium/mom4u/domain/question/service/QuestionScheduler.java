@@ -18,7 +18,6 @@ public class QuestionScheduler {
 
     /** 매일 0시: 트리거(신호) */
     @Async("schedulerExecutor")
-    @Transactional
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     public void scheduleEnsureToday() {
         try {
