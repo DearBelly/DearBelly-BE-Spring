@@ -33,8 +33,4 @@ public class NewsPreviewResponseDto {
                 .bookmarked(bookmarked)
                 .build();
     }
-    @JsonProperty("imgUrl")
-    public String getImgUrlAlias() {
-        return imageUrl;
-    }
 }
