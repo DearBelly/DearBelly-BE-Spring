@@ -163,6 +163,18 @@ tasks.named('asciidoctor') {
     inputs.dir snippetsDir
     configurations 'asciidoctorExt'
     dependsOn tasks.named('test')
+
+    sources {
+        include("**/index.adoc")
+    }
+
+    baseDirFollowsSourceFile()
+}
+
+tasks.register('copyDocument', Copy) {
+    dependsOn tasks.named('asciidoctor')
+    from file("build/docs/asciidoc")
+    into file("src/main/resources/static/docs")
 }
 
 tasks.named('bootJar') {

@@ -14,8 +14,6 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
  */
 public interface CustomRestDocsHandler {
 
-    //private CustomRestDocsHandler() {}
-
     /**
      *  가장 기본이 되는 문서화 : 기본 전처리(Pretty Print) + {class-name}/{identifier}/... 패턴
      */

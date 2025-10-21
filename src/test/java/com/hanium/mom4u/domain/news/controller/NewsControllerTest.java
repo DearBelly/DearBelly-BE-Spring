@@ -1,6 +1,7 @@
 package com.hanium.mom4u.domain.news.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hanium.mom4u.domain.member.common.Role;
 import com.hanium.mom4u.domain.news.common.Category;
 import com.hanium.mom4u.domain.news.dto.response.NewsDetailResponseDto;
 import com.hanium.mom4u.domain.news.dto.response.NewsPreviewResponseDto;
@@ -22,12 +23,17 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Import;
 import org.springframework.restdocs.payload.FieldDescriptor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.headers.HeaderDescriptor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.hanium.mom4u.global.util.CustomRestDocsHandler.customDocument;
@@ -40,6 +46,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
+import static org.springframework.restdocs.snippet.Attributes.key;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -52,9 +59,9 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWit
 @WebMvcTest(
         controllers = com.hanium.mom4u.domain.news.controller.NewsController.class,
         excludeAutoConfiguration = {
-                DataSourceAutoConfiguration.class,           // DataSource 제외
-                JpaRepositoriesAutoConfiguration.class,      // JPA Repository 제외
-                HibernateJpaAutoConfiguration.class          // Hibernate 제외
+                DataSourceAutoConfiguration.class,
+                JpaRepositoriesAutoConfiguration.class,
+                HibernateJpaAutoConfiguration.class
         }
 )
 @AutoConfigureRestDocs(uriScheme = "https", uriHost = "mom4u.hanium.com")
@@ -73,13 +80,19 @@ class NewsControllerTest{
 
     @BeforeEach
     void setUp() {
+        // JWT 토큰 파싱 및 인증 설정 Mock
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                "testUser", null, List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
         given(jwtTokenProvider.validateToken(anyString())).willReturn(true);
     }
 
     // 인증 헤더 스니펫
-    private final HeaderDescriptor[] authHeader = new HeaderDescriptor[]{
-            headerWithName("Authorization").description("Bearer {AccessToken}")
-    };
+    private static final HeaderDescriptor authHeader = headerWithName("Authorization")
+            .description("Bearer Access Token")
+            .attributes(key("format").value("Bearer {access-token}"));
+
 
     // Page 부분 응답
     private final FieldDescriptor[] pageMeta = new FieldDescriptor[] {
@@ -125,7 +138,43 @@ class NewsControllerTest{
                                         fieldWithPath("newsId").type(NUMBER).description("정보 ID"),
                                         fieldWithPath("title").type(STRING).description("제목"),
                                         fieldWithPath("subTitle").type(STRING).description("보조 제목"),
-                                        fieldWithPath("imageUrl").type(STRING).description("대표 이미지 URL"),
+                                        fieldWithPath("imgUrl").type(STRING).description("대표 이미지 URL"),
+                                        fieldWithPath("category").type(STRING).description("카테고리"),
+                                        fieldWithPath("bookmarked").type(BOOLEAN).description("북마크 여부")
+                                )
+                ));
+    }
+
+
+    @Test
+    @DisplayName("[GET] /api/v1/news/{categoryOrder} - 카테고리 별 뉴스 반환")
+    void getAll() {
+        // given
+        List<NewsPreviewResponseDto> newsList = new ArrayList<>();
+        Long newsId = 1L;
+        for (int i = 0; i < 20; i++) {
+            newsList.add(new NewsPreviewResponseDto(newsId + i,
+                    "title" + i,
+                    "SubTitle" + i,
+                    "image" + i + ".png",
+                    Category.HEALTH,
+                    false));
+        }
+
+        // when
+        given(newsService.getAllNewsPerCategory(anyLong(), 0).willReturn(newsList);
+
+        // then
+        mockMvc.perform(get("/api/v1/news/{categoryOrder}").accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andDo(document(
+                        "category",
+                        responseFields(pageMeta)
+                                .andWithPrefix("data[].",
+                                        fieldWithPath("newsId").type(NUMBER).description("정보 ID"),
+                                        fieldWithPath("title").type(STRING).description("제목"),
+                                        fieldWithPath("subTitle").type(STRING).description("보조 제목"),
                                         fieldWithPath("imgUrl").type(STRING).description("대표 이미지 URL"),
                                         fieldWithPath("category").type(STRING).description("카테고리"),
                                         fieldWithPath("bookmarked").type(BOOLEAN).description("북마크 여부")
@@ -174,7 +223,6 @@ class NewsControllerTest{
                                         fieldWithPath("subTitle").type(STRING).description("보조 제목"),
                                         fieldWithPath("content").type(STRING).description("내용"),
                                         fieldWithPath("category").type(STRING).description("카테고리"),
-                                        fieldWithPath("imageUrl").type(STRING).description("대표 이미지 URL"),
                                         fieldWithPath("imgUrl").type(STRING).description("대표 이미지 URL"),
                                         fieldWithPath("link").type(STRING).description("원문 링크"),
                                         fieldWithPath("bookmarked").type(BOOLEAN).description("북마크 여부")
@@ -188,6 +236,7 @@ class NewsControllerTest{
     @Test
     @DisplayName("[PUT] /api/v1/news/{newsId}/bookmark - 북마크 추가")
     void addBookmark() throws Exception {
+
         Mockito.doNothing().when(newsService).addBookmark(anyLong());
 
         mockMvc.perform(put("/api/v1/news/{newsId}/bookmark", 10L)
@@ -196,8 +245,8 @@ class NewsControllerTest{
                 .andExpect(status().isOk())
                 .andDo(customDocument(
                         "bookmark-add",
-                        new String[]{"Authorization"},         // 요청에서 제거할 헤더
-                        new String[]{"Set-Cookie"},            // 응답에서 제거할 헤더
+                        new String[]{"Authorization"},
+                        new String[]{"Set-Cookie"},
                         pathParameters(parameterWithName("newsId").description("정보 ID")),
                         requestHeaders(authHeader),
                         responseFields(
@@ -228,9 +277,9 @@ class NewsControllerTest{
                         pathParameters(parameterWithName("newsId").description("정보 ID")),
                         requestHeaders(authHeader),
                         responseFields(
+                                fieldWithPath("httpStatus").type(NUMBER).description("HTTP 상태 코드"),
                                 fieldWithPath("success").type(BOOLEAN).description("요청 성공 여부"),
-                                fieldWithPath("message").type(STRING).description("응답 메시지"),
-                                fieldWithPath("data").type(NULL).description("본문 데이터(없음)")
+                                fieldWithPath("message").type(STRING).description("응답 메시지")
                         )
                 ));
     }
