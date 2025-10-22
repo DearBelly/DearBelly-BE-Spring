@@ -1,12 +1,11 @@
 package com.hanium.mom4u.domain.news.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hanium.mom4u.domain.member.common.Role;
 import com.hanium.mom4u.domain.news.common.Category;
 import com.hanium.mom4u.domain.news.dto.response.NewsDetailResponseDto;
 import com.hanium.mom4u.domain.news.dto.response.NewsPreviewResponseDto;
 import com.hanium.mom4u.domain.news.service.NewsService;
-import com.hanium.mom4u.global.security.config.SecurityConfig;
+import com.hanium.mom4u.global.config.TestSecurityConfig;
 import com.hanium.mom4u.global.security.jwt.AuthenticatedProvider;
 import com.hanium.mom4u.global.security.jwt.JwtAuthenticationFilter;
 import com.hanium.mom4u.global.security.jwt.JwtTokenProvider;
@@ -22,6 +21,10 @@ import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDoc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -42,7 +45,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
@@ -64,8 +66,8 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWit
                 HibernateJpaAutoConfiguration.class
         }
 )
-@AutoConfigureRestDocs(uriScheme = "https", uriHost = "mom4u.hanium.com")
-@Import({JwtAuthenticationFilter.class, SecurityConfig.class})
+@AutoConfigureRestDocs(uriScheme = "https", uriHost = "dev.dearbelly.site")
+@Import({JwtAuthenticationFilter.class, TestSecurityConfig.class})
 class NewsControllerTest{
 
     @Autowired private MockMvc mockMvc;
@@ -97,8 +99,7 @@ class NewsControllerTest{
     // Page 부분 응답
     private final FieldDescriptor[] pageMeta = new FieldDescriptor[] {
             fieldWithPath("page").type(NUMBER).description("현재 페이지"),
-            fieldWithPath("size").type(NUMBER).description("페이지 사이즈"),
-            fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부")
+            fieldWithPath("size").type(NUMBER).description("페이지 사이즈")
     };
 
     /**
@@ -131,7 +132,7 @@ class NewsControllerTest{
         mockMvc.perform(get("/api/v1/news").accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(
+                .andDo(customDocument(
                         "recommend",
                         responseFields(envelope)
                                 .andWithPrefix("data[].",
@@ -148,11 +149,16 @@ class NewsControllerTest{
 
     @Test
     @DisplayName("[GET] /api/v1/news/{categoryOrder} - 카테고리 별 뉴스 반환")
-    void getAll() {
+    void getAll() throws Exception {
         // given
+        int categoryOrder = 1;
+        int page = 0;
+        int size = 15;
+        int dataLength = 20;
+
         List<NewsPreviewResponseDto> newsList = new ArrayList<>();
         Long newsId = 1L;
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < dataLength; i++) {
             newsList.add(new NewsPreviewResponseDto(newsId + i,
                     "title" + i,
                     "SubTitle" + i,
@@ -160,18 +166,65 @@ class NewsControllerTest{
                     Category.HEALTH,
                     false));
         }
+        Pageable pageable = PageRequest.of(page, size);
+        Slice<NewsPreviewResponseDto> newsListSlice = new SliceImpl<>(newsList, pageable, true);
 
         // when
-        given(newsService.getAllNewsPerCategory(anyLong(), 0).willReturn(newsList);
+        given(newsService.getAllNewsPerCategory(categoryOrder, page)).willReturn(newsListSlice);
 
         // then
-        mockMvc.perform(get("/api/v1/news/{categoryOrder}").accept(MediaType.APPLICATION_JSON))
+        FieldDescriptor[] envelope = new FieldDescriptor[]{
+                fieldWithPath("httpStatus").type(NUMBER).description("HTTP 상태 코드"),
+                fieldWithPath("message").type(STRING).description("응답 메시지"),
+                fieldWithPath("data").type(OBJECT).description("응답 데이터"),
+                fieldWithPath("success").type(BOOLEAN).description("성공 여부")
+        };
+
+        mockMvc.perform(get("/api/v1/news/category/{categoryOrder}", categoryOrder)
+                        .param("page", String.valueOf(page))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(
-                        "category",
-                        responseFields(pageMeta)
-                                .andWithPrefix("data[].",
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content.length()").value(dataLength))
+                .andExpect(jsonPath("$.data.size").value(size))
+                .andExpect(jsonPath("$.data.number").value(page))
+                .andExpect(jsonPath("$.data.first").value(true))
+                .andExpect(jsonPath("$.data.last").value(false))
+                .andDo(customDocument(
+                        "get-news-by-category",
+                        pathParameters(
+                                parameterWithName("categoryOrder").description("카테고리 순서 (인덱스)")
+                        ),
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호")
+                        ),
+                        responseFields(envelope)
+                                .andWithPrefix("data.",
+                                        fieldWithPath("content").type(ARRAY).description("뉴스 목록"),
+                                        fieldWithPath("size").type(NUMBER).description("페이지 크기"),
+                                        fieldWithPath("number").type(NUMBER).description("현재 페이지 번호"),
+                                        fieldWithPath("numberOfElements").type(NUMBER).description("현재 페이지의 요소 수"),
+                                        fieldWithPath("first").type(BOOLEAN).description("첫 페이지 여부"),
+                                        fieldWithPath("last").type(BOOLEAN).description("마지막 페이지 여부"),
+                                        fieldWithPath("empty").type(BOOLEAN).description("비어있는지 여부"),
+                                        fieldWithPath("sort").type(OBJECT).description("정렬 정보"),
+                                        fieldWithPath("sort.empty").type(BOOLEAN).description("정렬 정보 비어있는지 여부"),
+                                        fieldWithPath("sort.sorted").type(BOOLEAN).description("정렬 여부"),
+                                        fieldWithPath("sort.unsorted").type(BOOLEAN).description("비정렬 여부"),
+                                        fieldWithPath("pageable").type(OBJECT).description("페이지 정보"),
+                                        fieldWithPath("pageable.offset").type(NUMBER).description("오프셋"),
+                                        fieldWithPath("pageable.pageNumber").type(NUMBER).description("페이지 번호"),
+                                        fieldWithPath("pageable.pageSize").type(NUMBER).description("페이지 크기"),
+                                        fieldWithPath("pageable.paged").type(BOOLEAN).description("페이징 여부"),
+                                        fieldWithPath("pageable.unpaged").type(BOOLEAN).description("비페이징 여부"),
+                                        fieldWithPath("pageable.sort").type(OBJECT).description("정렬 정보"),
+                                        fieldWithPath("pageable.sort.empty").type(BOOLEAN).description("정렬 정보 비어있는지 여부"),
+                                        fieldWithPath("pageable.sort.sorted").type(BOOLEAN).description("정렬 여부"),
+                                        fieldWithPath("pageable.sort.unsorted").type(BOOLEAN).description("비정렬 여부")
+                                )
+                                .andWithPrefix("data.content[].",
                                         fieldWithPath("newsId").type(NUMBER).description("정보 ID"),
                                         fieldWithPath("title").type(STRING).description("제목"),
                                         fieldWithPath("subTitle").type(STRING).description("보조 제목"),
@@ -245,15 +298,12 @@ class NewsControllerTest{
                 .andExpect(status().isOk())
                 .andDo(customDocument(
                         "bookmark-add",
-                        new String[]{"Authorization"},
-                        new String[]{"Set-Cookie"},
                         pathParameters(parameterWithName("newsId").description("정보 ID")),
                         requestHeaders(authHeader),
                         responseFields(
                                 fieldWithPath("httpStatus").type(NUMBER).description("HTTP 상태 코드"),
                                 fieldWithPath("success").type(BOOLEAN).description("요청 성공 여부"),
-                                fieldWithPath("message").type(STRING).description("응답 메시지"),
-                                fieldWithPath("data").type(NULL).description("본문 데이터(없음)")
+                                fieldWithPath("message").type(STRING).description("응답 메시지")
                         )
                 ));
     }
@@ -272,8 +322,6 @@ class NewsControllerTest{
                 .andExpect(status().isOk())
                 .andDo(customDocument(
                         "bookmark-remove",
-                        new String[]{"Authorization"},
-                        new String[]{"Set-Cookie"},
                         pathParameters(parameterWithName("newsId").description("정보 ID")),
                         requestHeaders(authHeader),
                         responseFields(
