@@ -19,7 +19,7 @@ public class NewsPreviewResponseDto {
     private Long newsId;
     private String title;
     private String subTitle;
-    private String imageUrl;
+    private String imgUrl;
     private Category category;
     private boolean bookmarked;
 
@@ -29,7 +29,7 @@ public class NewsPreviewResponseDto {
                 .title(news.getTitle())
                 .subTitle(news.getSubTitle())
                 .category(news.getCategory())
-                .imageUrl(news.getImgUrl())
+                .imgUrl(news.getImgUrl())
                 .bookmarked(bookmarked)
                 .build();
     }
