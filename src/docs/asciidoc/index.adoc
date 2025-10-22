@@ -1,0 +1,40 @@
+= REST API Documentation
+:doctype: book
+:icons: font
+:source-highlighter: highlight.js
+:toc: left
+:toclevels: 4
+:sectlinks:
+:operation-curl-request-title: cURL Request
+:operation-http-request-title: HTTP Request
+:operation-http-response-title: HTTP Response
+:operation-httpie-request-title: HTTPie Request
+:operation-request-body-title: Request Body
+:operation-response-body-title: Response Body
+:operation-path-parameters-title: Path Parameters
+:operation-request-parameters-title: Query Parameters
+:operation-request-fields-title: Request Fields
+:operation-response-fields-title: Response Fields
+
+[[overview]]
+== Overview
+
+include::overview.adoc[]
+
+== News API
+
+
+=== 추천 정보 반환
+include::news-controller-test/news-recommend.adoc[]
+
+=== 정보 상세 조회
+include::news-controller-test/news-detail.adoc[]
+
+=== 정보 카테고리별 조회
+include::news-controller-test/news-getNewsByCategory.adoc[]
+
+=== 정보 북마크에 추가
+include::news-controller-test/news-addBookmark.adoc[]
+
+=== 정보 북마크에서 해제하기
+include::news-controller-test/news-removeBookmark.adoc[]
