@@ -3,12 +3,14 @@ package com.hanium.mom4u.domain.member.dto.request;
 import com.hanium.mom4u.domain.member.common.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @AllArgsConstructor
 @RequiredArgsConstructor
+@Builder
 @Schema(description = "태아 정보 요청 DTO")
 public class BabyInfoRequestDto {
     @Schema(description = "태아 ID")
