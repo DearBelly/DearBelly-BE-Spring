@@ -114,14 +114,25 @@ public class Member extends BaseEntity {
         this.family = family;
     }
 
-
-
     public void inactive() {
         this.isInactive = true;
         this.inactiveDate = LocalDate.now();
     }
 
-
+    public Member(Long id, String email, String name, String nickname, SocialType socialType, String providerId, Role role, Gender gender, LocalDate birthDate, boolean isPregnant, LocalDate lmpDate, Boolean prePregnant) {
+        this.id = id;
+        this.email = email;
+        this.name = name;
+        this.nickname = nickname;
+        this.socialType = socialType;
+        this.providerId = providerId;
+        this.role = role;
+        this.gender = gender;
+        this.birthDate = birthDate;
+        this.isPregnant = isPregnant;
+        this.lmpDate = lmpDate;
+        this.prePregnant = prePregnant;
+    }
 }
 
 

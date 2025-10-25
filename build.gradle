@@ -101,7 +101,7 @@ dependencies {
 }
 
 // Jacoco 제외 대상 설정
-def snippetsDir = layout.buildDirectory.dir("generated-snippets")
+def snippetsDir = layout.buildDirectory.dir("generated-snippets/asciidoc")
 ext.jacocoExclusions = [
         '**/*Dto*.class',
         '**/dto/**',
@@ -163,12 +163,24 @@ tasks.named('asciidoctor') {
     inputs.dir snippetsDir
     configurations 'asciidoctorExt'
     dependsOn tasks.named('test')
+
+    sources {
+        include("**/index.adoc")
+    }
+
+    baseDirFollowsSourceFile()
+}
+
+tasks.register('copyDocument', Copy) {
+    dependsOn tasks.named('asciidoctor')
+    from file("build/generated-snippets/asciidoc")
+    into file("src/docs/asciidoc")
 }
 
 tasks.named('bootJar') {
     dependsOn tasks.named('asciidoctor')
-    from(layout.buildDirectory.dir("docs/asciidoc")) {
-        into "static/docs"
+    from(layout.buildDirectory.dir("generated-snippets/asciidoc")) {
+        into "src/docs/asciidoc"
     }
 }
 

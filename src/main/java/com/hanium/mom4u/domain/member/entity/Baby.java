@@ -67,4 +67,13 @@ public class Baby extends BaseEntity {
     public void setLmpDate(LocalDate lmpDate) {
         this.lmpDate = lmpDate;
     }
+
+    public Baby(Long id, boolean isEnded, Gender babyGender, String name, int birthYear, Member member) {
+        this.id = id;
+        this.isEnded = isEnded;
+        this.babyGender = babyGender;
+        this.name = name;
+        this.birthYear = birthYear;
+        this.member = member;
+    }
 }

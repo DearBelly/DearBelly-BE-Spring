@@ -22,7 +22,7 @@ public class NewsDetailResponseDto {
     private String subTitle;
     private String content;
     private Category category;
-    private String imageUrl;
+    private String imgUrl;
     private String link;
     private boolean bookmarked;
 
@@ -32,15 +32,10 @@ public class NewsDetailResponseDto {
                 .title(news.getTitle())
                 .subTitle(news.getSubTitle())
                 .category(news.getCategory())
-                .imageUrl(news.getImgUrl())
+                .imgUrl(news.getImgUrl())
                 .content(news.getContent())
                 .link(news.getLink())
                 .bookmarked(bookmarked)
                 .build();
-    }
-
-    @JsonProperty("imgUrl")
-    public String getImgUrlAlias() {
-        return imageUrl;
     }
 }

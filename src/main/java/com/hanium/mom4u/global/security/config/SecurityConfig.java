@@ -36,7 +36,7 @@ public class SecurityConfig {
     // 공개(메서드 무관)
     private static final String[] PUBLIC_ANY = {
             "/test/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**",
-            "/uploads/**", "/actuator/**", "/api/v1/scan"
+            "/uploads/**", "/actuator/**", "/api/v1/scan", "/docs/**"
     };
     // 공개 GET
     private static final String[] PUBLIC_GET = {
