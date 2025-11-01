@@ -1,9 +1,8 @@
-package com.hanium.mom4u.domain.questions.repository;
+package com.hanium.mom4u.domain.letter.repository;
 
 import com.hanium.mom4u.domain.family.entity.Family;
 import com.hanium.mom4u.domain.member.entity.Member;
 import com.hanium.mom4u.domain.letter.entity.Letter;
-import com.hanium.mom4u.domain.letter.repository.LetterRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
@@ -13,12 +12,16 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,22 +64,22 @@ class LetterRepositoryTest {
         throw new RuntimeException(new NoSuchFieldException(field));
     }
 
-    private Family newFamily() {
+    public Family newFamily() {
         Family f = newInstance(Family.class);
         em.persist(f);
         return f;
     }
 
-    private Member newMember(Family fam, String nickname, boolean seen) {
+    public Member newMember(Family fam, String nickname, String providerId) {
         Member m = newInstance(Member.class);
         set(m, "nickname", nickname);
-        set(m, "hasSeenFamilyLetters", seen);
+        set(m, "providerId", providerId);
         if (fam != null) set(m, "family", fam);
         em.persist(m);
         return m;
     }
 
-    private Letter newLetter(Member writer, Family family, String content, LocalDateTime createdAt) {
+    public Letter newLetter(Member writer, Family family, String content, LocalDateTime createdAt) {
         Letter l = Letter.builder()
                 .content(content)
                 .writer(writer)
@@ -91,7 +94,7 @@ class LetterRepositoryTest {
     @DisplayName("existsByWriter_IdAndCreatedAtBetween: 오늘 쓴 편지 존재 여부")
     void existsToday() {
         Family fam = newFamily();
-        Member me = newMember(fam, "me", true);
+        Member me = newMember(fam, "me", "testProvider");
 
         LocalDate today = LocalDate.now();
         LocalDateTime start = today.atStartOfDay();
@@ -105,12 +108,12 @@ class LetterRepositoryTest {
     }
 
     @Test
-    @DisplayName("findByFamilyAndCreatedAtBetween: 가족의 월간 편지 조회 (최신순)")
-    void findByFamilyAndRange() {
+    @DisplayName("findTopByWriter_IdAndCreatedAtBetweenOrderByCreatedAtDesc: 편지 조회")
+    void findTopByWriter() {
+        // given
         Family fam = newFamily();
-
-        Member a = newMember(fam, "a", true);
-        Member b = newMember(fam, "b", true);
+        Member a = newMember(fam, "a", "a");
+        Member b = newMember(fam, "b", "b");
 
         LocalDateTime d1 = LocalDateTime.of(2025, 9, 1, 10, 0);
         LocalDateTime d2 = LocalDateTime.of(2025, 9, 15, 10, 0);
@@ -118,37 +121,50 @@ class LetterRepositoryTest {
 
         newLetter(a, fam, "9/1", d1);
         newLetter(b, fam, "9/15", d2);
-        newLetter(a, fam, "10/1", d3);
+        Letter expected = newLetter(a, fam, "10/1", d3);
 
         em.flush(); em.clear();
 
-//        var list = letterRepository.findByFamilyAndCreatedAtBetween(
-//                fam,
-//                LocalDateTime.of(2025, 9, 1, 0, 0),
-//                LocalDateTime.of(2025, 9, 30, 23, 59, 59)
-//        );
-//
-//        assertThat(list).extracting("content").containsExactly("9/15", "9/1"); // desc 정렬
+        // when
+        Optional<Letter> result = letterRepository
+                .findTopByWriter_IdAndCreatedAtBetweenOrderByCreatedAtDesc(
+                        a.getId(),
+                        d1,
+                        d3.plusSeconds(1)
+                );
+
+        // then
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(expected.getId());
+        assertThat(result.get().getContent()).isEqualTo("10/1");
     }
 
-
     @Test
-    @DisplayName("findFeedForUser: 내 개인+가족 편지 섞여 최신순 페이징")
-    void feedQuery() {
+    @DisplayName("findLetters: 해당 회원의 전체 편지 조회")
+    void findLetters() {
         Family fam = newFamily();
-        Member me = newMember(fam, "me", true);
-        Member other = newMember(fam, "other", true);
 
-        newLetter(other, fam, "fam1", LocalDateTime.of(2025, 9, 20, 10, 0));
-        newLetter(me, fam, "fam2", LocalDateTime.of(2025, 9, 21, 10, 0));
-        newLetter(me, null, "mine-only", LocalDateTime.of(2025, 9, 22, 10, 0));
+        Member a = newMember(fam, "a", "a");
+        Member b = newMember(fam, "b", "b");
 
+        YearMonth ym = YearMonth.of(2025, 9);
+
+        LocalDateTime d1 = LocalDateTime.of(2025, 9, 1, 10, 0);
+        LocalDateTime d2 = LocalDateTime.of(2025, 9, 15, 10, 0);
+        LocalDateTime d3 = LocalDateTime.of(2025, 10, 1, 10, 0);
+
+        LocalDateTime start = ym.atDay(1).atStartOfDay();
+        LocalDateTime end   = ym.plusMonths(1).atDay(1).atStartOfDay();
+
+        newLetter(a, fam, "9/1", d1);
+        newLetter(b, fam, "9/15", d2);
+        newLetter(a, fam, "10/1", d3);
+        LocalDateTime cursor = null;
+        Pageable pageable = PageRequest.of(0, 10);
         em.flush(); em.clear();
 
-//        var page = org.springframework.data.domain.PageRequest.of(0, 10);
-//        var list = letterRepository.findFeedForUser(me.getId(), fam.getId(), null, page);
-//
-//        assertThat(list).extracting("content")
-//                .containsExactly("mine-only", "fam2", "fam1");
+        var list = letterRepository.findLetters(a.getId(), fam.getId(), start, end, cursor, pageable, true);
+
+        assertThat(list).extracting("content").containsExactly("9/15", "9/1"); // desc 정렬
     }
 }
