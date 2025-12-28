@@ -1,56 +1,64 @@
-# Mom4U-Server-Spring Repository
+# 🤱DearBelly🤱
 
-## 🚀 프로젝트 개요
-- **Framework**: Spring Boot 3.4.5
-- **빌드 도구**: Gradle
-- **Database**: MySQL 8.0.33
-- **배포 방식**: 미정
+태아와 산모를 위한 맞춤형 관리 서비스, 디어벨리의 SrpingBoot Server Repository 입니다.
 
 ---
 
-## 🧩 주요 기술 스택
-
-| 기술              | 설명 |
-|-----------------|------|
-| Spring Boot     | 백엔드 프레임워크 |
-| Spring Data JPA | ORM 기반 DB 접근 |
-| MySQL 8.0.33    | 개발 / 운영 데이터베이스 |
-| Swagger         | API 문서화 도구 (선택 시) |
+## 👨‍💻구성원👨‍💻
+| 전유연 | 이효린 |
+|:---:|:---:|
+| <a href="https://github.com/youyeon11"><img src="https://avatars.githubusercontent.com/u/106169205?v=4" width="120"/></a> | <a href="https://github.com/hyo-lin"><img src="https://avatars.githubusercontent.com/u/106169205?v=4" width="120"/></a> |
+| [youyeon11](https://github.com/youyeon11) | [hyo-lin](https://github.com/hyo-lin) |
 
 ---
 
-## 📁 프로젝트 구조 (예시)
+## ⭐ERD⭐
+
+![ERD](https://github.com/user-attachments/assets/3f9a8294-7e3c-4d5b-a56d-6d38dda217da)
+
+---
+
+## ⭐Architecture⭐
+
+![Architecture](https://github.com/user-attachments/assets/13794936-81cd-439d-a995-358f75302b93)
+
+---
+
+## 📁 프로젝트 구조 📁
 ```angular2html
 src/
 └── main/
 ├── java/com/hanium/mom4u/
-│   ├── domain/                  # 핵심 비즈니스 도메인 계층
-│   │   ├── common/
-│   │   ├── member/              # Member 도메인 (엔티티, 서비스 등)
-│   │   │   ├── common/
-│   │   │   ├── entity/
-│   │   │   ├── service/
-│   │   │   ├── controller/
-│   │   │   ├── repository/
-│   │   │   └── dto/
-│   │   ├── drug/
-│   │   ├── family/
-│   │   ├── news/
-│   │   └── inquiry/
+│   ├── domain/                      # 핵심 비즈니스 도메인 계층
+│   │   ├── calendar/                # 일정 및 캘린더 도메인
+│   │   ├── common/                  # 도메인 공통 로직 및 베이스 코드
+│   │   ├── family/                  # 가족 관계 및 그룹 도메인
+│   │   ├── letter/                  # 편지 및 메시지 도메인
+│   │   ├── member/                  # 회원(Member) 도메인
+│   │   ├── news/                    # 정보 도메인
+│   │   ├── question/                # 질문 및 Q&A 도메인
+│   │   ├── scan/                    # 스캔 및 분석 도메인
+│   │   └── sse/                     # 실시간 알림 (Server-Sent Events)
 │   │
-│   ├── external/                # 외부 환경설정 관련
+│   ├── external/                    # 외부 시스템 연동 및 인프라 계층
+│   │   ├── redis/                   # Redis 캐시 및 세션 관리
+│   │   └── s3/                      # AWS S3 파일 관리
 │   │
-│   └── global/                  # 전역 공통 처리 영역
-│       ├── config/              # Security, Swagger 등
-│       ├── exception/               # 예외 처리 (Exception, ErrorCode 등)
-│       ├── util/                # 유틸리티 클래스
-│       └── response/            # 표준 API 응답 포맷
+│   └── global/                      # 전역 공통 처리 영역
+│       ├── config/                  # 전역 설정 (Security, Swagger 등)
+│       ├── exception/               # 전역 예외 처리
+│       ├── filter/                  # 공통 필터
+│       ├── response/                # 표준 API 응답 포맷
+│       └── util/                    # 공통 유틸리티
 │
 └── resources/
-├── application.yml          # 환경 설정
-├── application-dev.yml      # 개발 환경 설정
-└── application-local.yml     # 로컬 환경 설정
-
+├── application.yml              # 공통 애플리케이션 설정
+├── application-dev.yml          # 개발 환경 설정
+├── application-local.yml        # 로컬 환경 설정
+├── application-prod.yml         # 운영 환경 설정
+│
+├── logback-dev.yml              # 개발 환경 로그 설정
+└── logback-spring.xml           # Logback 메인 설정 파일
 ```
 
 ---
@@ -58,7 +66,7 @@ src/
 
 DearBelly Spring Server Git 커밋 메시지 작성 규칙
 
-## ✅ 커밋 메시지 형식 ✅
+## 커밋 메시지 형식
 
 ```angular2html
 <type>(<scope>): <subject>
@@ -68,7 +76,7 @@ DearBelly Spring Server Git 커밋 메시지 작성 규칙
 
 ---
 
-## 🧩 Type 목록 🧩
+## Type 목록
 
 | Type       | 설명 |
 |------------|------|
@@ -82,9 +90,9 @@ DearBelly Spring Server Git 커밋 메시지 작성 규칙
 
 ---
 
-# 🌿 Branch Naming Convention 🌿
+# 📝 Branch Naming Convention 📝
 
-## 📌 브랜치 네이밍 컨벤션 📌
+## 브랜치 네이밍 컨벤션
 
 ```angular2html
 <type>/<작업-설명>-<이슈번호>
