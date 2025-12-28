@@ -5,10 +5,10 @@
 ---
 
 ## 👨‍💻구성원👨‍💻
-| 전유연 | 이효린 |
-|:---:|:---:|
-| <a href="https://github.com/youyeon11"><img src="https://avatars.githubusercontent.com/u/106169205?v=4" width="120"/></a> | <a href="https://github.com/hyo-lin"><img src="https://avatars.githubusercontent.com/u/106169205?v=4" width="120"/></a> |
-| [youyeon11](https://github.com/youyeon11) | [hyo-lin](https://github.com/hyo-lin) |
+|                    전유연                    |                                                           이효린                                                           |
+|:-----------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------:|
+|                     <a href="https://github.com/hyo-lin"><img src="https://avatars.githubusercontent.com/u/109857975?v=4?v=4" width="120"/></a> | <a href="https://github.com/hyo-lin"><img src="https://avatars.githubusercontent.com/u/106169205?v=4" width="120"/></a> |
+| [youyeon11](https://github.com/youyeon11) |                                          [hyo-lin](https://github.com/hyo-lin)                                          |
 
 ---
 
